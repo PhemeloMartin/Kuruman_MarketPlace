@@ -1060,3 +1060,27 @@ body {
   font-weight: 700;
   letter-spacing: 0.02em;
 }
+
+/* ---------- Offline ---------- */
+.offline-banner {
+  margin: 0;
+  padding: 10px 16px;
+  background: #fdf1d8;
+  color: #6b4a12;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-bottom: 1px solid #f3dfb4;
+}
+
+.offline-note {
+  margin-bottom: 14px;
+  border-color: #f3dfb4;
+  background: #fffaf0;
+}
+
+.draft-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -6px 0 14px;
+}

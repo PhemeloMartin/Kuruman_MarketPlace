@@ -35,6 +35,14 @@ app.use((req, res, next) => {
   next();
 });
 
+// Private answers (accounts, orders, addresses, payments) must never be stored by the browser
+// or any cache in between (spec 5.4 "no-store"). Only the public catalogue may be cached.
+const PUBLIC_API = /^\/api\/(products|categories|config|health)(\/|$|\?)/;
+app.use("/api", (req, res, next) => {
+  res.set("Cache-Control", req.method === "GET" && PUBLIC_API.test(req.originalUrl) ? "no-cache" : "no-store");
+  next();
+});
+
 // Works out who is signed in (if anyone) for every request.
 app.use(loadSession);
 

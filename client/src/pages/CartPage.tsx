@@ -8,6 +8,7 @@ import { ProductPhoto } from '../components/ProductCard'
 import { api, ApiError } from '../lib/api'
 import { formatRand } from '../lib/money'
 import type { Product } from '../lib/types'
+import { useOnline } from '../lib/useOnline'
 
 interface Policy {
   deliveryFeeCents: number
@@ -26,6 +27,7 @@ export function CartPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [policy, setPolicy] = useState<Policy | null>(null)
+  const online = useOnline()
   const [fulfilment, setFulfilment] = useState<'delivery' | 'pickup'>('pickup')
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online'>('cash')
   const [address, setAddress] = useState('')
@@ -35,9 +37,11 @@ export function CartPage() {
   const [sending, setSending] = useState(false)
   const requestKey = useRef(newRequestKey())
 
+  // Fee and time limits come from the server; fetched again when the connection returns.
   useEffect(() => {
+    if (!online) return
     api<Policy>('/config').then(setPolicy).catch(() => setPolicy(null))
-  }, [])
+  }, [online])
 
   // Re-check prices and stock against the server (on opening the cart, and after a conflict).
   const { lines, refresh } = cart
@@ -57,10 +61,19 @@ export function CartPage() {
 
   const revalidatedOnOpen = useRef(false)
   useEffect(() => {
-    if (revalidatedOnOpen.current || lines.length === 0) return
+    if (revalidatedOnOpen.current || lines.length === 0 || !online) return
     revalidatedOnOpen.current = true
     revalidate()
-  }, [lines.length, revalidate])
+  }, [lines.length, revalidate, online])
+
+  // Back online: re-check the draft against the server before it can be sent (spec 5.3).
+  useEffect(() => {
+    const again = () => {
+      revalidatedOnOpen.current = false
+    }
+    window.addEventListener('online', again)
+    return () => window.removeEventListener('online', again)
+  }, [])
 
   if (cart.lines.length === 0 || !cart.business) {
     return (
@@ -128,6 +141,15 @@ export function CartPage() {
       <h1 className="page-title">Your cart</h1>
       <p className="cart-seller">
         Ordering from <strong>{cart.business.name}</strong> · one seller per order
+      </p>
+      <p className="draft-line">
+        <span className="draft-badge">Not submitted</span>
+        {cart.updatedAt && (
+          <span className="fine-print" style={{ margin: 0 }}>
+            Saved on this phone{' '}
+            {new Date(cart.updatedAt).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        )}
       </p>
 
       {notes.length > 0 && <Notes notes={notes} />}
@@ -258,7 +280,12 @@ export function CartPage() {
       )}
 
       <div className="sticky-action">
-        <button type="button" className="btn btn-primary btn-block" onClick={sendOrder} disabled={sending || !policy}>
+        {!online && (
+          <p className="notice" role="status" style={{ marginBottom: 8 }}>
+            You’re offline. Your cart is kept on this phone – send it when you’re connected.
+          </p>
+        )}
+        <button type="button" className="btn btn-primary btn-block" onClick={sendOrder} disabled={sending || !policy || !online}>
           {sending ? 'Sending…' : user ? 'Send order to seller' : 'Sign in to send order'}
           <span translate="no">· {formatRand(total)}</span>
         </button>

@@ -3,13 +3,21 @@ import { useAuth } from '../auth/AuthContext'
 import { useCart } from '../cart/CartContext'
 import { LANGUAGES, currentLanguage, setLanguage } from '../lib/translate'
 import type { LanguageCode } from '../lib/translate'
+import { useOnline } from '../lib/useOnline'
 import { DuneRibbon, LogoMark } from './Art'
 import { CartIcon, HomeIcon, OrdersIcon, ProfileIcon, ShopIcon, TruckIcon } from './Icons'
 
 export function Layout() {
+  const online = useOnline()
   return (
     <div className="app">
       <DuneRibbon />
+      {!online && (
+        <p className="offline-banner" role="status">
+          You’re offline. You can browse saved products and fill your cart. Orders, payments and deliveries need a
+          connection.
+        </p>
+      )}
       <Outlet />
       <BottomNav />
     </div>

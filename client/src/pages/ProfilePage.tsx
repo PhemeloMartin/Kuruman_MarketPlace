@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { useCart } from '../cart/CartContext'
 import { MokalaScene } from '../components/Art'
 import { LANGUAGES, currentLanguage } from '../lib/translate'
 
@@ -18,6 +19,7 @@ function localPhone(e164: string): string {
 
 export function ProfilePage() {
   const { user, loading, logout } = useAuth()
+  const { clear: clearCart } = useCart()
   const navigate = useNavigate()
 
   if (loading) return null
@@ -78,6 +80,8 @@ export function ProfilePage() {
         className="btn btn-outline btn-block"
         onClick={async () => {
           await logout()
+          // A shared phone: the next person must not see this person's cart (spec 5.4).
+          clearCart()
           navigate('/', { replace: true })
         }}
       >

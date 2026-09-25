@@ -5,8 +5,16 @@ import { SearchIcon } from '../components/Icons'
 import { ProductCard } from '../components/ProductCard'
 import { SiteHeader } from '../components/Layout'
 import { SwitchSellerDialog } from '../components/SwitchSellerDialog'
-import { api } from '../lib/api'
+import { api, ApiError } from '../lib/api'
+import { STALE_AFTER_MS, filterSaved, loadCatalogue, saveCatalogue } from '../lib/catalogueCache'
 import type { Category, Product } from '../lib/types'
+import { useOnline } from '../lib/useOnline'
+
+function savedTime(iso: string): string {
+  const d = new Date(iso)
+  const sameDay = d.toDateString() === new Date().toDateString()
+  return d.toLocaleString('en-ZA', sameDay ? { hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
 
 export function HomePage() {
   const cart = useCart()
@@ -17,10 +25,15 @@ export function HomePage() {
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('') // search text, applied after the user pauses typing
   const [pending, setPending] = useState<Product | null>(null) // waiting on "switch seller?"
+  const [savedAt, setSavedAt] = useState<string | null>(null) // set when showing the offline copy
+  const [savedIsStale, setSavedIsStale] = useState(false)
+  const online = useOnline()
 
   useEffect(() => {
-    api<Category[]>('/categories').then(setCategories).catch(() => setCategories([]))
-  }, [])
+    api<Category[]>('/categories')
+      .then(setCategories)
+      .catch(() => setCategories(loadCatalogue()?.categories ?? []))
+  }, [online])
 
   // Wait 300 ms after the last keystroke before searching, so we don't call the API on every letter.
   useEffect(() => {
@@ -38,12 +51,33 @@ export function HomePage() {
         if (cancelled) return
         setProducts(p)
         setError(null)
+        setSavedAt(null)
+        // The full, unfiltered list is what we keep for offline browsing.
+        if (!category && !query) {
+          api<Category[]>('/categories').then((c) => saveCatalogue(c, p)).catch(() => {})
+        }
       })
-      .catch((err) => !cancelled && setError(err.message))
+      .catch((err) => {
+        if (cancelled) return
+        // No connection: show the saved copy, clearly labelled with its age (spec 5.3).
+        const saved = err instanceof ApiError && err.status === 0 ? loadCatalogue() : null
+        if (saved) {
+          setProducts(filterSaved(saved.products, category, query))
+          setSavedAt(saved.savedAt)
+          setSavedIsStale(Date.now() - new Date(saved.savedAt).getTime() > STALE_AFTER_MS)
+          setError(null)
+        } else {
+          setError(
+            err instanceof ApiError && err.status === 0
+              ? 'You’re offline and no products are saved on this phone yet. Connect once to load the catalogue.'
+              : err.message,
+          )
+        }
+      })
     return () => {
       cancelled = true
     }
-  }, [category, query])
+  }, [category, query, online])
 
   function handleAdd(product: Product) {
     if (cart.add(product) === 'other-seller') setPending(product)
@@ -95,6 +129,16 @@ export function HomePage() {
               <MokalaScene />
             </div>
           </section>
+        )}
+
+        {savedAt && (
+          <p className="notice offline-note" role="status">
+            <strong>Saved copy from {savedTime(savedAt)}.</strong>{' '}
+            {savedIsStale
+              ? 'It’s more than a day old, so prices and stock may have changed.'
+              : 'Prices and stock may have changed.'}{' '}
+            You can still fill your cart – it’s checked again when you’re back online.
+          </p>
         )}
 
         <section aria-labelledby="products-heading" style={filtering ? { marginTop: 16 } : undefined}>
