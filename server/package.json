@@ -10,7 +10,8 @@
     "start": "node dist/index.js",
     "db:setup": "tsx src/scripts/dbSetup.ts",
     "db:seed": "tsx src/scripts/seed.ts",
-    "test:kpi": "tsx src/scripts/testKpis.ts"
+    "test:kpi": "tsx src/scripts/testKpis.ts",
+    "test:payfast": "tsx src/scripts/testPayfast.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

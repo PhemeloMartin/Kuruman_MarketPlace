@@ -2,6 +2,7 @@
 -- Money is always stored as whole cents (INTEGER), never as decimals.
 -- WARNING: running this file drops and re-creates all tables (development only).
 
+DROP TABLE IF EXISTS payment_events CASCADE;
 DROP TABLE IF EXISTS ai_suggestions CASCADE;
 DROP TABLE IF EXISTS cash_receipts CASCADE;
 DROP TABLE IF EXISTS sessions CASCADE;
@@ -119,6 +120,7 @@ CREATE TABLE orders (
   delivery_address   TEXT,
   notes              TEXT,
   accept_by          TIMESTAMPTZ NOT NULL,          -- seller must reply before this
+  payment_due_at     TIMESTAMPTZ,                   -- online orders: pay within 15 min of acceptance
   -- The same "Send order" tap arriving twice (e.g. flaky signal) must not create two orders.
   -- The app sends a random key per checkout; request_hash detects a key reused for a different cart.
   idempotency_key    VARCHAR(64) NOT NULL,
@@ -174,16 +176,39 @@ CREATE TABLE deliveries (
 );
 CREATE INDEX idx_deliveries_status ON deliveries(status);
 
+-- One row per online payment ATTEMPT (spec: payment_attempts). Cash is in cash_receipts.
+--   pending   - customer was sent to Payfast; nothing verified yet
+--   paid      - verified capture, applied to the order (at most one per order)
+--   unapplied - verified capture that could NOT be applied (order expired, or already paid):
+--               the money is real and must be refunded - never silently ignored (spec BR-08)
+--   failed    - Payfast reported the payment failed
 CREATE TABLE payments (
   id                 BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   order_id           BIGINT      NOT NULL REFERENCES orders(id),
-  method             VARCHAR(10) NOT NULL CHECK (method IN ('cash', 'online')),
+  provider           VARCHAR(20) NOT NULL DEFAULT 'payfast',
+  attempt_reference  VARCHAR(40) NOT NULL UNIQUE,  -- our m_payment_id sent to Payfast
   status             VARCHAR(20) NOT NULL DEFAULT 'pending'
-                     CHECK (status IN ('pending', 'paid', 'failed', 'refunded')),
+                     CHECK (status IN ('pending', 'paid', 'unapplied', 'failed', 'refunded')),
   amount_cents       INTEGER     NOT NULL CHECK (amount_cents > 0),
-  provider_reference VARCHAR(100) UNIQUE,   -- Payfast reference; UNIQUE blocks duplicate notifications
+  provider_reference VARCHAR(100) UNIQUE,          -- Payfast pf_payment_id; UNIQUE blocks duplicates
+  verified_at        TIMESTAMPTZ,
   created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- At most ONE applied (paid) capture per order, enforced by the database itself.
+CREATE UNIQUE INDEX one_applied_payment_per_order ON payments(order_id) WHERE status = 'paid';
+
+-- Every payment notification we receive, kept as evidence - including rejected/forged ones.
+-- Only references, amounts and outcomes are stored: no names, emails or card data.
+CREATE TABLE payment_events (
+  id                 BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  provider           VARCHAR(20)  NOT NULL,
+  attempt_reference  VARCHAR(40),
+  provider_reference VARCHAR(100),
+  payment_status     VARCHAR(20),
+  amount_cents       INTEGER,
+  outcome            VARCHAR(40)  NOT NULL,   -- e.g. applied, duplicate, rejected_signature
+  received_at        TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
 -- Physical cash, kept separate from digital payments (spec BR-11).

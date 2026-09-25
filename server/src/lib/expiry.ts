@@ -6,7 +6,10 @@ import { recordStatusChange, releaseReservation } from "./stock";
 // so an order the seller accepts at the very last second is left alone.
 export async function expireOverdueOrders(): Promise<number> {
   const due = await pool.query(
-    "SELECT id FROM orders WHERE status = 'pending_acceptance' AND accept_by < now() ORDER BY id LIMIT 100"
+    `SELECT id FROM orders
+      WHERE (status = 'pending_acceptance' AND accept_by < now())
+         OR (status = 'awaiting_payment' AND payment_due_at < now())
+      ORDER BY id LIMIT 100`
   );
   let expired = 0;
 
@@ -14,14 +17,29 @@ export async function expireOverdueOrders(): Promise<number> {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
-      const r = await client.query("SELECT status, accept_by < now() AS overdue FROM orders WHERE id = $1 FOR UPDATE", [row.id]);
-      if (r.rows[0]?.status !== "pending_acceptance" || !r.rows[0].overdue) {
+      // Re-check after locking: a seller decision or a verified payment may have just won the race.
+      const r = await client.query(
+        `SELECT status,
+                (status = 'pending_acceptance' AND accept_by < now())
+                  OR (status = 'awaiting_payment' AND payment_due_at < now()) AS overdue
+           FROM orders WHERE id = $1 FOR UPDATE`,
+        [row.id]
+      );
+      const status = r.rows[0]?.status;
+      if (!r.rows[0]?.overdue) {
         await client.query("ROLLBACK");
         continue;
       }
       await releaseReservation(client, Number(row.id));
-      await client.query("UPDATE orders SET status = 'expired', updated_at = now() WHERE id = $1", [row.id]);
-      await recordStatusChange(client, Number(row.id), "pending_acceptance", "expired", null, "Seller did not respond in time");
+      await client.query("UPDATE orders SET status = 'expired', payment_due_at = NULL, updated_at = now() WHERE id = $1", [row.id]);
+      await recordStatusChange(
+        client,
+        Number(row.id),
+        status,
+        "expired",
+        null,
+        status === "pending_acceptance" ? "Seller did not respond in time" : "Online payment not received in time"
+      );
       await client.query("COMMIT");
       expired++;
     } catch (err) {

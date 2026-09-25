@@ -5,6 +5,7 @@ import { requireRole } from "../auth/session";
 import { computeKpis } from "../lib/kpi";
 import { checkHandoverCode } from "../lib/handover";
 import { predictCategory } from "../lib/aiClient";
+import { POLICY } from "../lib/policy";
 import { consumeReservation, recordStatusChange, releaseReservation } from "../lib/stock";
 
 // Everything here is for an approved entrepreneur, and only ever about THEIR business.
@@ -166,7 +167,13 @@ sellerRouter.post("/orders/:id/accept", (req, res) =>
       return conflict(res, "expired");
     }
     const next = order.payment_method === "cash" ? "confirmed" : "awaiting_payment";
-    await client.query("UPDATE orders SET status = $2, updated_at = now() WHERE id = $1", [order.id, next]);
+    // Online orders get a 15-minute payment window from the moment the seller accepts (BR-06).
+    await client.query(
+      `UPDATE orders SET status = $2::varchar, updated_at = now(),
+              payment_due_at = CASE WHEN $2::varchar = 'awaiting_payment' THEN now() + make_interval(mins => $3) END
+        WHERE id = $1`,
+      [order.id, next, POLICY.paymentMinutes]
+    );
     await recordStatusChange(client, order.id, "pending_acceptance", next, req.user!.id);
     res.json({ status: next });
   })

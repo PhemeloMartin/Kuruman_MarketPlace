@@ -250,7 +250,8 @@ ordersRouter.post("/", shopper, async (req, res) => {
 ordersRouter.get("/mine", shopper, async (req, res) => {
   const r = await pool.query(
     `SELECT o.id, o.order_number, o.status, o.fulfilment, o.payment_method, o.subtotal_cents,
-            o.delivery_fee_cents, o.total_cents, o.accept_by, o.created_at,
+            o.delivery_fee_cents, o.total_cents, o.accept_by, o.created_at, o.payment_due_at,
+            (SELECT p.status FROM payments p WHERE p.order_id = o.id ORDER BY p.id DESC LIMIT 1) AS payment_status,
             b.name AS business_name, b.area AS business_area,
             (SELECT cu.display_name FROM deliveries d JOIN users cu ON cu.id = d.courier_id
               WHERE d.order_id = o.id) AS courier_name,
@@ -281,6 +282,8 @@ ordersRouter.get("/mine", shopper, async (req, res) => {
       totalCents: o.total_cents,
       acceptBy: o.accept_by,
       createdAt: o.created_at,
+      paymentDueAt: o.payment_due_at,
+      paymentStatus: o.payment_status,
       businessName: o.business_name,
       businessArea: o.business_area,
       courierName: o.courier_name,

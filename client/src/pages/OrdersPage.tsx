@@ -17,6 +17,8 @@ interface OrderSummary {
   businessName: string
   businessArea: string
   courierName: string | null
+  paymentDueAt: string | null
+  paymentStatus: 'pending' | 'paid' | 'unapplied' | 'failed' | 'refunded' | null
   statusReason: string | null
   items: { name: string; unitLabel: string; quantity: number }[]
 }
@@ -32,7 +34,7 @@ const STATUS: Record<string, { label: string; tone: 'wait' | 'good' | 'bad' }> =
   completed: { label: 'Completed', tone: 'good' },
   declined: { label: 'Declined by seller', tone: 'bad' },
   cancelled: { label: 'Cancelled', tone: 'bad' },
-  expired: { label: 'Seller didn’t respond', tone: 'bad' },
+  expired: { label: 'Expired', tone: 'bad' },
 }
 
 function timeLeft(iso: string): string {
@@ -44,6 +46,8 @@ export function OrdersPage() {
   const { user, loading } = useAuth()
   const location = useLocation()
   const placed = (location.state as { placed?: string } | null)?.placed
+  // Coming back from Payfast: ?payment=returned or ?payment=cancelled
+  const paymentReturn = new URLSearchParams(location.search).get('payment')
   const [orders, setOrders] = useState<OrderSummary[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<number | null>(null)
@@ -55,9 +59,49 @@ export function OrdersPage() {
       .catch((err) => setError(err.message))
   }, [])
 
+  // After returning from Payfast we only REFRESH: the browser coming back is not proof of
+  // payment (spec 5.5). The order changes only when Payfast's own notification is verified.
+  useEffect(() => {
+    if (!user || paymentReturn !== 'returned') return
+    const t = setInterval(load, 5000)
+    const stop = setTimeout(() => clearInterval(t), 120_000)
+    return () => {
+      clearInterval(t)
+      clearTimeout(stop)
+    }
+  }, [user, paymentReturn, load])
+
   useEffect(() => {
     if (user) load()
   }, [user, load])
+
+  // Gets a signed checkout form from our server and sends the browser to Payfast with it.
+  // Card and bank details are typed on Payfast's page only - never in our app.
+  async function payNow(id: number) {
+    setBusyId(id)
+    setError(null)
+    try {
+      const checkout = await api<{ action: string; fields: Record<string, string> }>(`/orders/${id}/payment-attempts`, {
+        method: 'POST',
+      })
+      const form = document.createElement('form')
+      form.method = 'POST'
+      form.action = checkout.action
+      for (const [name, value] of Object.entries(checkout.fields)) {
+        const input = document.createElement('input')
+        input.type = 'hidden'
+        input.name = name
+        input.value = value
+        form.appendChild(input)
+      }
+      document.body.appendChild(form)
+      form.submit()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not start the payment. Please try again.')
+      setBusyId(null)
+      load()
+    }
+  }
 
   async function cancel(id: number) {
     setBusyId(id)
@@ -108,6 +152,17 @@ export function OrdersPage() {
     <main className="page">
       <h1 className="page-title">Your orders</h1>
 
+      {paymentReturn === 'returned' && (
+        <p className="notice" role="status" style={{ marginBottom: 12, borderColor: 'var(--primary)' }}>
+          <strong>Checking your payment with Payfast…</strong> Your order changes to “Accepted” as soon as Payfast
+          confirms it. This page updates by itself.
+        </p>
+      )}
+      {paymentReturn === 'cancelled' && (
+        <p className="notice" role="status" style={{ marginBottom: 12 }}>
+          Payment cancelled – nothing was charged. You can try again before the time runs out.
+        </p>
+      )}
       {placed && (
         <p className="notice" role="status" style={{ marginBottom: 12, borderColor: 'var(--primary)' }}>
           <strong>Order {placed} sent.</strong> We’ll show here when the seller accepts it.
@@ -156,8 +211,36 @@ export function OrdersPage() {
                 )}
               </div>
               {o.status === 'pending_acceptance' && <p className="fine-print">{timeLeft(o.acceptBy)}</p>}
+              {o.status === 'expired' && o.statusReason && o.paymentStatus !== 'unapplied' && (
+                <p className="fine-print">{o.statusReason}. Nothing was charged and you can order again.</p>
+              )}
               {o.status === 'declined' && o.statusReason && (
                 <p className="fine-print">Seller’s reason: {o.statusReason}</p>
+              )}
+              {o.status === 'awaiting_payment' && (
+                <div className="collection-code">
+                  <p style={{ margin: '0 0 8px' }}>
+                    <strong>The seller accepted your order.</strong> Please pay{' '}
+                    <span translate="no">{formatRand(o.totalCents)}</span> online
+                    {o.paymentDueAt && (
+                      <>
+                        {' '}
+                        before{' '}
+                        {new Date(o.paymentDueAt).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}
+                      </>
+                    )}
+                    .
+                  </p>
+                  <button type="button" className="btn btn-primary btn-block" onClick={() => payNow(o.id)} disabled={busyId === o.id}>
+                    {busyId === o.id ? 'Opening Payfast…' : `Pay ${formatRand(o.totalCents)} with Payfast`}
+                  </button>
+                  <p className="fine-print">You’ll pay on Payfast’s secure page. We never see your card details.</p>
+                </div>
+              )}
+              {o.status === 'expired' && o.paymentStatus === 'unapplied' && (
+                <p className="fine-print">
+                  Your payment arrived after the time ran out. It is recorded and will be refunded.
+                </p>
               )}
               {o.status === 'confirmed' && (
                 <p className="fine-print">
