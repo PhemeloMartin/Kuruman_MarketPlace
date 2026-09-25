@@ -1,0 +1,9 @@
+{
+  "_note": "Predeclared keyword baseline (spec section 8.2). Written before training and never tuned on the test split. A listing gets the category with the most keyword hits; ties or no hits -> the majority class.",
+  "fresh-produce": ["fresh", "vars", "ntšhwa", "ripe", "ryp", "butswitseng", "kg", "vegetable", "fruit", "garden", "tuin", "tshingwaneng", "farm", "plaas", "polasing", "picked", "gepluk", "meat", "vleis", "nama", "eggs", "mae"],
+  "pantry": ["meal", "meel", "bupi", "bread", "brood", "senkgwe", "rice", "rys", "sugar", "suiker", "sukiri", "oil", "olie", "tea", "tee", "coffee", "kofi", "tin", "blik", "jar", "fles", "baked", "gebak", "besitsweng", "sauce", "sous", "sose", "flour", "juice", "sap", "lero"],
+  "clothing": ["shirt", "hemp", "hempe", "dress", "rok", "mosese", "shoes", "skoene", "ditlhako", "jacket", "baadjie", "baki", "size", "grootte", "saese", "trousers", "broek", "borokgwe", "school", "skool", "sekolo", "wear", "cotton", "katoen", "kotone"],
+  "household": ["household", "huishoudelike", "ntlo", "washing", "was", "tlhatswa", "kitchen", "kombuis", "pot", "pitsa", "broom", "besem", "lefielo", "bucket", "emmer", "emere", "cleaning", "clean", "phepafatsa", "bed", "bolao", "plastic", "plastiek", "polasetiki"],
+  "crafts": ["handmade", "handgemaak", "handgemaakte", "seatla", "beaded", "kraal", "krale", "dibaga", "craft", "kuns", "botaki", "carved", "gekerf", "betlilweng", "gift", "geskenk", "mpho", "woven", "gevlegte", "logilweng", "traditional", "tradisionele", "setso"],
+  "personal-care": ["soap", "seep", "sesepa", "lotion", "room", "setlolo", "skin", "vel", "letlalo", "hair", "hare", "moriri", "teeth", "tande", "meno", "baby", "baba", "lesea", "face", "gesig", "sefatlhego", "cream"]
+}

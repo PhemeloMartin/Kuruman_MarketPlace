@@ -1,0 +1,546 @@
+{
+  "model_version": "category-v2",
+  "created_at": "2026-09-25T21:37:17+00:00",
+  "artefact": "category-v2.joblib",
+  "artefact_sha256": "5c3c59f87c58b16529a13a82eec4f1ebf50892b539dc586ca18839489de6e2d6",
+  "dataset_sha256": "366b141992fc7bceee8036f7f119a2917344e00960e90a39194954a24b897619",
+  "dataset_note": "Student-authored development data; Setswana/Afrikaans unreviewed. Not field performance.",
+  "seed": 42,
+  "model": "TF-IDF (word+char, char n-grams (2, 5)) + multinomial logistic regression, C=50",
+  "trained_on": "all development concepts (train + validation), 192 concepts / 576 texts",
+  "test_split_note": "category-v1 was scored on this test split once (macro-F1 0.661, failed). v2 changed the tuning method, not the test data; the test split is therefore not strictly untouched.",
+  "labels": [
+    "clothing",
+    "crafts",
+    "fresh-produce",
+    "household",
+    "pantry",
+    "personal-care"
+  ],
+  "threshold": 0.77,
+  "split": {
+    "train": 144,
+    "validation": 48,
+    "test": 48
+  },
+  "tuning_grouped_cv": [
+    {
+      "features": "word",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 1,
+      "cv_macro_f1": 0.6475
+    },
+    {
+      "features": "word",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 2,
+      "cv_macro_f1": 0.6619
+    },
+    {
+      "features": "word",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 5,
+      "cv_macro_f1": 0.6671
+    },
+    {
+      "features": "word",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 10,
+      "cv_macro_f1": 0.6707
+    },
+    {
+      "features": "word",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 20,
+      "cv_macro_f1": 0.6707
+    },
+    {
+      "features": "word",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 50,
+      "cv_macro_f1": 0.6728
+    },
+    {
+      "features": "char",
+      "char_range": [
+        2,
+        4
+      ],
+      "C": 1,
+      "cv_macro_f1": 0.6748
+    },
+    {
+      "features": "char",
+      "char_range": [
+        2,
+        4
+      ],
+      "C": 2,
+      "cv_macro_f1": 0.683
+    },
+    {
+      "features": "char",
+      "char_range": [
+        2,
+        4
+      ],
+      "C": 5,
+      "cv_macro_f1": 0.686
+    },
+    {
+      "features": "char",
+      "char_range": [
+        2,
+        4
+      ],
+      "C": 10,
+      "cv_macro_f1": 0.688
+    },
+    {
+      "features": "char",
+      "char_range": [
+        2,
+        4
+      ],
+      "C": 20,
+      "cv_macro_f1": 0.6895
+    },
+    {
+      "features": "char",
+      "char_range": [
+        2,
+        4
+      ],
+      "C": 50,
+      "cv_macro_f1": 0.6911
+    },
+    {
+      "features": "char",
+      "char_range": [
+        2,
+        5
+      ],
+      "C": 1,
+      "cv_macro_f1": 0.6871
+    },
+    {
+      "features": "char",
+      "char_range": [
+        2,
+        5
+      ],
+      "C": 2,
+      "cv_macro_f1": 0.7045
+    },
+    {
+      "features": "char",
+      "char_range": [
+        2,
+        5
+      ],
+      "C": 5,
+      "cv_macro_f1": 0.711
+    },
+    {
+      "features": "char",
+      "char_range": [
+        2,
+        5
+      ],
+      "C": 10,
+      "cv_macro_f1": 0.7093
+    },
+    {
+      "features": "char",
+      "char_range": [
+        2,
+        5
+      ],
+      "C": 20,
+      "cv_macro_f1": 0.711
+    },
+    {
+      "features": "char",
+      "char_range": [
+        2,
+        5
+      ],
+      "C": 50,
+      "cv_macro_f1": 0.7093
+    },
+    {
+      "features": "char",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 1,
+      "cv_macro_f1": 0.6968
+    },
+    {
+      "features": "char",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 2,
+      "cv_macro_f1": 0.7092
+    },
+    {
+      "features": "char",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 5,
+      "cv_macro_f1": 0.7129
+    },
+    {
+      "features": "char",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 10,
+      "cv_macro_f1": 0.7025
+    },
+    {
+      "features": "char",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 20,
+      "cv_macro_f1": 0.7047
+    },
+    {
+      "features": "char",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 50,
+      "cv_macro_f1": 0.7137
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        2,
+        4
+      ],
+      "C": 1,
+      "cv_macro_f1": 0.7244
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        2,
+        4
+      ],
+      "C": 2,
+      "cv_macro_f1": 0.7278
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        2,
+        4
+      ],
+      "C": 5,
+      "cv_macro_f1": 0.7305
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        2,
+        4
+      ],
+      "C": 10,
+      "cv_macro_f1": 0.7338
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        2,
+        4
+      ],
+      "C": 20,
+      "cv_macro_f1": 0.7355
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        2,
+        4
+      ],
+      "C": 50,
+      "cv_macro_f1": 0.7317
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        2,
+        5
+      ],
+      "C": 1,
+      "cv_macro_f1": 0.7266
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        2,
+        5
+      ],
+      "C": 2,
+      "cv_macro_f1": 0.7338
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        2,
+        5
+      ],
+      "C": 5,
+      "cv_macro_f1": 0.7395
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        2,
+        5
+      ],
+      "C": 10,
+      "cv_macro_f1": 0.7414
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        2,
+        5
+      ],
+      "C": 20,
+      "cv_macro_f1": 0.7395
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        2,
+        5
+      ],
+      "C": 50,
+      "cv_macro_f1": 0.7425
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 1,
+      "cv_macro_f1": 0.7262
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 2,
+      "cv_macro_f1": 0.7325
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 5,
+      "cv_macro_f1": 0.7345
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 10,
+      "cv_macro_f1": 0.7295
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 20,
+      "cv_macro_f1": 0.7295
+    },
+    {
+      "features": "word+char",
+      "char_range": [
+        3,
+        5
+      ],
+      "C": 50,
+      "cv_macro_f1": 0.7333
+    }
+  ],
+  "out_of_fold": {
+    "displayed_precision": 0.9095477386934674,
+    "coverage": 0.3454861111111111
+  },
+  "test": {
+    "texts": 144,
+    "macro_f1": 0.7122,
+    "macro_f1_95ci": [
+      0.6125,
+      0.7905
+    ],
+    "displayed": 59,
+    "displayed_precision": 0.9322,
+    "coverage": 0.4097,
+    "latency_ms_per_text": 0.102,
+    "per_language": {
+      "en": {
+        "texts": 48,
+        "macro_f1": 0.6949,
+        "accuracy": 0.7083,
+        "displayed": 19,
+        "displayed_precision": 0.8947,
+        "coverage": 0.3958
+      },
+      "tn": {
+        "texts": 48,
+        "macro_f1": 0.6734,
+        "accuracy": 0.6875,
+        "displayed": 25,
+        "displayed_precision": 0.96,
+        "coverage": 0.5208
+      },
+      "af": {
+        "texts": 48,
+        "macro_f1": 0.7711,
+        "accuracy": 0.7917,
+        "displayed": 15,
+        "displayed_precision": 0.9333,
+        "coverage": 0.3125
+      }
+    },
+    "per_class": {
+      "fresh-produce": {
+        "support": 24,
+        "f1": 0.8148
+      },
+      "pantry": {
+        "support": 24,
+        "f1": 0.6522
+      },
+      "clothing": {
+        "support": 24,
+        "f1": 0.7391
+      },
+      "household": {
+        "support": 24,
+        "f1": 0.3784
+      },
+      "crafts": {
+        "support": 24,
+        "f1": 0.9167
+      },
+      "personal-care": {
+        "support": 24,
+        "f1": 0.7719
+      }
+    },
+    "baselines_macro_f1": {
+      "majority": 0.0476,
+      "keyword": 0.5774
+    },
+    "confusion_matrix": {
+      "labels": [
+        "fresh-produce",
+        "pantry",
+        "clothing",
+        "household",
+        "crafts",
+        "personal-care"
+      ],
+      "rows_true_cols_pred": [
+        [
+          22,
+          0,
+          0,
+          1,
+          0,
+          1
+        ],
+        [
+          5,
+          15,
+          1,
+          0,
+          0,
+          3
+        ],
+        [
+          1,
+          0,
+          17,
+          3,
+          2,
+          1
+        ],
+        [
+          2,
+          7,
+          2,
+          7,
+          0,
+          6
+        ],
+        [
+          0,
+          0,
+          2,
+          0,
+          22,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          2,
+          0,
+          22
+        ]
+      ]
+    }
+  },
+  "acceptance_checks": {
+    "macro_f1_overall >= 0.75": false,
+    "macro_f1_each_language >= 0.65": true,
+    "beats strongest baseline by >= 0.10": true,
+    "displayed precision >= 0.90": true,
+    "coverage >= 0.40": true,
+    "each language precision >= 0.80 and coverage >= 0.25": true
+  }
+}

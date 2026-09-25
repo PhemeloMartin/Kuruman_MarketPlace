@@ -4,6 +4,7 @@ import { pool } from "../db";
 import { requireRole } from "../auth/session";
 import { computeKpis } from "../lib/kpi";
 import { checkHandoverCode } from "../lib/handover";
+import { predictCategory } from "../lib/aiClient";
 import { consumeReservation, recordStatusChange, releaseReservation } from "../lib/stock";
 
 // Everything here is for an approved entrepreneur, and only ever about THEIR business.
@@ -404,18 +405,73 @@ function parseProduct(body: any, partial: boolean) {
   return { fields, out };
 }
 
+// AI category suggestion (spec FR-19, section 8). Advisory only: it fills nothing in by itself.
+// The seller must still choose the category, and the product is saved with THEIR choice.
+sellerRouter.post("/ai/category-suggestion", async (req, res) => {
+  const title = typeof req.body?.title === "string" ? req.body.title.trim().slice(0, 100) : "";
+  const description = typeof req.body?.description === "string" ? req.body.description.trim().slice(0, 1000) : "";
+  const locale = ["en", "tn", "af"].includes(req.body?.locale) ? req.body.locale : "xx";
+  if (title.length < 2) return res.status(422).json({ error: "Type the product name first." });
+
+  const prediction = await predictCategory(title, description, locale);
+  if (!prediction) return res.json({ available: false });
+
+  // Keep what was suggested (not the text), so we can later measure how often sellers agree.
+  const r = await pool.query(
+    `INSERT INTO ai_suggestions (business_id, model_version, locale, suggested_category, score, abstain_reason)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+    [req.business!.id, prediction.modelVersion, locale === "xx" ? "en" : locale, prediction.suggestion, prediction.score, prediction.reason]
+  );
+  res.json({
+    available: true,
+    suggestionId: Number(r.rows[0].id),
+    suggestion: prediction.suggestion,
+    score: prediction.score,
+    abstained: prediction.abstained,
+    reason: prediction.reason,
+    modelVersion: prediction.modelVersion,
+  });
+});
+
 sellerRouter.post("/products", async (req, res) => {
   const { fields, out } = parseProduct(req.body, false);
   const cat = await pool.query("SELECT id FROM categories WHERE slug = $1", [req.body?.category]);
   if (cat.rowCount === 0) fields.category = "Choose a category.";
   if (Object.keys(fields).length) return res.status(422).json({ error: "Please check the highlighted fields.", fields });
 
-  const r = await pool.query(
-    `INSERT INTO products (business_id, category_id, name, description, unit_label, price_cents, stock_qty)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-    [req.business!.id, cat.rows[0].id, out.name, out.description ?? null, out.unit_label, out.price_cents, out.stock_qty]
-  );
-  res.status(201).json({ id: Number(r.rows[0].id) });
+  // The product and the AI-outcome record are saved together, or not at all.
+  const client = await pool.connect();
+  let productId: number;
+  try {
+    await client.query("BEGIN");
+    const r = await client.query(
+      `INSERT INTO products (business_id, category_id, name, description, unit_label, price_cents, stock_qty)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+      [req.business!.id, cat.rows[0].id, out.name, out.description ?? null, out.unit_label, out.price_cents, out.stock_qty]
+    );
+    productId = Number(r.rows[0].id);
+
+    // Record the seller's final decision against the AI suggestion they were shown (if any).
+    const suggestionId = Number(req.body?.aiSuggestionId);
+    if (Number.isInteger(suggestionId) && suggestionId > 0) {
+      await client.query(
+        `UPDATE ai_suggestions
+            SET chosen_category = $3::varchar,
+                outcome = CASE WHEN suggested_category IS NULL THEN 'manual'
+                               WHEN suggested_category = $3::varchar THEN 'accepted'
+                               ELSE 'overridden' END
+          WHERE id = $1 AND business_id = $2 AND outcome IS NULL`,
+        [suggestionId, req.business!.id, req.body.category]
+      );
+    }
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+  res.status(201).json({ id: productId });
 });
 
 // Update price, stock, details, or hide/show. Past orders are unaffected: they keep their snapshot (BR-15).

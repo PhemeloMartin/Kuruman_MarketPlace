@@ -2,6 +2,7 @@
 -- Money is always stored as whole cents (INTEGER), never as decimals.
 -- WARNING: running this file drops and re-creates all tables (development only).
 
+DROP TABLE IF EXISTS ai_suggestions CASCADE;
 DROP TABLE IF EXISTS cash_receipts CASCADE;
 DROP TABLE IF EXISTS sessions CASCADE;
 DROP TABLE IF EXISTS order_status_history CASCADE;
@@ -202,6 +203,23 @@ CREATE TABLE cash_receipts (
   collected_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   remitted_at     TIMESTAMPTZ,
   CHECK (remitted_cents <= collected_cents)
+);
+
+-- AI category suggestions (spec 8.2 "Retention", 8.4 human control).
+-- Stores what the model suggested and what the seller finally chose - never the listing text.
+-- Proposed retention: 30 days (to be enforced by a clean-up job).
+CREATE TABLE ai_suggestions (
+  id                 BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  business_id        BIGINT       NOT NULL REFERENCES businesses(id),
+  model_version      VARCHAR(40)  NOT NULL,
+  locale             VARCHAR(2)   NOT NULL,
+  suggested_category VARCHAR(40),                 -- NULL when the model abstained
+  score              NUMERIC(4,3),
+  abstain_reason     VARCHAR(40),
+  chosen_category    VARCHAR(40),                 -- filled when the product is saved
+  outcome            VARCHAR(12)
+                     CHECK (outcome IN ('accepted', 'overridden', 'manual')),
+  created_at         TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
 -- Every status change is recorded: who, when, from what, to what.

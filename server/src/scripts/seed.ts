@@ -12,12 +12,14 @@ async function main() {
     await client.query("BEGIN");
 
     // Categories
+    // The six categories from spec Table 34 - the same labels the AI model predicts.
     const categories = [
       ["fresh-produce", "Fresh produce"],
-      ["bakery", "Bakery"],
-      ["pantry", "Pantry"],
-      ["crafts", "Crafts & beadwork"],
+      ["pantry", "Pantry & groceries"],
+      ["clothing", "Clothing & accessories"],
       ["household", "Household"],
+      ["crafts", "Crafts & gifts"],
+      ["personal-care", "Personal care"],
     ];
     const categoryIds: Record<string, number> = {};
     for (const [slug, name] of categories) {
@@ -83,8 +85,8 @@ async function main() {
       ["fresh-produce", "Spinach bunch", "1 bunch", 2500, 20],
       ["fresh-produce", "Tomatoes", "1 kg", 3000, 15],
       ["fresh-produce", "Onions", "1 x 2 kg bag", 3500, 10],
-      ["bakery", "Brown bread", "1 loaf", 1800, 12],
-      ["bakery", "Vetkoek", "Pack of 6", 3000, 8],
+      ["pantry", "Brown bread", "1 loaf", 1800, 12],
+      ["pantry", "Vetkoek", "Pack of 6", 3000, 8],
       ["pantry", "Maize meal", "1 x 5 kg bag", 6500, 6],
     ];
     for (const [cat, name, unit, price, stock] of products) {

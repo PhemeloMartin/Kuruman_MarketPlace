@@ -1,0 +1,721 @@
+concept_id|category|language|title|description
+fp01|fresh-produce|en|Spinach bunch|Fresh green spinach picked this morning from my garden
+fp01|fresh-produce|tn|Sepinatšhe|Sepinatšhe se setala se se kgotlhilweng mo tshingwaneng gompieno
+fp01|fresh-produce|af|Spinasie bondel|Vars groen spinasie vanoggend uit my tuin gepluk
+fp02|fresh-produce|en|Tomatoes|Ripe red tomatoes sold per kilogram
+fp02|fresh-produce|tn|Ditamati|Ditamati tse di butswitseng tse dikhibidu, ka kilo
+fp02|fresh-produce|af|Tamaties|Ryp rooi tamaties per kilogram verkoop
+fp03|fresh-produce|en|Onions|Brown onions in a 2 kg bag
+fp03|fresh-produce|tn|Dieie|Dieie tse di sootho mo kgetsing ya 2 kg
+fp03|fresh-produce|af|Uie|Bruin uie in 'n 2 kg sak
+fp04|fresh-produce|en|Potatoes|Washed potatoes in a 7 kg pocket
+fp04|fresh-produce|tn|Ditapole|Ditapole tse di tlhapilweng mo kgetsing ya 7 kg
+fp04|fresh-produce|af|Aartappels|Gewaste aartappels in 'n 7 kg sak
+fp05|fresh-produce|en|Butternut|Sweet butternut squash from a local garden
+fp05|fresh-produce|tn|Botatanate|Lephutshe le le monate go tswa mo tshingwaneng ya fa gae
+fp05|fresh-produce|af|Botterskorsie|Soet botterskorsie uit 'n plaaslike tuin
+fp06|fresh-produce|en|Cabbage|Large green cabbage head, crisp and fresh
+fp06|fresh-produce|tn|Khabetšhe|Khabetšhe e kgolo e tala, e ntšhwa
+fp06|fresh-produce|af|Kool|Groot groen koolkop, bros en vars
+fp07|fresh-produce|en|Carrots|Crunchy orange carrots, 1 kg bunch
+fp07|fresh-produce|tn|Dikherote|Dikherote tsa mmala wa namune, 1 kg
+fp07|fresh-produce|af|Wortels|Bros oranje wortels, 1 kg bondel
+fp08|fresh-produce|en|Green peppers|Fresh green peppers, pack of four
+fp08|fresh-produce|tn|Dipepere tse ditala|Dipepere tse ditala tse di ntšhwa, di le nne
+fp08|fresh-produce|af|Groen soetrissies|Vars groen soetrissies, pak van vier
+fp09|fresh-produce|en|Beetroot|Red beetroot bunch with the leaves on
+fp09|fresh-produce|tn|Bitiruti|Bitiruti e khibidu le matlhare a yone
+fp09|fresh-produce|af|Beet|Rooi beet bondel met die blare aan
+fp10|fresh-produce|en|Pumpkin|Whole orange pumpkin from the farm
+fp10|fresh-produce|tn|Lephutshe|Lephutshe le lotlhe go tswa kwa polasing
+fp10|fresh-produce|af|Pampoen|Hele oranje pampoen van die plaas
+fp11|fresh-produce|en|Sweet potatoes|Orange sweet potatoes sold per kg
+fp11|fresh-produce|tn|Dipatata|Dipatata tse di monate, di rekisiwa ka kilo
+fp11|fresh-produce|af|Patats|Oranje patats per kg verkoop
+fp12|fresh-produce|en|Green beans|Fresh green beans, 500 g packet
+fp12|fresh-produce|tn|Dinawa tse ditala|Dinawa tse ditala tse di ntšhwa, 500 g
+fp12|fresh-produce|af|Groenboontjies|Vars groenboontjies, pak van 500 g
+fp13|fresh-produce|en|Apples|Crisp red apples, bag of six
+fp13|fresh-produce|tn|Diapole|Diapole tse dikhibidu, di le thataro mo kgetsing
+fp13|fresh-produce|af|Appels|Bros rooi appels, sak van ses
+fp14|fresh-produce|en|Oranges|Juicy oranges in a 3 kg pocket
+fp14|fresh-produce|tn|Dinamune|Dinamune tse di nang le lero, 3 kg
+fp14|fresh-produce|af|Lemoene|Sappige lemoene in 'n 3 kg sak
+fp15|fresh-produce|en|Bananas|Ripe yellow bananas, bunch of eight
+fp15|fresh-produce|tn|Dipanana|Dipanana tse di butswitseng, di le robedi
+fp15|fresh-produce|af|Piesangs|Ryp geel piesangs, tros van agt
+fp16|fresh-produce|en|Lemons|Lemons from the tree, bag of ten
+fp16|fresh-produce|tn|Dilemone|Dilemone go tswa mo setlhareng, di le lesome
+fp16|fresh-produce|af|Suurlemoene|Suurlemoene van die boom, sak van tien
+fp17|fresh-produce|en|Watermelon|Whole sweet watermelon, very juicy
+fp17|fresh-produce|tn|Legapu|Legapu le lotlhe le le monate, le na le metsi a mantsi
+fp17|fresh-produce|af|Waatlemoen|Hele soet waatlemoen, baie sappig
+fp18|fresh-produce|en|Mangoes|Ripe mangoes, tray of four
+fp18|fresh-produce|tn|Dimango|Dimango tse di butswitseng, di le nne
+fp18|fresh-produce|af|Mango's|Ryp mango's, bakkie van vier
+fp19|fresh-produce|en|Peaches|Soft yellow peaches sold per kg
+fp19|fresh-produce|tn|Diperekisi|Diperekisi tse di bonolo tse di serolwana, ka kilo
+fp19|fresh-produce|af|Perskes|Sagte geel perskes per kg
+fp20|fresh-produce|en|Grapes|Seedless green grapes, 500 g punnet
+fp20|fresh-produce|tn|Diterebe|Diterebe tse ditala tse di se nang dipeo, 500 g
+fp20|fresh-produce|af|Druiwe|Pitlose groen druiwe, 500 g bakkie
+fp21|fresh-produce|en|Garlic|Fresh garlic bulbs, pack of five
+fp21|fresh-produce|tn|Konofole|Konofole e ntšhwa, di le tlhano
+fp21|fresh-produce|af|Knoffel|Vars knoffelbolle, pak van vyf
+fp22|fresh-produce|en|Chillies|Hot green chillies in a small bag
+fp22|fresh-produce|tn|Pepere e bogale|Pepere e tala e e bogale mo kgetsaneng
+fp22|fresh-produce|af|Brandrissies|Warm groen brandrissies in 'n klein sakkie
+fp23|fresh-produce|en|Green mealies|Fresh mealies, corn on the cob, four cobs
+fp23|fresh-produce|tn|Mmidi o motala|Mmidi o montšhwa mo diphatšheng, di le nne
+fp23|fresh-produce|af|Groen mielies|Vars mielies aan die kop, vier koppe
+fp24|fresh-produce|en|Lettuce|Fresh lettuce head for salads
+fp24|fresh-produce|tn|Letase|Letase le lentšhwa la salate
+fp24|fresh-produce|af|Blaarslaai|Vars slaaikop vir slaaie
+fp25|fresh-produce|en|Cucumber|Long green cucumber, freshly picked
+fp25|fresh-produce|tn|Kokomore|Kokomore e telele e tala, e sa tswa go kgwa
+fp25|fresh-produce|af|Komkommer|Lang groen komkommer, vars gepluk
+fp26|fresh-produce|en|Morogo wild spinach|Morogo leaves picked in the veld, ready to cook
+fp26|fresh-produce|tn|Morogo|Morogo o o kgotlhilweng kwa nageng, o siametse go apeiwa
+fp26|fresh-produce|af|Morogo wilde spinasie|Morogo blare in die veld gepluk, gereed om te kook
+fp27|fresh-produce|en|Farm eggs|Fresh farm eggs, tray of 30
+fp27|fresh-produce|tn|Mae a polase|Mae a mantšhwa a polase, a le 30
+fp27|fresh-produce|af|Plaaseiers|Vars plaaseiers, bak van 30
+fp28|fresh-produce|en|Fresh milk|Farm fresh cow's milk, 2 litres
+fp28|fresh-produce|tn|Mashi a mantšhwa|Mashi a kgomo a mantšhwa go tswa polasing, 2 lt
+fp28|fresh-produce|af|Vars melk|Plaasvars koeimelk, 2 liter
+fp29|fresh-produce|en|Whole chicken|Fresh free-range chicken, cleaned
+fp29|fresh-produce|tn|Koko e e feletseng|Koko ya setswana e ntšhwa, e phepafaditswe
+fp29|fresh-produce|af|Hele hoender|Vars vrylopende hoender, skoongemaak
+fp30|fresh-produce|en|Beef mince|Fresh beef mince, 1 kg
+fp30|fresh-produce|tn|Nama ya kgomo e sitlilweng|Nama ya kgomo e e sitlilweng e ntšhwa, 1 kg
+fp30|fresh-produce|af|Beesmaalvleis|Vars beesmaalvleis, 1 kg
+fp31|fresh-produce|en|Pears|Sweet green pears, bag of six
+fp31|fresh-produce|tn|Diperea|Diperea tse ditala tse di monate, di le thataro
+fp31|fresh-produce|af|Pere|Soet groen pere, sak van ses
+fp32|fresh-produce|en|Avocados|Ripe avocados, pack of three
+fp32|fresh-produce|tn|Diabokado|Diabokado tse di butswitseng, di le tharo
+fp32|fresh-produce|af|Avokado's|Ryp avokado's, pak van drie
+fp33|fresh-produce|en|Guavas|Fragrant pink guavas per kg
+fp33|fresh-produce|tn|Dikoiabe|Dikoiabe tse di nkgang monate, ka kilo
+fp33|fresh-produce|af|Koejawels|Geurige pienk koejawels per kg
+fp34|fresh-produce|en|Spring onions|Bunch of fresh spring onions
+fp34|fresh-produce|tn|Dieie tse ditala|Sehlopha sa dieie tse ditala tse di ntšhwa
+fp34|fresh-produce|af|Sprietuie|Bondel vars sprietuie
+fp35|fresh-produce|en|Coriander|Fresh coriander herb bunch
+fp35|fresh-produce|tn|Khoriantara|Sehlopha sa khoriantara e ntšhwa
+fp35|fresh-produce|af|Koljander|Vars koljander kruie bondel
+fp36|fresh-produce|en|Baby marrows|Tender baby marrows, 500 g
+fp36|fresh-produce|tn|Dimaro tse dinnye|Dimaro tse dinnye tse di bonolo, 500 g
+fp36|fresh-produce|af|Murgpampoentjies|Sagte murgpampoentjies, 500 g
+fp37|fresh-produce|en|Pawpaw|Ripe orange pawpaw fruit
+fp37|fresh-produce|tn|Phoophoo|Leungo la phoophoo le le butswitseng
+fp37|fresh-produce|af|Papaja|Ryp oranje papaja vrug
+fp38|fresh-produce|en|Naartjies|Sweet easy-peel naartjies, 2 kg
+fp38|fresh-produce|tn|Dinaretšhe|Dinaretšhe tse di monate tse di ebolwang motlhofo, 2 kg
+fp38|fresh-produce|af|Nartjies|Soet maklik-skil nartjies, 2 kg
+fp39|fresh-produce|en|Mutton chops|Fresh mutton chops, 1 kg
+fp39|fresh-produce|tn|Nama ya nku|Ditšhopo tsa nama ya nku e ntšhwa, 1 kg
+fp39|fresh-produce|af|Skaaptjops|Vars skaaptjops, 1 kg
+fp40|fresh-produce|en|Mushrooms|Fresh white button mushrooms, 250 g
+fp40|fresh-produce|tn|Mamane|Mamane a masweu a mantšhwa, 250 g
+fp40|fresh-produce|af|Sampioene|Vars wit knopiesampioene, 250 g
+pg01|pantry|en|Maize meal|Super maize meal for pap, 5 kg bag
+pg01|pantry|tn|Bupi jwa mmidi|Bupi jwa mmidi jwa bogobe, kgetsi ya 5 kg
+pg01|pantry|af|Mieliemeel|Super mieliemeel vir pap, 5 kg sak
+pg02|pantry|en|Brown bread|Freshly baked brown bread loaf
+pg02|pantry|tn|Senkgwe se sesootho|Senkgwe se sesootho se se sa tswang go besiwa
+pg02|pantry|af|Bruinbrood|Varsgebakte bruinbrood
+pg03|pantry|en|White bread|Soft white bread loaf baked today
+pg03|pantry|tn|Senkgwe se sesweu|Senkgwe se sesweu se se bonolo, se besitswe gompieno
+pg03|pantry|af|Witbrood|Sagte witbrood vandag gebak
+pg04|pantry|en|Vetkoek|Home-made vetkoek, pack of six
+pg04|pantry|tn|Magwinya|Magwinya a a dirilweng kwa gae, a le thataro
+pg04|pantry|af|Vetkoek|Tuisgemaakte vetkoek, pak van ses
+pg05|pantry|en|Rice|Long grain white rice, 2 kg
+pg05|pantry|tn|Reisi|Reisi e tshweu, 2 kg
+pg05|pantry|af|Rys|Langkorrel witrys, 2 kg
+pg06|pantry|en|Sugar|White sugar, 2.5 kg bag
+pg06|pantry|tn|Sukiri|Sukiri e tshweu, kgetsi ya 2.5 kg
+pg06|pantry|af|Suiker|Wit suiker, 2.5 kg sak
+pg07|pantry|en|Cooking oil|Sunflower cooking oil, 2 litres
+pg07|pantry|tn|Oli ya go apaya|Oli ya sonobolomo ya go apaya, 2 lt
+pg07|pantry|af|Kookolie|Sonneblom kookolie, 2 liter
+pg08|pantry|en|Salt|Fine table salt, 1 kg
+pg08|pantry|tn|Letswai|Letswai le le boleta, 1 kg
+pg08|pantry|af|Sout|Fyn tafelsout, 1 kg
+pg09|pantry|en|Samp|Samp for umngqusho, 2 kg bag
+pg09|pantry|tn|Setampa|Setampa sa go apaya le dinawa, 2 kg
+pg09|pantry|af|Stampmielies|Stampmielies vir umngqusho, 2 kg sak
+pg10|pantry|en|Dried beans|Dried sugar beans, 1 kg
+pg10|pantry|tn|Dinawa tse di omileng|Dinawa tse di omileng, 1 kg
+pg10|pantry|af|Droë bone|Droë suikerbone, 1 kg
+pg11|pantry|en|Rooibos tea|Rooibos tea, box of 80 tea bags
+pg11|pantry|tn|Tee ya rooibos|Tee ya rooibos, lebokose la dikgetsana di le 80
+pg11|pantry|af|Rooibostee|Rooibostee, doos van 80 teesakkies
+pg12|pantry|en|Instant coffee|Instant coffee, 250 g tin
+pg12|pantry|tn|Kofi|Kofi ya ka bonako, 250 g
+pg12|pantry|af|Kitskoffie|Kitskoffie, 250 g blik
+pg13|pantry|en|Cake flour|Cake flour for baking, 2.5 kg
+pg13|pantry|tn|Folouru|Folouru ya go besa dikuku, 2.5 kg
+pg13|pantry|af|Koekmeel|Koekmeel vir bak, 2.5 kg
+pg14|pantry|en|Macaroni|Macaroni pasta, 500 g
+pg14|pantry|tn|Makaroni|Makaroni, 500 g
+pg14|pantry|af|Macaroni|Macaroni pasta, 500 g
+pg15|pantry|en|Peanut butter|Smooth peanut butter, 400 g jar
+pg15|pantry|tn|Botoro ya matonkomane|Botoro ya matonkomane e boleta, 400 g
+pg15|pantry|af|Grondboontjiebotter|Gladde grondboontjiebotter, 400 g fles
+pg16|pantry|en|Apricot jam|Apricot jam, 450 g jar
+pg16|pantry|tn|Jeme ya aprikose|Jeme ya apolekose, 450 g
+pg16|pantry|af|Appelkooskonfyt|Appelkooskonfyt, 450 g fles
+pg17|pantry|en|Pilchards|Pilchards in tomato sauce, 400 g tin
+pg17|pantry|tn|Ditlhapi mo thineng|Ditlhapi mo soseng ya tamati, 400 g
+pg17|pantry|af|Sardyne|Sardyne in tamatiesous, 400 g blik
+pg18|pantry|en|Baked beans|Baked beans in tomato sauce, tin
+pg18|pantry|tn|Dinawa tsa thini|Dinawa tse di besitsweng mo soseng, thini
+pg18|pantry|af|Gebakte bone|Gebakte bone in tamatiesous, blik
+pg19|pantry|en|Sorghum meal|Mabele sorghum porridge meal, 1 kg
+pg19|pantry|tn|Bupi jwa mabele|Bupi jwa mabele jwa motogo, 1 kg
+pg19|pantry|af|Sorghummeel|Mabele sorghum pap meel, 1 kg
+pg20|pantry|en|Biltong|Dry beef biltong, 250 g
+pg20|pantry|tn|Segwapa|Segwapa sa nama ya kgomo, 250 g
+pg20|pantry|af|Biltong|Droë beesbiltong, 250 g
+pg21|pantry|en|Rusks|Home-baked buttermilk rusks
+pg21|pantry|tn|Diraske|Diraske tse di besitsweng kwa gae
+pg21|pantry|af|Beskuit|Tuisgebakte karringmelkbeskuit
+pg22|pantry|en|Scones|Fresh scones, pack of six
+pg22|pantry|tn|Disekone|Disekone tse di ntšhwa, di le thataro
+pg22|pantry|af|Skons|Vars skons, pak van ses
+pg23|pantry|en|Mango atchar|Spicy mango atchar, 500 ml jar
+pg23|pantry|tn|Atšhara ya mango|Atšhara ya mango e e bogale, 500 ml
+pg23|pantry|af|Mango atjar|Pikante mango atjar, 500 ml fles
+pg24|pantry|en|Soup mix|Dried soup mix, 500 g
+pg24|pantry|tn|Motswako wa sopo|Motswako wa sopo o o omileng, 500 g
+pg24|pantry|af|Sopmengsel|Droë sopmengsel, 500 g
+pg25|pantry|en|Oats|Rolled oats for breakfast, 1 kg
+pg25|pantry|tn|Ouse|Ouse ya sefitlholo, 1 kg
+pg25|pantry|af|Hawermout|Hawermout vir ontbyt, 1 kg
+pg26|pantry|en|Raw honey|Local raw honey, 500 g jar
+pg26|pantry|tn|Tswina|Tswina ya tlhago ya fa gae, 500 g
+pg26|pantry|af|Rou heuning|Plaaslike rou heuning, 500 g fles
+pg27|pantry|en|Braai spice|Braai spice for meat, 200 g
+pg27|pantry|tn|Dinoko tsa nama|Dinoko tsa go bešeletsa nama, 200 g
+pg27|pantry|af|Braaispeserye|Braaispeserye vir vleis, 200 g
+pg28|pantry|en|Stock cubes|Beef stock cubes, box of 12
+pg28|pantry|tn|Disetoko|Disetoko tsa nama ya kgomo, di le 12
+pg28|pantry|af|Aftrekselblokkies|Bees aftrekselblokkies, doos van 12
+pg29|pantry|en|Muffins|Home-made muffins, pack of four
+pg29|pantry|tn|Dimafini|Dimafini tse di dirilweng kwa gae, di le nne
+pg29|pantry|af|Muffins|Tuisgemaakte muffins, pak van vier
+pg30|pantry|en|Orange juice|Orange fruit juice, 2 litres
+pg30|pantry|tn|Lero la namune|Lero la namune, 2 lt
+pg30|pantry|af|Lemoensap|Lemoen vrugtesap, 2 liter
+pg31|pantry|en|Long-life milk|Long-life UHT milk, 1 litre
+pg31|pantry|tn|Mashi a a nnelang|Mashi a a nnelang lobaka lo loleele, 1 lt
+pg31|pantry|af|Rakleeftydmelk|Rakleeftyd UHT melk, 1 liter
+pg32|pantry|en|Mayonnaise|Creamy mayonnaise, 750 g
+pg32|pantry|tn|Meyonese|Meyonese e bonolo, 750 g
+pg32|pantry|af|Mayonnaise|Romerige mayonnaise, 750 g
+pg33|pantry|en|Tomato sauce|Tomato sauce, 700 ml bottle
+pg33|pantry|tn|Sose ya tamati|Sose ya tamati, botlolo ya 700 ml
+pg33|pantry|af|Tamatiesous|Tamatiesous, 700 ml bottel
+pg34|pantry|en|Chakalaka|Home-made chakalaka relish in a jar
+pg34|pantry|tn|Tšhakalaka|Tšhakalaka e e dirilweng kwa gae mo nkgong
+pg34|pantry|af|Chakalaka|Tuisgemaakte chakalaka in 'n fles
+pg35|pantry|en|Mopane worms|Dried mopane worms, 250 g
+pg35|pantry|tn|Diphane|Diphane tse di omisitsweng, 250 g
+pg35|pantry|af|Mopaniewurms|Gedroogde mopaniewurms, 250 g
+pg36|pantry|en|Koeksisters|Syrupy koeksisters, pack of six
+pg36|pantry|tn|Dikuksusetara|Dikuksusetara tse di nang le sirapo, di le thataro
+pg36|pantry|af|Koeksisters|Stroperige koeksisters, pak van ses
+pg37|pantry|en|Chocolate cake|Home-baked chocolate cake
+pg37|pantry|tn|Kuku ya tšhokolete|Kuku ya tšhokolete e e besitsweng kwa gae
+pg37|pantry|af|Sjokoladekoek|Tuisgebakte sjokoladekoek
+pg38|pantry|en|Custard|Ready-made custard, 1 litre
+pg38|pantry|tn|Khasetete|Khasetete e e siameng, 1 lt
+pg38|pantry|af|Vla|Klaargemaakte vla, 1 liter
+pg39|pantry|en|Cool drink|Fizzy cool drink, 2 litre bottle
+pg39|pantry|tn|Senotsididi|Senotsididi se se nang le dikhase, 2 lt
+pg39|pantry|af|Koeldrank|Gaskoeldrank, 2 liter bottel
+pg40|pantry|en|Popcorn kernels|Popcorn kernels, 500 g
+pg40|pantry|tn|Mmidi wa phopokhone|Dithoro tsa phopokhone, 500 g
+pg40|pantry|af|Springmielies|Springmielie pitte, 500 g
+cl01|clothing|en|School shirt|White school shirt, size 10
+cl01|clothing|tn|Hempe ya sekolo|Hempe e tshweu ya sekolo, saese 10
+cl01|clothing|af|Skoolhemp|Wit skoolhemp, grootte 10
+cl02|clothing|en|School shoes|Black leather school shoes
+cl02|clothing|tn|Ditlhako tsa sekolo|Ditlhako tse dintsho tsa letlalo tsa sekolo
+cl02|clothing|af|Skoolskoene|Swart leer skoolskoene
+cl03|clothing|en|Winter jacket|Warm padded winter jacket
+cl03|clothing|tn|Baki ya mariga|Baki e e thuthafatsang ya mariga
+cl03|clothing|af|Winterbaadjie|Warm gevoerde winterbaadjie
+cl04|clothing|en|Beanie|Knitted woollen beanie for cold mornings
+cl04|clothing|tn|Kepese ya boboa|Kepese e e logilweng ya boboa ya mesong e e tsididi
+cl04|clothing|af|Beanie|Gebreide wol beanie vir koue oggende
+cl05|clothing|en|Shweshwe dress|Shweshwe print dress, sizes 32 to 40
+cl05|clothing|tn|Mosese wa seshweshwe|Mosese wa seshweshwe, disaese 32 go ya go 40
+cl05|clothing|af|Shweshwe rok|Shweshwe drukrok, groottes 32 tot 40
+cl06|clothing|en|Men's trousers|Grey formal trousers for men
+cl06|clothing|tn|Borokgwe jwa banna|Borokgwe jo bo pududu jwa banna
+cl06|clothing|af|Mansbroek|Grys formele broek vir mans
+cl07|clothing|en|Cotton T-shirt|Plain cotton T-shirt, all sizes
+cl07|clothing|tn|Sekipa sa kotone|Sekipa sa kotone, disaese tsotlhe
+cl07|clothing|af|Katoen T-hemp|Gewone katoen T-hemp, alle groottes
+cl08|clothing|en|Denim jeans|Blue denim jeans, slim fit
+cl08|clothing|tn|Jini|Borokgwe jwa jini jo bo tala
+cl08|clothing|af|Denim jeans|Blou denim jeans, nousluitend
+cl09|clothing|en|Socks|Pack of five pairs of socks
+cl09|clothing|tn|Dikausu|Dikausu, dipara di le tlhano
+cl09|clothing|af|Sokkies|Pak van vyf pare sokkies
+cl10|clothing|en|Takkies|Running takkies sneakers, size 7
+cl10|clothing|tn|Dithekese|Ditlhako tsa go taboga, saese 7
+cl10|clothing|af|Tekkies|Hardloop tekkies, grootte 7
+cl11|clothing|en|Leather belt|Brown leather belt for trousers
+cl11|clothing|tn|Lebanta la letlalo|Lebanta le lesootho la letlalo
+cl11|clothing|af|Leergordel|Bruin leergordel vir broeke
+cl12|clothing|en|Handbag|Ladies handbag with shoulder strap
+cl12|clothing|tn|Kgetsi ya letsogo|Kgetsi ya letsogo ya basadi e e nang le mogala
+cl12|clothing|af|Handsak|Dames handsak met skouerband
+cl13|clothing|en|Headwrap doek|Colourful headwrap doek
+cl13|clothing|tn|Tuku|Tuku ya tlhogo e e mebalabala
+cl13|clothing|af|Kopdoek|Kleurvolle kopdoek
+cl14|clothing|en|Baby romper|Cotton baby romper, 0 to 6 months
+cl14|clothing|tn|Diaparo tsa lesea|Seaparo sa lesea sa kotone, dikgwedi 0 go ya go 6
+cl14|clothing|af|Baba kruippakkie|Katoen baba kruippakkie, 0 tot 6 maande
+cl15|clothing|en|Tracksuit|Warm fleece tracksuit top and pants
+cl15|clothing|tn|Terekesutu|Terekesutu e e thuthafatsang, baki le borokgwe
+cl15|clothing|af|Sweetpak|Warm fleece sweetpak, baadjie en broek
+cl16|clothing|en|Scarf|Soft knitted winter scarf
+cl16|clothing|tn|Sekhafo|Sekhafo se se bonolo se se logilweng sa mariga
+cl16|clothing|af|Serp|Sagte gebreide winterserp
+cl17|clothing|en|Sandals|Summer sandals for women
+cl17|clothing|tn|Diseta|Ditlhako tsa selemo tsa basadi
+cl17|clothing|af|Sandale|Somersandale vir vroue
+cl18|clothing|en|Sun hat|Wide brim sun hat
+cl18|clothing|tn|Hutshe ya letsatsi|Hutshe e e phaphathi ya letsatsi
+cl18|clothing|af|Sonhoed|Wyerand sonhoed
+cl19|clothing|en|Traditional skirt|Traditional Setswana print skirt
+cl19|clothing|tn|Mosese wa setso|Mosese wa setso wa Setswana
+cl19|clothing|af|Tradisionele romp|Tradisionele Setswana drukromp
+cl20|clothing|en|Traditional shirt|Men's traditional print shirt for weddings
+cl20|clothing|tn|Hempe ya setso|Hempe ya setso ya banna ya manyalo
+cl20|clothing|af|Tradisionele hemp|Mans tradisionele drukhemp vir troues
+cl21|clothing|en|Pyjamas|Warm flannel pyjamas
+cl21|clothing|tn|Diaparo tsa go robala|Diaparo tse di thuthafatsang tsa go robala
+cl21|clothing|af|Pajamas|Warm flennie pajamas
+cl22|clothing|en|Gloves|Warm winter gloves
+cl22|clothing|tn|Ditlelafo|Ditlelafo tse di thuthafatsang tsa mariga
+cl22|clothing|af|Handskoene|Warm winterhandskoene
+cl23|clothing|en|Wallet|Leather wallet for men
+cl23|clothing|tn|Sepache|Sepache sa letlalo sa banna
+cl23|clothing|af|Beursie|Leerbeursie vir mans
+cl24|clothing|en|Sunglasses|Sunglasses with UV protection
+cl24|clothing|tn|Diborele tsa letsatsi|Diborele tsa letsatsi tse di sireletsang matlho
+cl24|clothing|af|Sonbril|Sonbril met UV-beskerming
+cl25|clothing|en|Raincoat|Waterproof raincoat with hood
+cl25|clothing|tn|Baki ya pula|Baki ya pula e e sa tseneleng metsi
+cl25|clothing|af|Reënjas|Waterdigte reënjas met kappie
+cl26|clothing|en|Work overalls|Blue work overalls, size 36
+cl26|clothing|tn|Ovarolo|Ovarolo e e tala ya tiro, saese 36
+cl26|clothing|af|Oorpak|Blou werksoorpak, grootte 36
+cl27|clothing|en|Gumboots|Black rubber gumboots
+cl27|clothing|tn|Dikhumbutu|Ditlhako tsa rabara tse dintsho
+cl27|clothing|af|Rubberstewels|Swart rubberstewels
+cl28|clothing|en|School blazer|Navy school blazer
+cl28|clothing|tn|Beleisara ya sekolo|Beleisara e e tala e e lefifi ya sekolo
+cl28|clothing|af|Skoolkleurbaadjie|Vlootblou skoolkleurbaadjie
+cl29|clothing|en|School jersey|Grey V-neck school jersey
+cl29|clothing|tn|Jesi ya sekolo|Jesi e e pududu ya sekolo
+cl29|clothing|af|Skooltrui|Grys V-hals skooltrui
+cl30|clothing|en|Leggings|Stretch black leggings
+cl30|clothing|tn|Dilekense|Dilekense tse dintsho tse di gogegang
+cl30|clothing|af|Kouse broek|Rekbare swart kousbroek
+cl31|clothing|en|Silver earrings|Silver hoop earrings
+cl31|clothing|tn|Masale a selefera|Masale a selefera a a kgolokwe
+cl31|clothing|af|Silweroorbelle|Silwer hoepeloorbelle
+cl32|clothing|en|Wristwatch|Analogue wristwatch with metal strap
+cl32|clothing|tn|Watšhe|Watšhe ya seatla e e nang le mogala wa tshipi
+cl32|clothing|af|Polshorlosie|Analoog polshorlosie met metaalband
+cl33|clothing|en|School backpack|School backpack bag with two straps
+cl33|clothing|tn|Kgetsi ya sekolo|Kgetsi ya mokotla ya sekolo
+cl33|clothing|af|Skoolrugsak|Skoolrugsak met twee bande
+cl34|clothing|en|Cap|Cotton baseball cap
+cl34|clothing|tn|Kepese|Kepese ya kotone
+cl34|clothing|af|Pet|Katoen bofbalpet
+cl35|clothing|en|Slippers|Warm indoor slippers
+cl35|clothing|tn|Disilipasi|Disilipasi tse di thuthafatsang tsa mo ntlong
+cl35|clothing|af|Pantoffels|Warm binnenshuise pantoffels
+cl36|clothing|en|Underwear|Cotton underwear, pack of three
+cl36|clothing|tn|Diaparo tsa ka fa teng|Diaparo tsa ka fa teng tsa kotone, di le tharo
+cl36|clothing|af|Onderklere|Katoen onderklere, pak van drie
+cl37|clothing|en|Formal shoes|Men's black formal shoes
+cl37|clothing|tn|Ditlhako tsa semmuso|Ditlhako tse dintsho tsa semmuso tsa banna
+cl37|clothing|af|Formele skoene|Mans swart formele skoene
+cl38|clothing|en|Tie|School or office necktie
+cl38|clothing|tn|Thai|Thai ya sekolo kgotsa ya ofisi
+cl38|clothing|af|Das|Skool- of kantoordas
+cl39|clothing|en|Shorts|Cotton summer shorts
+cl39|clothing|tn|Borokgwe jo bokhutshwane|Borokgwe jo bokhutshwane jwa kotone jwa selemo
+cl39|clothing|af|Kortbroek|Katoen somerkortbroek
+cl40|clothing|en|Baby shoes|Soft first baby shoes
+cl40|clothing|tn|Ditlhako tsa lesea|Ditlhako tse di bonolo tsa lesea
+cl40|clothing|af|Babaskoene|Sagte eerste babaskoene
+hh01|household|en|Dishwashing liquid|Dishwashing liquid, 750 ml
+hh01|household|tn|Sesepa sa dijana|Sesepa sa metsi sa go tlhatswa dijana, 750 ml
+hh01|household|af|Skottelgoedseep|Skottelgoedseep, 750 ml
+hh02|household|en|Washing powder|Washing powder for laundry, 2 kg
+hh02|household|tn|Phouta ya go tlhatswa|Phouta ya go tlhatswa diaparo, 2 kg
+hh02|household|af|Waspoeier|Waspoeier vir wasgoed, 2 kg
+hh03|household|en|Broom|Grass broom for sweeping the yard
+hh03|household|tn|Lefielo|Lefielo la bojang la go feela jarata
+hh03|household|af|Besem|Grasbesem om die erf te vee
+hh04|household|en|Mop and bucket|Floor mop with bucket
+hh04|household|tn|Mopo le emere|Mopo wa bodilo le emere
+hh04|household|af|Mop en emmer|Vloermop met emmer
+hh05|household|en|Toilet paper|Toilet paper, 9 rolls
+hh05|household|tn|Pampiri ya ntlwana|Pampiri ya ntlwana ya boithusetso, meqolo e le 9
+hh05|household|af|Toiletpapier|Toiletpapier, 9 rolle
+hh06|household|en|Candles|White household candles, box of six
+hh06|household|tn|Dikerese|Dikerese tse tshweu tsa ntlo, di le thataro
+hh06|household|af|Kerse|Wit huishoudelike kerse, doos van ses
+hh07|household|en|Paraffin|Illuminating paraffin, 2 litres
+hh07|household|tn|Parafene|Parafene ya lebone, 2 lt
+hh07|household|af|Paraffien|Beligtingsparaffien, 2 liter
+hh08|household|en|Matches|Box of safety matches, pack of ten
+hh08|household|tn|Metšhise|Mabokose a metšhise, a le lesome
+hh08|household|af|Vuurhoutjies|Veiligheidsvuurhoutjies, pak van tien
+hh09|household|en|Plastic basin|Large plastic washing basin
+hh09|household|tn|Beisene ya polasetiki|Beisene e kgolo ya polasetiki ya go tlhatswa
+hh09|household|af|Plastiekwaskom|Groot plastiek waskom
+hh10|household|en|Three-legged pot|Cast iron three-legged potjie pot
+hh10|household|tn|Pitsa ya maoto a mararo|Pitsa ya tshipi ya maoto a mararo
+hh10|household|af|Driepootpot|Gietyster driepoot potjiepot
+hh11|household|en|Frying pan|Non-stick frying pan, 28 cm
+hh11|household|tn|Pane ya go gadika|Pane ya go gadika e e sa kgomareleng
+hh11|household|af|Braaipan|Kleefvrye braaipan, 28 cm
+hh12|household|en|Gas refill|Gas cylinder refill, 9 kg
+hh12|household|tn|Gase|Go tlatsa silintara ya gase, 9 kg
+hh12|household|af|Gas hervul|Gassilinder hervul, 9 kg
+hh13|household|en|Fleece blanket|Warm fleece blanket for a double bed
+hh13|household|tn|Kobo|Kobo e e thuthafatsang ya bolao jo bogolo
+hh13|household|af|Fleece kombers|Warm fleece kombers vir 'n dubbelbed
+hh14|household|en|Pillow|Soft bed pillow
+hh14|household|tn|Mosamo|Mosamo o o bonolo wa bolao
+hh14|household|af|Kussing|Sagte bedkussing
+hh15|household|en|Bed sheets|Cotton bed sheet set, double
+hh15|household|tn|Masela a bolao|Masela a kotone a bolao jo bogolo
+hh15|household|af|Beddegoed|Katoen lakenstel, dubbel
+hh16|household|en|Curtains|Pair of lined curtains
+hh16|household|tn|Dikgaretene|Dikgaretene di le pedi
+hh16|household|af|Gordyne|Paar gevoerde gordyne
+hh17|household|en|Bleach|Household bleach, 750 ml
+hh17|household|tn|Bliitšhi|Bliitšhi ya go phepafatsa ntlo, 750 ml
+hh17|household|af|Bleikmiddel|Huishoudelike bleikmiddel, 750 ml
+hh18|household|en|Floor polish|Red floor polish, 400 ml tin
+hh18|household|tn|Pholetšhe ya bodilo|Pholetšhe e khibidu ya bodilo, 400 ml
+hh18|household|af|Vloerpolitoer|Rooi vloerpolitoer, 400 ml blik
+hh19|household|en|Mugs|Set of four ceramic mugs
+hh19|household|tn|Dikomiki|Dikomiki di le nne tsa letsopa
+hh19|household|af|Bekers|Stel van vier keramiekbekers
+hh20|household|en|Dinner plates|Set of six dinner plates
+hh20|household|tn|Dipolete|Dipolete tsa dijo di le thataro
+hh20|household|af|Etensborde|Stel van ses etensborde
+hh21|household|en|Cutlery set|Stainless steel knives, forks and spoons
+hh21|household|tn|Dithipa le diforoko|Dithipa, diforoko le maswana a tshipi
+hh21|household|af|Eetgereistel|Vlekvrye staal messe, vurke en lepels
+hh22|household|en|Electric kettle|Electric kettle, 1.7 litres
+hh22|household|tn|Ketlele ya motlakase|Ketlele ya motlakase, 1.7 lt
+hh22|household|af|Elektriese ketel|Elektriese ketel, 1.7 liter
+hh23|household|en|Light bulbs|Energy saving light bulbs, pack of four
+hh23|household|tn|Dibalabala tsa lebone|Dibalabala tsa lebone tse di bolokang motlakase, di le nne
+hh23|household|af|Gloeilampe|Energiebesparende gloeilampe, pak van vier
+hh24|household|en|Extension cord|Extension cord with four plugs
+hh24|household|tn|Terata ya motlakase|Terata e telele ya motlakase ya diplaka di le nne
+hh24|household|af|Verlengkoord|Verlengkoord met vier proppe
+hh25|household|en|Firewood|Bundle of dry firewood
+hh25|household|tn|Dikgong|Sehlopha sa dikgong tse di omileng
+hh25|household|af|Brandhout|Bondel droë brandhout
+hh26|household|en|Charcoal|Charcoal for the braai, 4 kg bag
+hh26|household|tn|Magala|Magala a go besa nama, 4 kg
+hh26|household|af|Houtskool|Houtskool vir die braai, 4 kg sak
+hh27|household|en|Water container|Water container, 25 litres
+hh27|household|tn|Sejana sa metsi|Sejana sa go tshola metsi, 25 lt
+hh27|household|af|Waterhouer|Waterhouer, 25 liter
+hh28|household|en|Refuse bags|Black refuse bags, roll of 20
+hh28|household|tn|Dikgetsi tsa matlakala|Dikgetsi tse dintsho tsa matlakala, di le 20
+hh28|household|af|Vullissakke|Swart vullissakke, rol van 20
+hh29|household|en|Scourers|Sponge scourers, pack of six
+hh29|household|tn|Diphonto tsa go kgotlha|Diphonto tsa go kgotlha dipitsa, di le thataro
+hh29|household|af|Skuursponse|Skuursponse, pak van ses
+hh30|household|en|Clothes pegs|Plastic clothes pegs, pack of 24
+hh30|household|tn|Dipeke tsa diaparo|Dipeke tsa polasetiki tsa diaparo, di le 24
+hh30|household|af|Wasgoedpenne|Plastiek wasgoedpenne, pak van 24
+hh31|household|en|Washing line|Washing line rope, 20 metres
+hh31|household|tn|Mogala wa diaparo|Mogala wa go anega diaparo, 20 m
+hh31|household|af|Wasgoedlyn|Wasgoedlyn tou, 20 meter
+hh32|household|en|Insect spray|Insect spray for flies and mosquitoes
+hh32|household|tn|Seporeio sa dikokonyana|Seporeio sa dintsi le mosetsana
+hh32|household|af|Insektespuit|Insektespuit vir vlieë en muskiete
+hh33|household|en|Torch|Rechargeable LED torch
+hh33|household|tn|Toutšhe|Toutšhe ya LED e e tlatsiwang
+hh33|household|af|Flits|Herlaaibare LED flits
+hh34|household|en|Bucket|Plastic bucket, 20 litres
+hh34|household|tn|Emere|Emere ya polasetiki, 20 lt
+hh34|household|af|Emmer|Plastiek emmer, 20 liter
+hh35|household|en|Storage containers|Plastic food storage containers, set of five
+hh35|household|tn|Dijana tsa go boloka|Dijana tsa polasetiki tsa go boloka dijo, di le tlhano
+hh35|household|af|Bergingshouers|Plastiek kosbergingshouers, stel van vyf
+hh36|household|en|Steam iron|Electric steam iron for clothes
+hh36|household|tn|Aene|Aene ya motlakase ya go aena diaparo
+hh36|household|af|Stoomyster|Elektriese stoomstrykyster vir klere
+hh37|household|en|Doormat|Rubber doormat for the front door
+hh37|household|tn|Mmete wa kgoro|Mmete wa rabara wa kgoro ya ntlo
+hh37|household|af|Deurmat|Rubber deurmat vir die voordeur
+hh38|household|en|Bath towels|Set of two cotton bath towels
+hh38|household|tn|Ditaolo tsa go tlhapa|Ditaolo tsa kotone tsa go tlhapa, di le pedi
+hh38|household|af|Badhanddoeke|Stel van twee katoen badhanddoeke
+hh39|household|en|Air freshener|Lavender air freshener spray
+hh39|household|tn|Seporeio sa monko|Seporeio sa monko o monate wa ntlo
+hh39|household|af|Luggverfrisser|Laventel luggverfrisser spuitkan
+hh40|household|en|Padlock|Brass padlock with two keys
+hh40|household|tn|Selotlolo|Selotlolo sa koporo le dilotlolo di le pedi
+hh40|household|af|Hangslot|Geelkoper hangslot met twee sleutels
+cr01|crafts|en|Beaded bracelet|Handmade beaded bracelet in bright colours
+cr01|crafts|tn|Sefaphegwana sa dibaga|Sefaphegwana sa dibaga se se dirilweng ka seatla
+cr01|crafts|af|Kraalarmband|Handgemaakte kraalarmband in helder kleure
+cr02|crafts|en|Beaded key ring|Beaded key ring, handmade gift
+cr02|crafts|tn|Selotlolo sa dibaga|Selotlolo sa dibaga, mpho e e dirilweng ka seatla
+cr02|crafts|af|Kraalsleutelring|Kraalsleutelring, handgemaakte geskenk
+cr03|crafts|en|Beaded necklace|Traditional beaded necklace made by hand
+cr03|crafts|tn|Sebaga sa molala|Sebaga sa setso sa molala se se dirilweng ka seatla
+cr03|crafts|af|Kraalhalssnoer|Tradisionele kraalhalssnoer met die hand gemaak
+cr04|crafts|en|Clay pot|Handmade decorated clay pot
+cr04|crafts|tn|Nkgwana ya letsopa|Nkgwana ya letsopa e e kgabisitsweng, e dirilwe ka seatla
+cr04|crafts|af|Kleipot|Handgemaakte versierde kleipot
+cr05|crafts|en|Woven basket|Woven grass basket made by local weavers
+cr05|crafts|tn|Seroto|Seroto se se logilweng ka bojang ke baloki ba fa gae
+cr05|crafts|af|Gevlegte mandjie|Gevlegte grasmandjie deur plaaslike wewers gemaak
+cr06|crafts|en|Carved wooden spoon|Hand-carved wooden spoon
+cr06|crafts|tn|Leso la logong|Leso la logong le le betlilweng ka seatla
+cr06|crafts|af|Houtlepel|Handgesnyde houtlepel
+cr07|crafts|en|Wire car toy|Wire car toy made by hand
+cr07|crafts|tn|Koloinyana ya terata|Koloinyana ya terata e e dirilweng ka seatla
+cr07|crafts|af|Draadkarretjie|Draadkarretjie met die hand gemaak
+cr08|crafts|en|Painted calabash|Hand-painted calabash gourd
+cr08|crafts|tn|Sego se se pentilweng|Sego se se pentilweng ka seatla
+cr08|crafts|af|Geverfde kalbas|Handgeverfde kalbas
+cr09|crafts|en|Beaded earrings|Handmade beaded earrings, colourful
+cr09|crafts|tn|Masale a dibaga|Masale a dibaga a a dirilweng ka seatla
+cr09|crafts|af|Kraaloorbelle|Handgemaakte kraaloorbelle, kleurvol
+cr10|crafts|en|Handmade card|Handmade greeting card for birthdays
+cr10|crafts|tn|Karata ya ditumediso|Karata ya ditumediso ya letsatsi la matsalo e e dirilweng ka seatla
+cr10|crafts|af|Handgemaakte kaartjie|Handgemaakte groetekaartjie vir verjaarsdae
+cr11|crafts|en|Leather key holder|Tooled leather key holder, handmade
+cr11|crafts|tn|Setshola dilotlolo sa letlalo|Setshola dilotlolo sa letlalo se se dirilweng ka seatla
+cr11|crafts|af|Leer sleutelhouer|Bewerkte leer sleutelhouer, handgemaak
+cr12|crafts|en|Carved giraffe|Hand-carved wooden giraffe ornament
+cr12|crafts|tn|Thutlwa ya logong|Thutlwa ya logong e e betlilweng ka seatla
+cr12|crafts|af|Gekerfde kameelperd|Handgekerfde houtkameelperd ornament
+cr13|crafts|en|Patchwork quilt|Handmade patchwork quilt
+cr13|crafts|tn|Kobo ya dipatšhe|Kobo ya dipatšhe e e rokilweng ka seatla
+cr13|crafts|af|Laslappie kwilt|Handgemaakte laslappie kwilt
+cr14|crafts|en|Crochet baby blanket|Crochet baby blanket, handmade gift
+cr14|crafts|tn|Kobo ya lesea e e logilweng|Kobo ya lesea e e logilweng ka seatla, mpho
+cr14|crafts|af|Gehekelde babakombers|Gehekelde babakombers, handgemaakte geskenk
+cr15|crafts|en|Kalahari painting|Painting of the Kalahari landscape on canvas
+cr15|crafts|tn|Setshwantsho sa Kgalagadi|Setshwantsho se se pentilweng sa naga ya Kgalagadi
+cr15|crafts|af|Kalahari skildery|Skildery van die Kalahari landskap op doek
+cr16|crafts|en|Beaded ornament|Beaded Christmas tree ornament
+cr16|crafts|tn|Sekgabisi sa dibaga|Sekgabisi sa dibaga sa Keresemose
+cr16|crafts|af|Kraalornament|Kraal Kersboomornament
+cr17|crafts|en|Clay beads|Handmade clay beads for jewellery making
+cr17|crafts|tn|Dibaga tsa letsopa|Dibaga tsa letsopa tse di dirilweng ka seatla
+cr17|crafts|af|Kleikrale|Handgemaakte kleikrale vir juweliersware
+cr18|crafts|en|Ostrich eggshell necklace|Ostrich eggshell bead necklace
+cr18|crafts|tn|Sebaga sa lee la ntšhe|Sebaga sa molala sa dikgapetla tsa lee la ntšhe
+cr18|crafts|af|Volstruiseierdop halssnoer|Volstruiseierdop kraalhalssnoer
+cr19|crafts|en|Handmade doll|Handmade cloth doll in traditional dress
+cr19|crafts|tn|Popi e e dirilweng ka seatla|Popi ya lesela e e apereng seaparo sa setso
+cr19|crafts|af|Handgemaakte pop|Handgemaakte lappop in tradisionele drag
+cr20|crafts|en|Grass placemats|Woven grass placemats, set of four
+cr20|crafts|tn|Dimmete tsa bojang|Dimmete tsa bojang tse di logilweng, di le nne
+cr20|crafts|af|Grasplekmatjies|Gevlegte grasplekmatjies, stel van vier
+cr21|crafts|en|Decorative candle|Hand-poured decorative candle, gift wrapped
+cr21|crafts|tn|Kerese ya sekgabisi|Kerese ya sekgabisi e e dirilweng ka seatla, e phuthetswe jaaka mpho
+cr21|crafts|af|Dekoratiewe kers|Handgegote dekoratiewe kers, geskenkverpak
+cr22|crafts|en|Beaded photo frame|Photo frame decorated with beads
+cr22|crafts|tn|Foreime ya setshwantsho|Foreime ya setshwantsho e e kgabisitsweng ka dibaga
+cr22|crafts|af|Kraal fotoraam|Fotoraam met krale versier
+cr23|crafts|en|Soapstone carving|Small soapstone carving of a bird
+cr23|crafts|tn|Nonyane ya lentswe|Nonyane e nnye e e betlilweng mo lentsweng
+cr23|crafts|af|Seepsteen beeldjie|Klein seepsteenbeeldjie van 'n voël
+cr24|crafts|en|Tyre planter|Garden planter made from recycled tyres
+cr24|crafts|tn|Sejana sa dimela|Sejana sa dimela se se dirilweng ka dithaere tsa kgale
+cr24|crafts|af|Bandplanter|Tuinplanter van herwinde bande gemaak
+cr25|crafts|en|Embroidered cushion|Embroidered cushion cover, hand stitched
+cr25|crafts|tn|Kheseni e e rokilweng|Kheseni e e kgabisitsweng ka go roka ka seatla
+cr25|crafts|af|Geborduurde kussing|Geborduurde kussingoortreksel, handgestik
+cr26|crafts|en|Macrame wall hanging|Macrame wall hanging for decoration
+cr26|crafts|tn|Sekgabisi sa lobota|Sekgabisi sa lobota se se logilweng ka dikgole
+cr26|crafts|af|Macrame muurhanger|Macrame muurhanger vir versiering
+cr27|crafts|en|Gift hamper|Gift hamper basket for special occasions
+cr27|crafts|tn|Seroto sa dimpho|Seroto sa dimpho sa metlha e e kgethegileng
+cr27|crafts|af|Geskenkmandjie|Geskenkmandjie vir spesiale geleenthede
+cr28|crafts|en|Beadwork wedding belt|Traditional beadwork belt for weddings
+cr28|crafts|tn|Lebanta la dibaga|Lebanta la dibaga la setso la manyalo
+cr28|crafts|af|Kraalwerk troubelt|Tradisionele kraalwerk belt vir troues
+cr29|crafts|en|Tin can sculpture|Sculpture art made from tin cans
+cr29|crafts|tn|Setshwantsho sa dithini|Botaki jo bo dirilweng ka dithini
+cr29|crafts|af|Blikkiebeeld|Kunsbeeld van blikkies gemaak
+cr30|crafts|en|Carved wooden bowl|Hand-carved wooden bowl
+cr30|crafts|tn|Mogopo wa logong|Mogopo wa logong o o betlilweng ka seatla
+cr30|crafts|af|Houtbak|Handgekerfde houtbak
+cr31|crafts|en|Crochet flowers|Crochet flowers in a small vase, gift
+cr31|crafts|tn|Dithunya tse di logilweng|Dithunya tse di logilweng mo nkgwaneng, mpho
+cr31|crafts|af|Gehekelde blomme|Gehekelde blomme in 'n klein vaas, geskenk
+cr32|crafts|en|Hand-painted mug|Hand-painted mug with a Kalahari sunset
+cr32|crafts|tn|Komiki e e pentilweng|Komiki e e pentilweng ka seatla ka phirimo ya Kgalagadi
+cr32|crafts|af|Handgeverfde beker|Handgeverfde beker met 'n Kalahari sonsondergang
+cr33|crafts|en|Beaded wall art|Beaded wall art panel
+cr33|crafts|tn|Botaki jwa dibaga|Botaki jwa dibaga jwa go anega mo loboteng
+cr33|crafts|af|Kraal muurkuns|Kraal muurkunspaneel
+cr34|crafts|en|Leather bookmark|Tooled leather bookmark
+cr34|crafts|tn|Letshwao la buka la letlalo|Letshwao la buka la letlalo le le kgabisitsweng
+cr34|crafts|af|Leer boekmerk|Bewerkte leer boekmerk
+cr35|crafts|en|Pottery vase|Hand-thrown pottery vase
+cr35|crafts|tn|Nkgwana ya dithunya|Nkgwana ya letsopa ya dithunya e e bopilweng ka seatla
+cr35|crafts|af|Erdewerk vaas|Handgedraaide erdewerk vaas
+cr36|crafts|en|Bead loom kit|Bead loom kit for making beadwork
+cr36|crafts|tn|Sedirisiwa sa dibaga|Sedirisiwa sa go loga dibaga
+cr36|crafts|af|Kraalweefstel|Kraalweefstel om kraalwerk te maak
+cr37|crafts|en|Small drum|Small traditional drum with goatskin
+cr37|crafts|tn|Moropa o monnye|Moropa o monnye wa setso wa letlalo la podi
+cr37|crafts|af|Klein trom|Klein tradisionele trom met bokvel
+cr38|crafts|en|Gift box|Decorated birthday gift box
+cr38|crafts|tn|Lebokose la mpho|Lebokose la mpho le le kgabisitsweng la letsatsi la matsalo
+cr38|crafts|af|Geskenkdoos|Versierde verjaarsdag geskenkdoos
+cr39|crafts|en|Jewellery box|Handmade wooden jewellery box
+cr39|crafts|tn|Lebokose la dikgabisi|Lebokose la logong la dikgabisi le le dirilweng ka seatla
+cr39|crafts|af|Juweliersdoos|Handgemaakte hout juweliersdoos
+cr40|crafts|en|Sand art bottle|Kalahari coloured sand art in a bottle
+cr40|crafts|tn|Botaki jwa motlhaba|Botaki jwa motlhaba wa Kgalagadi mo botlolong
+cr40|crafts|af|Sandkuns bottel|Kalahari gekleurde sandkuns in 'n bottel
+pc01|personal-care|en|Bath soap|Bath soap bar, pack of three
+pc01|personal-care|tn|Sesepa sa go tlhapa|Sesepa sa go tlhapa, di le tharo
+pc01|personal-care|af|Badseep|Badseep koek, pak van drie
+pc02|personal-care|en|Body lotion|Moisturising body lotion, 400 ml
+pc02|personal-care|tn|Setlolo sa mmele|Setlolo sa mmele se se nolofatsang letlalo, 400 ml
+pc02|personal-care|af|Lyfroom|Vogtige lyfroom, 400 ml
+pc03|personal-care|en|Petroleum jelly|Petroleum jelly for dry skin, 250 ml
+pc03|personal-care|tn|Vaseline|Vaseline ya letlalo le le omileng, 250 ml
+pc03|personal-care|af|Petroleumjellie|Petroleumjellie vir droë vel, 250 ml
+pc04|personal-care|en|Toothpaste|Fluoride toothpaste, 100 ml
+pc04|personal-care|tn|Setlolo sa meno|Setlolo sa go tlhapisa meno, 100 ml
+pc04|personal-care|af|Tandepasta|Fluoried tandepasta, 100 ml
+pc05|personal-care|en|Toothbrush|Soft toothbrush, pack of two
+pc05|personal-care|tn|Borasi ya meno|Borasi e bonolo ya meno, di le pedi
+pc05|personal-care|af|Tandeborsel|Sagte tandeborsel, pak van twee
+pc06|personal-care|en|Roll-on deodorant|Roll-on deodorant, 50 ml
+pc06|personal-care|tn|Setlolo sa mokgotlho|Setlolo sa mokgotlho sa monko, 50 ml
+pc06|personal-care|af|Roller deodorant|Roller deodorant, 50 ml
+pc07|personal-care|en|Shampoo|Shampoo for all hair types, 400 ml
+pc07|personal-care|tn|Sesepa sa moriri|Sesepa sa moriri sa mefuta yotlhe ya moriri, 400 ml
+pc07|personal-care|af|Sjampoe|Sjampoe vir alle haartipes, 400 ml
+pc08|personal-care|en|Hair food|Hair food oil for dry hair
+pc08|personal-care|tn|Dijo tsa moriri|Oli ya dijo tsa moriri o o omileng
+pc08|personal-care|af|Haarkos|Haarkos olie vir droë hare
+pc09|personal-care|en|Braid extensions|Braiding hair extensions, black
+pc09|personal-care|tn|Moriri wa go loga|Moriri wa maitirelo wa go loga, o montsho
+pc09|personal-care|af|Vlegsel hare|Vlegsel haarverlengings, swart
+pc10|personal-care|en|Sanitary pads|Sanitary pads, pack of ten
+pc10|personal-care|tn|Dipete tsa basadi|Dipete tsa kgwedi tsa basadi, di le lesome
+pc10|personal-care|af|Sanitêre doekies|Sanitêre doekies, pak van tien
+pc11|personal-care|en|Baby nappies|Disposable baby nappies, size 3
+pc11|personal-care|tn|Dinapi tsa lesea|Dinapi tsa lesea tse di latlhwang, saese 3
+pc11|personal-care|af|Babadoeke|Weggooibare babadoeke, grootte 3
+pc12|personal-care|en|Baby wipes|Gentle baby wipes, 80 pack
+pc12|personal-care|tn|Dikgetsana tsa go phimola lesea|Dilesela tse di bonolo tsa go phimola lesea, 80
+pc12|personal-care|af|Babadoekies|Sagte babadoekies, 80 pak
+pc13|personal-care|en|Razor blades|Disposable razors, pack of five
+pc13|personal-care|tn|Dileiri|Dileiri tsa go beola, di le tlhano
+pc13|personal-care|af|Skeermesse|Weggooibare skeermesse, pak van vyf
+pc14|personal-care|en|Shaving cream|Shaving cream for sensitive skin
+pc14|personal-care|tn|Setlolo sa go beola|Setlolo sa go beola sa letlalo le le bonolo
+pc14|personal-care|af|Skeerroom|Skeerroom vir sensitiewe vel
+pc15|personal-care|en|Face cream|Daily face cream with SPF
+pc15|personal-care|tn|Setlolo sa sefatlhego|Setlolo sa sefatlhego sa letsatsi le letsatsi
+pc15|personal-care|af|Gesigroom|Daaglikse gesigroom met SPF
+pc16|personal-care|en|Lip balm|Lip balm for dry lips
+pc16|personal-care|tn|Setlolo sa dipounama|Setlolo sa dipounama tse di omileng
+pc16|personal-care|af|Lipbalsem|Lipbalsem vir droë lippe
+pc17|personal-care|en|Hand sanitiser|Hand sanitiser, 500 ml
+pc17|personal-care|tn|Setlolo sa diatla|Setlolo sa go phepafatsa diatla, 500 ml
+pc17|personal-care|af|Handreiniger|Handontsmetter, 500 ml
+pc18|personal-care|en|Nail polish|Nail polish, bright red
+pc18|personal-care|tn|Pente ya dinala|Pente ya dinala e khibidu
+pc18|personal-care|af|Naellak|Naellak, helderrooi
+pc19|personal-care|en|Hair comb|Wide tooth hair comb
+pc19|personal-care|tn|Kama ya moriri|Kama ya moriri e e nang le meno a a kgakala
+pc19|personal-care|af|Haarkam|Wye tand haarkam
+pc20|personal-care|en|Perfume|Floral perfume for women, 50 ml
+pc20|personal-care|tn|Monko o monate|Monko o monate wa basadi, 50 ml
+pc20|personal-care|af|Parfuum|Blommige parfuum vir vroue, 50 ml
+pc21|personal-care|en|Aqueous cream|Aqueous cream for skin, 500 g
+pc21|personal-care|tn|Setlolo sa metsi|Setlolo sa metsi sa letlalo, 500 g
+pc21|personal-care|af|Waterige room|Waterige room vir die vel, 500 g
+pc22|personal-care|en|Shower gel|Refreshing shower gel, 500 ml
+pc22|personal-care|tn|Sesepa sa go tlhapa sa metsi|Sesepa sa metsi sa go tlhapa, 500 ml
+pc22|personal-care|af|Stortjel|Verfrissende stortjel, 500 ml
+pc23|personal-care|en|Hair bands|Elastic hair bands, pack of 20
+pc23|personal-care|tn|Dibante tsa moriri|Dibante tsa moriri tse di gogegang, di le 20
+pc23|personal-care|af|Haarrekkies|Elastiese haarrekkies, pak van 20
+pc24|personal-care|en|Cotton buds|Cotton buds, pack of 100
+pc24|personal-care|tn|Dikotone tsa ditsebe|Dikotone tsa go phepafatsa ditsebe, di le 100
+pc24|personal-care|af|Wattestokkies|Wattestokkies, pak van 100
+pc25|personal-care|en|Sunscreen|Sunscreen lotion SPF 50
+pc25|personal-care|tn|Setlolo sa letsatsi|Setlolo se se sireletsang letlalo mo letsatsing
+pc25|personal-care|af|Sonskerm|Sonskermroom SPF 50
+pc26|personal-care|en|Shea body butter|Handmade shea body butter for dry skin
+pc26|personal-care|tn|Botoro ya mmele|Botoro ya mmele ya shea ya letlalo le le omileng
+pc26|personal-care|af|Shea lyfbotter|Handgemaakte shea lyfbotter vir droë vel
+pc27|personal-care|en|Face cloth|Soft face cloth for washing
+pc27|personal-care|tn|Lesela la sefatlhego|Lesela le le bonolo la go tlhapa sefatlhego
+pc27|personal-care|af|Waslap|Sagte waslap vir was
+pc28|personal-care|en|Nail clippers|Steel nail clippers
+pc28|personal-care|tn|Sesegi sa dinala|Sesegi sa tshipi sa dinala
+pc28|personal-care|af|Naelknipper|Staal naelknipper
+pc29|personal-care|en|Talcum powder|Talcum powder, 200 g
+pc29|personal-care|tn|Phouta ya mmele|Phouta ya mmele, 200 g
+pc29|personal-care|af|Talkpoeier|Talkpoeier, 200 g
+pc30|personal-care|en|Mouthwash|Fresh mint mouthwash, 500 ml
+pc30|personal-care|tn|Metsi a go tlhapisa molomo|Metsi a minte a go tlhapisa molomo, 500 ml
+pc30|personal-care|af|Mondspoelmiddel|Vars kruisement mondspoel, 500 ml
+pc31|personal-care|en|Hair dye|Black hair dye kit
+pc31|personal-care|tn|Dae ya moriri|Dae e ntsho ya moriri
+pc31|personal-care|af|Haarkleursel|Swart haarkleurselstel
+pc32|personal-care|en|Hair conditioner|Hair conditioner, 400 ml
+pc32|personal-care|tn|Setlolo sa moriri|Setlolo sa go nolofatsa moriri, 400 ml
+pc32|personal-care|af|Haarversorger|Haarversorger, 400 ml
+pc33|personal-care|en|Glycerine|Pure glycerine for skin, 100 ml
+pc33|personal-care|tn|Gliserine|Gliserine e e phepa ya letlalo, 100 ml
+pc33|personal-care|af|Gliserien|Suiwer gliserien vir die vel, 100 ml
+pc34|personal-care|en|Baby oil|Gentle baby oil, 200 ml
+pc34|personal-care|tn|Oli ya lesea|Oli e e bonolo ya lesea, 200 ml
+pc34|personal-care|af|Babaolie|Sagte babaolie, 200 ml
+pc35|personal-care|en|Facial tissues|Facial tissues, box of 100
+pc35|personal-care|tn|Dithishu|Dithishu tsa sefatlhego, lebokose la 100
+pc35|personal-care|af|Snesies|Gesigsnesies, doos van 100
+pc36|personal-care|en|Bath salts|Relaxing bath salts, 500 g
+pc36|personal-care|tn|Letswai la go tlhapa|Letswai la go tlhapa le le iketlisang, 500 g
+pc36|personal-care|af|Badsout|Ontspannende badsout, 500 g
+pc37|personal-care|en|Beard oil|Beard oil for men, 30 ml
+pc37|personal-care|tn|Oli ya ditedu|Oli ya ditedu tsa banna, 30 ml
+pc37|personal-care|af|Baardolie|Baardolie vir mans, 30 ml
+pc38|personal-care|en|Foot cream|Foot cream for cracked heels
+pc38|personal-care|tn|Setlolo sa dinao|Setlolo sa dinao tse di phatlogileng
+pc38|personal-care|af|Voetroom|Voetroom vir gebarste hakke
+pc39|personal-care|en|Eyebrow pencil|Black eyebrow pencil
+pc39|personal-care|tn|Pensele ya ditsiba|Pensele e ntsho ya ditsiba tsa matlho
+pc39|personal-care|af|Wenkbroupotlood|Swart wenkbroupotlood
+pc40|personal-care|en|Makeup remover wipes|Makeup remover wipes, pack of 25
+pc40|personal-care|tn|Dilesela tsa go tlosa makeup|Dilesela tsa go tlosa makeup, di le 25
+pc40|personal-care|af|Grimeerverwyderdoekies|Grimeerverwyderdoekies, pak van 25
