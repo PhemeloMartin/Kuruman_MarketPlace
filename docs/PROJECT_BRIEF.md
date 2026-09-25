@@ -151,3 +151,18 @@ Reset the database with demo data (deletes everything): `npm run db:setup` then 
 - Human review of Setswana and Afrikaans wording.
 - Original Kuruman photographs, if they replace the SVG illustrations.
 - Hosting accounts when deployment starts.
+
+---
+
+## 8. Progress
+
+- [x] API, database schema, demo data
+- [x] Accounts: register / sign in / sign out, server-side sessions (HttpOnly cookie), roles from the database
+- [x] Catalogue API: categories, products with search and category filter, product details
+- [x] Home screen in the agreed design, wired to the API; language selector (Google Translate, phase 1)
+- [x] Cart: one seller per order (explicit "start a new cart?" choice), saved on the phone as a draft, re-checked against the server
+- [x] Order submission (TX-01): products locked in id order, stock reserved atomically, snapshot items, history row, duplicate-tap protection (Idempotency-Key)
+- [x] Customer can cancel while waiting for the seller; unanswered orders expire after 30 min and release stock
+- [ ] Seller dashboard: accept / decline / mark ready, KPIs
+- [ ] Pickup handover with one-time code, cash collection
+- [ ] Courier flow, Payfast sandbox, offline PWA, AI category model, support console
