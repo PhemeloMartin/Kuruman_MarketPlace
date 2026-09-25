@@ -15,6 +15,8 @@ interface OrderSummary {
   acceptBy: string
   createdAt: string
   businessName: string
+  businessArea: string
+  statusReason: string | null
   items: { name: string; unitLabel: string; quantity: number }[]
 }
 
@@ -44,6 +46,7 @@ export function OrdersPage() {
   const [orders, setOrders] = useState<OrderSummary[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<number | null>(null)
+  const [codes, setCodes] = useState<Record<number, { code: string; expiresAt: string }>>({})
 
   const load = useCallback(() => {
     api<OrderSummary[]>('/orders/mine')
@@ -65,6 +68,20 @@ export function OrdersPage() {
     } finally {
       setBusyId(null)
       load()
+    }
+  }
+
+  // Collection code for a ready pickup order. Asking again gives a new code (the old one stops working).
+  async function showCode(id: number) {
+    setBusyId(id)
+    setError(null)
+    try {
+      const c = await api<{ code: string; expiresAt: string }>(`/orders/${id}/handover-code`, { method: 'POST' })
+      setCodes((all) => ({ ...all, [id]: c }))
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not get a code. Please try again.')
+    } finally {
+      setBusyId(null)
     }
   }
 
@@ -138,6 +155,42 @@ export function OrdersPage() {
                 )}
               </div>
               {o.status === 'pending_acceptance' && <p className="fine-print">{timeLeft(o.acceptBy)}</p>}
+              {o.status === 'declined' && o.statusReason && (
+                <p className="fine-print">Seller’s reason: {o.statusReason}</p>
+              )}
+              {o.status === 'confirmed' && (
+                <p className="fine-print">
+                  The seller is preparing your order.{o.paymentMethod === 'cash' && ' Cash still due.'}
+                </p>
+              )}
+              {o.status === 'ready' && o.fulfilment === 'pickup' && (
+                <div className="collection-code">
+                  <p style={{ margin: '0 0 8px' }}>
+                    <strong>Ready to collect</strong> from {o.businessName}, {o.businessArea}.
+                    {o.paymentMethod === 'cash' && (
+                      <>
+                        {' '}
+                        Bring <span translate="no">{formatRand(o.totalCents)}</span> cash.
+                      </>
+                    )}
+                  </p>
+                  {codes[o.id] ? (
+                    <>
+                      <span className="code" translate="no" aria-label={`Collection code ${codes[o.id].code.split('').join(' ')}`}>
+                        {codes[o.id].code}
+                      </span>
+                      <span className="fine-print">
+                        Show this to the seller. Valid until{' '}
+                        {new Date(codes[o.id].expiresAt).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}.
+                      </span>
+                    </>
+                  ) : (
+                    <button type="button" className="btn btn-primary btn-block" onClick={() => showCode(o.id)} disabled={busyId === o.id}>
+                      {busyId === o.id ? 'Getting code…' : 'Show collection code'}
+                    </button>
+                  )}
+                </div>
+              )}
             </article>
           )
         })

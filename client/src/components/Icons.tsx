@@ -69,3 +69,11 @@ export const BackIcon = () => (
     <path d="M15 5l-7 7 7 7" />
   </svg>
 )
+
+export const ShopIcon = () => (
+  <svg {...common}>
+    <path d="M4 9h16l-1.2-4.2a1 1 0 0 0-1-.8H6.2a1 1 0 0 0-1 .8z" />
+    <path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9" />
+    <path d="M10 20v-5h4v5" />
+  </svg>
+)

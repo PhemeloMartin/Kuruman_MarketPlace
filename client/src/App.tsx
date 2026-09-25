@@ -7,6 +7,9 @@ import { CartPage } from './pages/CartPage'
 import { HomePage } from './pages/HomePage'
 import { OrdersPage } from './pages/OrdersPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { SellerDashboardPage } from './pages/seller/SellerDashboardPage'
+import { SellerProductFormPage, SellerProductsPage } from './pages/seller/SellerProductsPage'
+import { RequireRole } from './auth/RequireRole'
 
 export default function App() {
   return (
@@ -21,6 +24,11 @@ export default function App() {
               <Route path="profile" element={<ProfilePage />} />
               <Route path="signin" element={<SignInPage />} />
               <Route path="register" element={<RegisterPage />} />
+              <Route element={<RequireRole role="entrepreneur" />}>
+                <Route path="seller" element={<SellerDashboardPage />} />
+                <Route path="seller/products" element={<SellerProductsPage />} />
+                <Route path="seller/products/:id" element={<SellerProductFormPage />} />
+              </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>

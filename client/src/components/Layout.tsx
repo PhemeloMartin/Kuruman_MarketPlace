@@ -1,9 +1,10 @@
 import { Link, NavLink, Outlet } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
 import { useCart } from '../cart/CartContext'
 import { LANGUAGES, currentLanguage, setLanguage } from '../lib/translate'
 import type { LanguageCode } from '../lib/translate'
 import { DuneRibbon, LogoMark } from './Art'
-import { CartIcon, HomeIcon, OrdersIcon, ProfileIcon } from './Icons'
+import { CartIcon, HomeIcon, OrdersIcon, ProfileIcon, ShopIcon } from './Icons'
 
 export function Layout() {
   return (
@@ -58,8 +59,10 @@ function LanguageSelect() {
 
 function BottomNav() {
   const { itemCount } = useCart()
+  const { user } = useAuth()
+  const isSeller = user?.role === 'entrepreneur'
   return (
-    <nav className="bottom-nav" aria-label="Main">
+    <nav className={`bottom-nav${isSeller ? ' five' : ''}`} aria-label="Main">
       <NavLink to="/" end>
         <HomeIcon />
         Home
@@ -73,6 +76,12 @@ function BottomNav() {
           </span>
         )}
       </NavLink>
+      {isSeller && (
+        <NavLink to="/seller">
+          <ShopIcon />
+          My shop
+        </NavLink>
+      )}
       <NavLink to="/orders">
         <OrdersIcon />
         Orders
