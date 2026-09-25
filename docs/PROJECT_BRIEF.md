@@ -55,7 +55,9 @@ handover code valid **15 min**, max 5 wrong attempts.
 | Platform | PWA | PWA only for now. |
 | Languages | Full reviewed i18n | Phase 1: Google Translate widget, documented as temporary. Human review of payment/legal wording still required (NFR-09). |
 | Hosting | Hosted, SA region preferred | Deferred. Build locally; keep code deployment-ready (config via env vars). |
-| Schema | 27 tables | 9 core tables + `sessions`; the rest added as features need them. |
+| Schema | 27 tables | 14 tables so far (core 9 + sessions, cash_receipts, ai_suggestions, payment_events, and payments used as payment attempts); the rest added as features need them. |
+| Categories | Six AI labels (spec Table 34) | The catalogue uses the same six: fresh produce, pantry & groceries, clothing & accessories, household, crafts & gifts, personal care. |
+| Payfast credentials | — | The shared public sandbox merchant's passphrase no longer matches, so online payment stays off until the student's own free sandbox account is configured. Contract tests cover the verification logic. |
 | Order state names | `PENDING_SELLER`, … | Lower-case names in the DB: `pending_acceptance`, `awaiting_payment`, `confirmed`, `ready`, `out_for_delivery`, `completed`, `declined`, `cancelled`, `expired`. Same meaning. |
 | Password hashing | Argon2id | bcrypt (cost 10) for the MVP — well-known, no native build on Windows. Argon2id is the documented upgrade. |
 | API prefix | `/api/v1/…` | `/api/…` for the MVP. |
@@ -175,4 +177,13 @@ KPI check against the spec's worked example: `npm run test:kpi` in `server` (cha
 - [x] Cash from couriers: courier collection and seller confirmation are separate events;
       a different amount is recorded as disputed and stays visible as unreconciled cash
 - [ ] Failed delivery / returns and disputed-cash resolution (need the support console)
-- [ ] Payfast sandbox, offline PWA, AI category model, support console
+- [x] AI category assistant (ai/): 720-text student-authored dataset, grouped split, grouped CV, keyword and
+      majority baselines, model card with artefact hash, private token-protected service, seller confirms every
+      suggestion; category-v2 meets 5 of 6 spec 8.3 targets (macro-F1 0.71 vs 0.75 - needs better data)
+- [x] Payfast sandbox: seller-first checkout, signed form, verified ITN (signature, merchant, source IP, amount,
+      server validation), duplicates ignored, late/second captures kept for refund; TC-11 contract tests (13 checks)
+- [x] Offline PWA: installable, app shell cached, public catalogue saved with its age (24 h stale / 7 days discard),
+      "Not submitted" cart drafts, private API answers no-store, sign-out clears the cart
+- [x] Presentation walkthrough: docs/DEMO_SCRIPT.md
+- [ ] Support console (approvals, disputes, refunds of unapplied payments, disputed cash, failed deliveries)
+- [ ] Privacy requests, notifications, reviewed translations, remaining tables, hosting
