@@ -2,6 +2,7 @@
 -- Money is always stored as whole cents (INTEGER), never as decimals.
 -- WARNING: running this file drops and re-creates all tables (development only).
 
+DROP TABLE IF EXISTS sessions CASCADE;
 DROP TABLE IF EXISTS order_status_history CASCADE;
 DROP TABLE IF EXISTS payments CASCADE;
 DROP TABLE IF EXISTS deliveries CASCADE;
@@ -28,6 +29,18 @@ CREATE TABLE users (
   created_at         TIMESTAMPTZ  NOT NULL DEFAULT now(),
   updated_at         TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
+
+-- Login sessions. The browser only holds a random token in an HttpOnly cookie;
+-- we store its SHA-256 hash, so a leaked database cannot be used to log in.
+CREATE TABLE sessions (
+  id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id      BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash   CHAR(64)    NOT NULL UNIQUE,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at   TIMESTAMPTZ NOT NULL             -- absolute limit (12 hours after login)
+);
+CREATE INDEX idx_sessions_user ON sessions(user_id);
 
 -- One business per entrepreneur for the MVP.
 CREATE TABLE businesses (
