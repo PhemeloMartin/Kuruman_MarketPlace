@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import { pool } from "../db";
 import { normaliseSaPhone } from "../lib/phone";
-import { endSession, requireAuth, startSession } from "../auth/session";
+import { endSession, startSession } from "../auth/session";
 
 export const authRouter = Router();
 
@@ -106,6 +106,7 @@ authRouter.post("/logout", async (req, res) => {
 });
 
 // The app calls this on start-up to find out who (if anyone) is signed in.
-authRouter.get("/me", requireAuth, (req, res) => {
-  res.json({ user: req.user });
+// Not being signed in is a normal answer here (user: null), not an error.
+authRouter.get("/me", (req, res) => {
+  res.json({ user: req.user ?? null });
 });

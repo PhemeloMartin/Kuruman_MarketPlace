@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS products CASCADE;
 DROP TABLE IF EXISTS categories CASCADE;
 DROP TABLE IF EXISTS businesses CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP SEQUENCE IF EXISTS order_number_seq;
 
 -- ---------------------------------------------------------------
 -- People
@@ -87,9 +88,12 @@ CREATE INDEX idx_products_category ON products(category_id);
 -- ---------------------------------------------------------------
 -- Orders (one business per order)
 -- ---------------------------------------------------------------
+CREATE SEQUENCE order_number_seq;
+
 CREATE TABLE orders (
   id                 BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  order_number       VARCHAR(20) NOT NULL UNIQUE,   -- e.g. KMP-000123
+  order_number       VARCHAR(20) NOT NULL UNIQUE    -- e.g. KMP-000123
+                     DEFAULT ('KMP-' || lpad(nextval('order_number_seq')::text, 6, '0')),
   consumer_id        BIGINT      NOT NULL REFERENCES users(id),
   business_id        BIGINT      NOT NULL REFERENCES businesses(id),
   status             VARCHAR(30) NOT NULL DEFAULT 'pending_acceptance'
@@ -112,10 +116,15 @@ CREATE TABLE orders (
   delivery_address   TEXT,
   notes              TEXT,
   accept_by          TIMESTAMPTZ NOT NULL,          -- seller must reply before this
+  -- The same "Send order" tap arriving twice (e.g. flaky signal) must not create two orders.
+  -- The app sends a random key per checkout; request_hash detects a key reused for a different cart.
+  idempotency_key    VARCHAR(64) NOT NULL,
+  request_hash       CHAR(64)    NOT NULL,
   created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
   CHECK (total_cents = subtotal_cents + delivery_fee_cents),
-  CHECK (fulfilment = 'pickup' OR delivery_address IS NOT NULL)
+  CHECK (fulfilment = 'pickup' OR delivery_address IS NOT NULL),
+  UNIQUE (consumer_id, idempotency_key)
 );
 CREATE INDEX idx_orders_consumer ON orders(consumer_id);
 CREATE INDEX idx_orders_business_status ON orders(business_id, status);

@@ -6,6 +6,9 @@ import { pool } from "./db";
 import { loadSession } from "./auth/session";
 import { authRouter } from "./routes/auth";
 import { catalogueRouter } from "./routes/catalogue";
+import { ordersRouter } from "./routes/orders";
+import { POLICY } from "./lib/policy";
+import { startExpiryTimer } from "./lib/expiry";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 4000;
@@ -38,7 +41,13 @@ app.get("/api/health", async (_req, res) => {
   res.json({ status: "ok", databaseTime: r.rows[0].time, productCount: r.rows[0].product_count });
 });
 
+// Public policy values, so the website shows exactly what the server enforces.
+app.get("/api/config", (_req, res) => {
+  res.json(POLICY);
+});
+
 app.use("/api/auth", authRouter);
+app.use("/api/orders", ordersRouter);
 app.use("/api", catalogueRouter);
 
 app.use((_req, res) => {
@@ -53,4 +62,5 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 
 app.listen(PORT, () => {
   console.log(`KurumanMarketPlace API running on http://localhost:${PORT}`);
+  startExpiryTimer();
 });
