@@ -16,6 +16,7 @@ interface OrderSummary {
   createdAt: string
   businessName: string
   businessArea: string
+  courierName: string | null
   statusReason: string | null
   items: { name: string; unitLabel: string; quantity: number }[]
 }
@@ -163,14 +164,25 @@ export function OrdersPage() {
                   The seller is preparing your order.{o.paymentMethod === 'cash' && ' Cash still due.'}
                 </p>
               )}
-              {o.status === 'ready' && o.fulfilment === 'pickup' && (
+              {o.status === 'ready' && o.fulfilment === 'delivery' && (
+                <p className="fine-print">Packed and waiting for a courier.</p>
+              )}
+              {((o.status === 'ready' && o.fulfilment === 'pickup') || o.status === 'out_for_delivery') && (
                 <div className="collection-code">
                   <p style={{ margin: '0 0 8px' }}>
-                    <strong>Ready to collect</strong> from {o.businessName}, {o.businessArea}.
+                    {o.status === 'out_for_delivery' ? (
+                      <>
+                        <strong>On the way</strong> with {o.courierName ?? 'your courier'}.
+                      </>
+                    ) : (
+                      <>
+                        <strong>Ready to collect</strong> from {o.businessName}, {o.businessArea}.
+                      </>
+                    )}
                     {o.paymentMethod === 'cash' && (
                       <>
                         {' '}
-                        Bring <span translate="no">{formatRand(o.totalCents)}</span> cash.
+                        Have <span translate="no">{formatRand(o.totalCents)}</span> cash ready.
                       </>
                     )}
                   </p>
@@ -180,13 +192,18 @@ export function OrdersPage() {
                         {codes[o.id].code}
                       </span>
                       <span className="fine-print">
-                        Show this to the seller. Valid until{' '}
+                        Show this to the {o.status === 'out_for_delivery' ? 'courier' : 'seller'} when you get your
+                        order. Valid until{' '}
                         {new Date(codes[o.id].expiresAt).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}.
                       </span>
                     </>
                   ) : (
                     <button type="button" className="btn btn-primary btn-block" onClick={() => showCode(o.id)} disabled={busyId === o.id}>
-                      {busyId === o.id ? 'Getting code…' : 'Show collection code'}
+                      {busyId === o.id
+                        ? 'Getting code…'
+                        : o.status === 'out_for_delivery'
+                          ? 'Show delivery code'
+                          : 'Show collection code'}
                     </button>
                   )}
                 </div>

@@ -63,6 +63,11 @@ export function ProfilePage() {
           translated for now and are being checked by fluent speakers.
         </p>
       </section>
+      {user.role === 'courier' && (
+        <Link to="/courier" className="btn btn-primary btn-block" style={{ marginBottom: 10 }}>
+          Go to deliveries
+        </Link>
+      )}
       {user.role === 'entrepreneur' && (
         <Link to="/seller" className="btn btn-primary btn-block" style={{ marginBottom: 10 }}>
           Go to my shop

@@ -10,6 +10,7 @@ import { ProfilePage } from './pages/ProfilePage'
 import { SellerDashboardPage } from './pages/seller/SellerDashboardPage'
 import { SellerProductFormPage, SellerProductsPage } from './pages/seller/SellerProductsPage'
 import { RequireRole } from './auth/RequireRole'
+import { CourierPage } from './pages/courier/CourierPage'
 
 export default function App() {
   return (
@@ -28,6 +29,9 @@ export default function App() {
                 <Route path="seller" element={<SellerDashboardPage />} />
                 <Route path="seller/products" element={<SellerProductsPage />} />
                 <Route path="seller/products/:id" element={<SellerProductFormPage />} />
+              </Route>
+              <Route element={<RequireRole role="courier" />}>
+                <Route path="courier" element={<CourierPage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>

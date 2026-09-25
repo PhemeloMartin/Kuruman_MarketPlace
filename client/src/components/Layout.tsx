@@ -4,7 +4,7 @@ import { useCart } from '../cart/CartContext'
 import { LANGUAGES, currentLanguage, setLanguage } from '../lib/translate'
 import type { LanguageCode } from '../lib/translate'
 import { DuneRibbon, LogoMark } from './Art'
-import { CartIcon, HomeIcon, OrdersIcon, ProfileIcon, ShopIcon } from './Icons'
+import { CartIcon, HomeIcon, OrdersIcon, ProfileIcon, ShopIcon, TruckIcon } from './Icons'
 
 export function Layout() {
   return (
@@ -61,8 +61,9 @@ function BottomNav() {
   const { itemCount } = useCart()
   const { user } = useAuth()
   const isSeller = user?.role === 'entrepreneur'
+  const isCourier = user?.role === 'courier'
   return (
-    <nav className={`bottom-nav${isSeller ? ' five' : ''}`} aria-label="Main">
+    <nav className={`bottom-nav${isSeller || isCourier ? ' five' : ''}`} aria-label="Main">
       <NavLink to="/" end>
         <HomeIcon />
         Home
@@ -80,6 +81,12 @@ function BottomNav() {
         <NavLink to="/seller">
           <ShopIcon />
           My shop
+        </NavLink>
+      )}
+      {isCourier && (
+        <NavLink to="/courier">
+          <TruckIcon />
+          Jobs
         </NavLink>
       )}
       <NavLink to="/orders">

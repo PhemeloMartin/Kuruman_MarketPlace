@@ -51,7 +51,18 @@ export interface SellerOrder {
   createdAt: string
   updatedAt: string
   customerName: string
+  delivery: { status: string; courierName: string | null; released: boolean } | null
+  cashStatus: 'collected' | 'remitted' | 'disputed' | null
   items: { name: string; unitLabel: string; quantity: number }[]
+}
+
+export interface CashToConfirm {
+  orderId: number
+  orderNumber: string
+  collectedCents: number
+  remittedCents: number
+  status: 'collected' | 'disputed'
+  courierName: string
 }
 
 export interface SellerProduct {

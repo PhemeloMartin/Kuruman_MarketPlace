@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, ApiError } from '../../lib/api'
-import { formatRand } from '../../lib/money'
-import type { Kpis, SellerOrder } from '../../lib/types'
+import { formatRand, parseRandToCents } from '../../lib/money'
+import type { CashToConfirm, Kpis, SellerOrder } from '../../lib/types'
 
 interface Dashboard {
   business: { id: number; name: string }
@@ -32,13 +32,19 @@ export function SellerDashboardPage() {
   const [period, setPeriod] = useState('week')
   const [dashboard, setDashboard] = useState<Dashboard | null>(null)
   const [orders, setOrders] = useState<SellerOrder[] | null>(null)
+  const [cash, setCash] = useState<CashToConfirm[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
-    Promise.all([api<Dashboard>(`/seller/dashboard?period=${period}`), api<SellerOrder[]>('/seller/orders')])
-      .then(([d, o]) => {
+    Promise.all([
+      api<Dashboard>(`/seller/dashboard?period=${period}`),
+      api<SellerOrder[]>('/seller/orders'),
+      api<CashToConfirm[]>('/seller/cash'),
+    ])
+      .then(([d, o, c]) => {
         setDashboard(d)
         setOrders(o)
+        setCash(c)
         setError(null)
       })
       .catch((err) => setError(err.message))
@@ -123,6 +129,17 @@ export function SellerDashboardPage() {
           waiting.map((o) => <OrderCard key={o.id} order={o} onChanged={load} />)
         )}
       </section>
+
+      {cash.length > 0 && (
+        <section aria-labelledby="cash-heading" style={{ marginTop: 20 }}>
+          <div className="section-head">
+            <h2 id="cash-heading">Cash from couriers</h2>
+          </div>
+          {cash.map((c) => (
+            <CashCard key={c.orderId} cash={c} onChanged={load} />
+          ))}
+        </section>
+      )}
 
       {active.length > 0 && (
         <section aria-labelledby="active-heading" style={{ marginTop: 20 }}>
@@ -330,9 +347,118 @@ function OrderCard({ order: o, onChanged }: { order: SellerOrder; onChanged: () 
       )}
 
       {o.status === 'ready' && o.fulfilment === 'delivery' && (
-        <p className="fine-print">Waiting for a courier to collect it.</p>
+        <DeliveryStep order={o} busy={busy} onRelease={() => act('release')} />
+      )}
+      {o.status === 'out_for_delivery' && o.delivery?.courierName && (
+        <p className="fine-print">{o.delivery.courierName} is delivering it.</p>
       )}
 
+      {error && (
+        <p className="field-error" role="alert">
+          {error}
+        </p>
+      )}
+    </article>
+  )
+}
+
+// Delivery orders after "ready": wait for a courier, then confirm handing the goods to them.
+function DeliveryStep({ order: o, busy, onRelease }: { order: SellerOrder; busy: boolean; onRelease: () => void }) {
+  const d = o.delivery
+  if (!d || d.status === 'open') return <p className="fine-print">Waiting for a courier to take the job.</p>
+  if (d.status === 'claimed' && !d.released) {
+    return (
+      <>
+        <p className="fine-print">{d.courierName} is coming to collect it. Tap below when you give them the order.</p>
+        <button type="button" className="btn btn-primary btn-block" style={{ marginTop: 8 }} disabled={busy} onClick={onRelease}>
+          {busy ? 'Saving…' : `Hand over to ${d.courierName?.split(' ')[0]}`}
+        </button>
+      </>
+    )
+  }
+  return <p className="fine-print">Handed to {d.courierName}. Waiting for them to confirm pickup.</p>
+}
+
+// The seller confirms how much cash the courier handed over (spec BR-11).
+// A different amount is recorded as disputed - the gap stays visible, never written off.
+function CashCard({ cash: c, onChanged }: { cash: CashToConfirm; onChanged: () => void }) {
+  const [other, setOther] = useState(false)
+  const [amount, setAmount] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function confirm(receivedCents: number) {
+    setBusy(true)
+    setError(null)
+    try {
+      await api(`/seller/cash/${c.orderId}/acknowledge`, { method: 'POST', body: { receivedCents } })
+      onChanged()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (c.status === 'disputed') {
+    return (
+      <article className="card">
+        <div className="order-card-head">
+          <strong translate="no">Order {c.orderNumber}</strong>
+          <span className="status-pill bad">Amount disputed</span>
+        </div>
+        <p className="product-meta" style={{ margin: '4px 0 0' }}>
+          You received <span translate="no">{formatRand(c.remittedCents)}</span> of{' '}
+          <span translate="no">{formatRand(c.collectedCents)}</span> from {c.courierName}. The difference stays on
+          record until it’s sorted out.
+        </p>
+      </article>
+    )
+  }
+
+  const typed = parseRandToCents(amount)
+  return (
+    <article className="card">
+      <div className="order-card-head">
+        <strong translate="no">Order {c.orderNumber}</strong>
+        <span className="status-pill wait">Cash with courier</span>
+      </div>
+      <p className="product-meta" style={{ margin: '4px 0 0' }}>
+        {c.courierName} collected <strong translate="no">{formatRand(c.collectedCents)}</strong> for you.
+      </p>
+      {!other ? (
+        <div className="btn-row">
+          <button type="button" className="btn btn-outline" disabled={busy} onClick={() => setOther(true)}>
+            Different amount
+          </button>
+          <button type="button" className="btn btn-primary" disabled={busy} onClick={() => confirm(c.collectedCents)}>
+            Received {formatRand(c.collectedCents)}
+          </button>
+        </div>
+      ) : (
+        <div className="btn-row">
+          <div className="input-wrap">
+            <label className="visually-hidden" htmlFor={`cash-${c.orderId}`}>
+              Amount received in rand
+            </label>
+            <input
+              id={`cash-${c.orderId}`}
+              inputMode="decimal"
+              placeholder="Amount (R)"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </div>
+          <button
+            type="button"
+            className="btn btn-danger"
+            disabled={busy || typed === null}
+            onClick={() => typed !== null && confirm(typed)}
+          >
+            Confirm amount
+          </button>
+        </div>
+      )}
       {error && (
         <p className="field-error" role="alert">
           {error}

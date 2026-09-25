@@ -77,3 +77,11 @@ export const ShopIcon = () => (
     <path d="M10 20v-5h4v5" />
   </svg>
 )
+
+export const TruckIcon = () => (
+  <svg {...common}>
+    <path d="M3 6h11v10H3zM14 10h4l3 3v3h-7" />
+    <circle cx="7" cy="18" r="1.6" />
+    <circle cx="17.5" cy="18" r="1.6" />
+  </svg>
+)
