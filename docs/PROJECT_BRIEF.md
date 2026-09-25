@@ -132,6 +132,7 @@ KPI check against the spec's worked example: `npm run test:kpi` in `server` (cha
 | 071 000 0003 | Pieter | courier |
 | 071 000 0004 | Support | support |
 | 071 000 0005 | Naledi | entrepreneur (second seller) |
+| 071 000 0006 | Lerato | courier (second courier) |
 
 ---
 
@@ -169,4 +170,9 @@ KPI check against the spec's worked example: `npm run test:kpi` in `server` (cha
 - [x] KPI fixture test TC-18 (`npm run test:kpi` in `server`) matches spec Table 33
 - [x] Pickup handover: customer's one-time 6-digit code (15 min, 5 tries), stock consumed once, cash receipt
 - [x] Seller products: list with available / held stock, add and edit, hide/show; stock can't drop below reservations
-- [ ] Courier flow, Payfast sandbox, offline PWA, AI category model, support console
+- [x] Courier flow: job board (area + fee only), atomic claim (first courier wins), seller "hand over",
+      collect (stock consumed once), deliver with the customer's one-time code
+- [x] Cash from couriers: courier collection and seller confirmation are separate events;
+      a different amount is recorded as disputed and stays visible as unreconciled cash
+- [ ] Failed delivery / returns and disputed-cash resolution (need the support console)
+- [ ] Payfast sandbox, offline PWA, AI category model, support console

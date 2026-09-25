@@ -37,6 +37,7 @@ async function main() {
       ["courier", "+27710000003", "Pieter (demo courier)", "courier"],
       ["support", "+27710000004", "Support (demo)", "support"],
       ["seller2", "+27710000005", "Naledi (demo seller)", "entrepreneur"],
+      ["courier2", "+27710000006", "Lerato (demo courier)", "courier"],
     ];
     const userIds: Record<string, number> = {};
     for (const [key, phone, name, role] of users) {

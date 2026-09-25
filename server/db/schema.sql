@@ -159,7 +159,9 @@ CREATE TABLE deliveries (
   courier_id            BIGINT      REFERENCES users(id),      -- NULL until a courier claims it
   status                VARCHAR(20) NOT NULL DEFAULT 'open'
                         CHECK (status IN ('open', 'claimed', 'collected', 'delivered', 'failed')),
-  handover_code_hash    TEXT,                                  -- the customer's code, hashed
+  -- The seller confirms handing the goods to THIS courier; collection needs it (spec FR-15).
+  released_to_courier_id BIGINT     REFERENCES users(id),
+  released_at           TIMESTAMPTZ,
   fee_cents             INTEGER     NOT NULL DEFAULT 0 CHECK (fee_cents >= 0),
   cash_to_collect_cents INTEGER     NOT NULL DEFAULT 0 CHECK (cash_to_collect_cents >= 0),
   cash_remitted         BOOLEAN     NOT NULL DEFAULT FALSE,
@@ -190,6 +192,11 @@ CREATE TABLE cash_receipts (
   id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   order_id        BIGINT      NOT NULL UNIQUE REFERENCES orders(id),
   collected_by    BIGINT      NOT NULL REFERENCES users(id),
+  -- collected: courier holds it; remitted: business confirmed receiving it all;
+  -- disputed: business received a different amount - stays visible, never written off.
+  status          VARCHAR(10) NOT NULL DEFAULT 'collected'
+                  CHECK (status IN ('collected', 'remitted', 'disputed')),
+  acknowledged_by BIGINT      REFERENCES users(id),
   collected_cents INTEGER     NOT NULL CHECK (collected_cents >= 0),
   remitted_cents  INTEGER     NOT NULL DEFAULT 0 CHECK (remitted_cents >= 0),
   collected_at    TIMESTAMPTZ NOT NULL DEFAULT now(),

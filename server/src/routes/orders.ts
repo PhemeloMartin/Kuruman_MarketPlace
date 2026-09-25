@@ -252,6 +252,8 @@ ordersRouter.get("/mine", shopper, async (req, res) => {
     `SELECT o.id, o.order_number, o.status, o.fulfilment, o.payment_method, o.subtotal_cents,
             o.delivery_fee_cents, o.total_cents, o.accept_by, o.created_at,
             b.name AS business_name, b.area AS business_area,
+            (SELECT cu.display_name FROM deliveries d JOIN users cu ON cu.id = d.courier_id
+              WHERE d.order_id = o.id) AS courier_name,
             (SELECT h.reason FROM order_status_history h
               WHERE h.order_id = o.id ORDER BY h.id DESC LIMIT 1) AS status_reason,
             COALESCE(json_agg(json_build_object(
@@ -281,6 +283,7 @@ ordersRouter.get("/mine", shopper, async (req, res) => {
       createdAt: o.created_at,
       businessName: o.business_name,
       businessArea: o.business_area,
+      courierName: o.courier_name,
       statusReason: o.status_reason,
       items: o.items,
     }))
@@ -347,12 +350,16 @@ ordersRouter.post("/:id/handover-code", codeLimiter, shopper, async (req, res) =
         SET handover_code_hash = $3,
             handover_code_expires_at = now() + make_interval(mins => $4),
             handover_failed_attempts = 0
-      WHERE id = $1 AND consumer_id = $2 AND status = 'ready' AND fulfilment = 'pickup'
+      WHERE id = $1 AND consumer_id = $2
+        AND ((status = 'ready' AND fulfilment = 'pickup')
+          OR (status = 'out_for_delivery' AND fulfilment = 'delivery'))
       RETURNING handover_code_expires_at`,
     [orderId, req.user!.id, hashHandoverCode(orderId, code), HANDOVER_CODE_MINUTES]
   );
   if (r.rowCount === 0) {
-    return res.status(409).json({ error: "A collection code is only available once your pickup order is ready." });
+    return res.status(409).json({
+      error: "A code is available once your pickup order is ready, or your delivery is on its way.",
+    });
   }
   res.json({ code, expiresAt: r.rows[0].handover_code_expires_at });
 });

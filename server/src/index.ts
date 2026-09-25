@@ -8,6 +8,7 @@ import { authRouter } from "./routes/auth";
 import { catalogueRouter } from "./routes/catalogue";
 import { ordersRouter } from "./routes/orders";
 import { sellerRouter } from "./routes/seller";
+import { courierRouter } from "./routes/courier";
 import { POLICY } from "./lib/policy";
 import { startExpiryTimer } from "./lib/expiry";
 
@@ -50,6 +51,7 @@ app.get("/api/config", (_req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/orders", ordersRouter);
 app.use("/api/seller", sellerRouter);
+app.use("/api/courier", courierRouter);
 app.use("/api", catalogueRouter);
 
 app.use((_req, res) => {

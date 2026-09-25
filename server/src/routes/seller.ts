@@ -3,7 +3,7 @@ import { PoolClient } from "pg";
 import { pool } from "../db";
 import { requireRole } from "../auth/session";
 import { computeKpis } from "../lib/kpi";
-import { HANDOVER_MAX_ATTEMPTS, handoverCodeMatches } from "../lib/handover";
+import { checkHandoverCode } from "../lib/handover";
 import { consumeReservation, recordStatusChange, releaseReservation } from "../lib/stock";
 
 // Everything here is for an approved entrepreneur, and only ever about THEIR business.
@@ -56,11 +56,17 @@ sellerRouter.get("/orders", async (req, res) => {
     `SELECT o.id, o.order_number, o.status, o.fulfilment, o.payment_method, o.subtotal_cents,
             o.delivery_fee_cents, o.total_cents, o.notes, o.accept_by, o.created_at, o.updated_at,
             u.display_name AS customer_name,
+            d.status AS delivery_status, cu.display_name AS courier_name,
+            d.released_to_courier_id IS NOT NULL AND d.released_to_courier_id = d.courier_id AS released,
+            cr.status AS cash_status,
             (SELECT json_agg(json_build_object('name', i.product_name, 'unitLabel', i.unit_label,
                                                'quantity', i.quantity) ORDER BY i.id)
                FROM order_items i WHERE i.order_id = o.id) AS items
        FROM orders o
        JOIN users u ON u.id = o.consumer_id
+       LEFT JOIN deliveries d ON d.order_id = o.id
+       LEFT JOIN users cu ON cu.id = d.courier_id
+       LEFT JOIN cash_receipts cr ON cr.order_id = o.id
       WHERE o.business_id = $1
         AND (o.status IN ('pending_acceptance', 'awaiting_payment', 'confirmed', 'ready', 'out_for_delivery')
              OR o.updated_at > now() - interval '3 days')
@@ -83,6 +89,10 @@ sellerRouter.get("/orders", async (req, res) => {
       updatedAt: o.updated_at,
       // Minimum disclosure: the seller sees the customer's name, not their phone or address.
       customerName: o.customer_name,
+      delivery: o.delivery_status
+        ? { status: o.delivery_status, courierName: o.courier_name, released: Boolean(o.released) }
+        : null,
+      cashStatus: o.cash_status,
       items: o.items ?? [],
     }))
   );
@@ -199,35 +209,17 @@ sellerRouter.post("/orders/:id/ready", (req, res) =>
 // In one transaction: check the code, use up the reserved stock, record the cash, complete the order.
 sellerRouter.post("/orders/:id/pickup", (req, res) =>
   withMyOrder(req, res, async (client, order) => {
-    const code = typeof req.body?.code === "string" ? req.body.code.replace(/\s/g, "") : "";
     if (order.fulfilment !== "pickup") {
       await client.query("ROLLBACK");
       res.status(422).json({ error: "This is a delivery order - the courier completes it." });
       return;
     }
     if (order.status !== "ready") return conflict(res, order.status);
-    if (!order.handover_code_hash || order.code_expired) {
-      await client.query("ROLLBACK");
-      res.status(422).json({ error: "Ask the customer to open their order and show a new collection code." });
-      return;
-    }
-    if (order.handover_failed_attempts >= HANDOVER_MAX_ATTEMPTS) {
-      await client.query("ROLLBACK");
-      res.status(423).json({ error: "Too many wrong codes. The customer needs to show a new code." });
-      return;
-    }
-    if (!/^\d{6}$/.test(code) || !handoverCodeMatches(order.id, code, order.handover_code_hash)) {
-      // Count the failed try and keep that count (COMMIT), even though the handover didn't happen.
-      await client.query("UPDATE orders SET handover_failed_attempts = handover_failed_attempts + 1 WHERE id = $1", [order.id]);
-      await client.query("COMMIT");
-      const left = HANDOVER_MAX_ATTEMPTS - order.handover_failed_attempts - 1;
-      res.status(422).json({
-        error:
-          left > 0
-            ? `That code is not right. ${left} ${left === 1 ? "try" : "tries"} left.`
-            : "That code is not right. The customer needs a new code.",
-        fields: { code: "Wrong code." },
-      });
+
+    const check = await checkHandoverCode(client, order, req.body?.code);
+    if (!check.ok) {
+      await client.query(check.countedAttempt ? "COMMIT" : "ROLLBACK");
+      res.status(check.status).json(check.body);
       return;
     }
 
@@ -235,8 +227,9 @@ sellerRouter.post("/orders/:id/pickup", (req, res) =>
     if (order.payment_method === "cash") {
       // The seller received the cash in person, so it is collected and remitted at once.
       await client.query(
-        `INSERT INTO cash_receipts (order_id, collected_by, collected_cents, remitted_cents, remitted_at)
-         VALUES ($1, $2, $3, $3, now())`,
+        `INSERT INTO cash_receipts (order_id, collected_by, collected_cents, remitted_cents, remitted_at,
+                                    status, acknowledged_by)
+         VALUES ($1, $2, $3, $3, now(), 'remitted', $2)`,
         [order.id, req.user!.id, order.total_cents]
       );
     }
@@ -249,6 +242,104 @@ sellerRouter.post("/orders/:id/pickup", (req, res) =>
     res.json({ status: "completed" });
   })
 );
+
+// Hand over to the courier (spec FR-15): the seller confirms giving the goods to the
+// courier who claimed the job. The courier can only mark "collected" after this.
+sellerRouter.post("/orders/:id/release", (req, res) =>
+  withMyOrder(req, res, async (client, order) => {
+    if (order.status !== "ready" || order.fulfilment !== "delivery") return conflict(res, order.status);
+    const r = await client.query(
+      `UPDATE deliveries SET released_to_courier_id = courier_id, released_at = now()
+        WHERE order_id = $1 AND status = 'claimed' AND courier_id IS NOT NULL
+        RETURNING courier_id`,
+      [order.id]
+    );
+    if (r.rowCount === 0) {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "No courier has taken this job yet." });
+      return;
+    }
+    res.json({ status: "released" });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// Cash from couriers (spec BR-11, FR-12)
+// ---------------------------------------------------------------------------
+
+// Cash couriers collected for this business that the seller hasn't confirmed yet.
+sellerRouter.get("/cash", async (req, res) => {
+  const r = await pool.query(
+    `SELECT c.order_id, o.order_number, c.collected_cents, c.remitted_cents, c.status, c.collected_at,
+            u.display_name AS courier_name
+       FROM cash_receipts c
+       JOIN orders o ON o.id = c.order_id
+       JOIN users u ON u.id = c.collected_by
+      WHERE o.business_id = $1 AND c.status <> 'remitted'
+      ORDER BY c.collected_at`,
+    [req.business!.id]
+  );
+  res.json(
+    r.rows.map((c) => ({
+      orderId: Number(c.order_id),
+      orderNumber: c.order_number,
+      collectedCents: c.collected_cents,
+      remittedCents: c.remitted_cents,
+      status: c.status,
+      collectedAt: c.collected_at,
+      courierName: c.courier_name,
+    }))
+  );
+});
+
+// The seller says how much cash they actually received from the courier.
+// Exactly the collected amount -> remitted. Anything else -> disputed: the difference stays
+// visible as unreconciled cash, and nothing is silently written off.
+sellerRouter.post("/cash/:orderId/acknowledge", async (req, res) => {
+  const orderId = Number(req.params.orderId);
+  const received = req.body?.receivedCents;
+  if (!Number.isInteger(received) || received < 0) {
+    return res.status(422).json({ error: "Enter the amount you received.", fields: { receivedCents: "Enter an amount." } });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const r = await client.query(
+      `SELECT c.id, c.collected_cents, c.status
+         FROM cash_receipts c JOIN orders o ON o.id = c.order_id
+        WHERE c.order_id = $1 AND o.business_id = $2
+          FOR UPDATE OF c`,
+      [orderId, req.business!.id]
+    );
+    const receipt = r.rows[0];
+    if (!receipt) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Cash record not found." });
+    }
+    if (receipt.status !== "collected") {
+      await client.query("ROLLBACK");
+      return res.status(409).json({ error: "This cash has already been confirmed." });
+    }
+    if (received > receipt.collected_cents) {
+      await client.query("ROLLBACK");
+      return res.status(422).json({ error: "That's more than the courier collected. Please check the amount." });
+    }
+    const status = received === receipt.collected_cents ? "remitted" : "disputed";
+    await client.query(
+      `UPDATE cash_receipts SET remitted_cents = $2, status = $3, remitted_at = now(), acknowledged_by = $4
+        WHERE id = $1`,
+      [receipt.id, received, status, req.user!.id]
+    );
+    await client.query("COMMIT");
+    res.json({ status });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+});
 
 // ---------------------------------------------------------------------------
 // Products (listing management, spec FR-05 - basic version)

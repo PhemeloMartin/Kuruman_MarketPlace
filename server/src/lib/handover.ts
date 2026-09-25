@@ -20,3 +20,51 @@ export function handoverCodeMatches(orderId: number, code: string, storedHash: s
   // Constant-time comparison, so response timing gives nothing away.
   return given.length === stored.length && crypto.timingSafeEqual(given, stored);
 }
+
+// Checks a code typed by the seller (pickup) or courier (delivery) against the order.
+// Must run inside a transaction with the order row locked. On a wrong code the failed
+// try is counted; the caller must COMMIT so the count sticks.
+export type HandoverCheck =
+  | { ok: true }
+  | { ok: false; status: number; body: { error: string; fields?: Record<string, string> }; countedAttempt: boolean };
+
+export async function checkHandoverCode(
+  client: import("pg").PoolClient,
+  order: { id: number; handover_code_hash: string | null; code_expired: boolean; handover_failed_attempts: number },
+  rawCode: unknown
+): Promise<HandoverCheck> {
+  const code = typeof rawCode === "string" ? rawCode.replace(/\s/g, "") : "";
+  if (!order.handover_code_hash || order.code_expired) {
+    return {
+      ok: false,
+      status: 422,
+      body: { error: "Ask the customer to open their order and show a new code." },
+      countedAttempt: false,
+    };
+  }
+  if (order.handover_failed_attempts >= HANDOVER_MAX_ATTEMPTS) {
+    return {
+      ok: false,
+      status: 423,
+      body: { error: "Too many wrong codes. The customer needs to show a new code." },
+      countedAttempt: false,
+    };
+  }
+  if (!/^\d{6}$/.test(code) || !handoverCodeMatches(order.id, code, order.handover_code_hash)) {
+    await client.query("UPDATE orders SET handover_failed_attempts = handover_failed_attempts + 1 WHERE id = $1", [order.id]);
+    const left = HANDOVER_MAX_ATTEMPTS - order.handover_failed_attempts - 1;
+    return {
+      ok: false,
+      status: 422,
+      body: {
+        error:
+          left > 0
+            ? `That code is not right. ${left} ${left === 1 ? "try" : "tries"} left.`
+            : "That code is not right. The customer needs a new code.",
+        fields: { code: "Wrong code." },
+      },
+      countedAttempt: true,
+    };
+  }
+  return { ok: true };
+}
