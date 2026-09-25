@@ -1,9 +1,11 @@
 import crypto from "crypto";
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import { pool } from "../db";
 import { requireRole } from "../auth/session";
 import { POLICY } from "../lib/policy";
 import { recordStatusChange, releaseReservation } from "../lib/stock";
+import { HANDOVER_CODE_MINUTES, hashHandoverCode, newHandoverCode } from "../lib/handover";
 
 export const ordersRouter = Router();
 
@@ -249,7 +251,9 @@ ordersRouter.get("/mine", shopper, async (req, res) => {
   const r = await pool.query(
     `SELECT o.id, o.order_number, o.status, o.fulfilment, o.payment_method, o.subtotal_cents,
             o.delivery_fee_cents, o.total_cents, o.accept_by, o.created_at,
-            b.name AS business_name,
+            b.name AS business_name, b.area AS business_area,
+            (SELECT h.reason FROM order_status_history h
+              WHERE h.order_id = o.id ORDER BY h.id DESC LIMIT 1) AS status_reason,
             COALESCE(json_agg(json_build_object(
               'name', i.product_name, 'unitLabel', i.unit_label, 'quantity', i.quantity,
               'unitPriceCents', i.unit_price_cents, 'lineTotalCents', i.line_total_cents
@@ -258,7 +262,7 @@ ordersRouter.get("/mine", shopper, async (req, res) => {
        JOIN businesses b ON b.id = o.business_id
        JOIN order_items i ON i.order_id = o.id
       WHERE o.consumer_id = $1
-      GROUP BY o.id, b.name
+      GROUP BY o.id, b.name, b.area
       ORDER BY o.created_at DESC
       LIMIT 50`,
     [req.user!.id]
@@ -276,6 +280,8 @@ ordersRouter.get("/mine", shopper, async (req, res) => {
       acceptBy: o.accept_by,
       createdAt: o.created_at,
       businessName: o.business_name,
+      businessArea: o.business_area,
+      statusReason: o.status_reason,
       items: o.items,
     }))
   );
@@ -317,4 +323,36 @@ ordersRouter.post("/:id/cancel", shopper, async (req, res) => {
   } finally {
     client.release();
   }
+});
+
+// POST /api/orders/:id/handover-code - the customer gets a fresh one-time code to show the
+// seller at collection (FR-13). A new code replaces the old one and resets the wrong-try count.
+// The plain code is returned only here, only to the order's own customer.
+// Spec 9.2: code issuance is rate-limited.
+const codeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Too many new codes requested. Please wait a few minutes." },
+});
+
+ordersRouter.post("/:id/handover-code", codeLimiter, shopper, async (req, res) => {
+  const orderId = Number(req.params.id);
+  if (!Number.isInteger(orderId)) return res.status(404).json({ error: "Order not found." });
+
+  const code = newHandoverCode();
+  const r = await pool.query(
+    `UPDATE orders
+        SET handover_code_hash = $3,
+            handover_code_expires_at = now() + make_interval(mins => $4),
+            handover_failed_attempts = 0
+      WHERE id = $1 AND consumer_id = $2 AND status = 'ready' AND fulfilment = 'pickup'
+      RETURNING handover_code_expires_at`,
+    [orderId, req.user!.id, hashHandoverCode(orderId, code), HANDOVER_CODE_MINUTES]
+  );
+  if (r.rowCount === 0) {
+    return res.status(409).json({ error: "A collection code is only available once your pickup order is ready." });
+  }
+  res.json({ code, expiresAt: r.rows[0].handover_code_expires_at });
 });

@@ -2,6 +2,7 @@
 -- Money is always stored as whole cents (INTEGER), never as decimals.
 -- WARNING: running this file drops and re-creates all tables (development only).
 
+DROP TABLE IF EXISTS cash_receipts CASCADE;
 DROP TABLE IF EXISTS sessions CASCADE;
 DROP TABLE IF EXISTS order_status_history CASCADE;
 DROP TABLE IF EXISTS payments CASCADE;
@@ -75,6 +76,7 @@ CREATE TABLE products (
   price_cents  INTEGER      NOT NULL CHECK (price_cents > 0),
   stock_qty    INTEGER      NOT NULL DEFAULT 0 CHECK (stock_qty >= 0),
   reserved_qty INTEGER      NOT NULL DEFAULT 0 CHECK (reserved_qty >= 0),
+  low_stock_threshold INTEGER NOT NULL DEFAULT 5 CHECK (low_stock_threshold >= 0),
   image_url    TEXT,
   is_active    BOOLEAN      NOT NULL DEFAULT TRUE,
   created_at   TIMESTAMPTZ  NOT NULL DEFAULT now(),
@@ -120,6 +122,11 @@ CREATE TABLE orders (
   -- The app sends a random key per checkout; request_hash detects a key reused for a different cart.
   idempotency_key    VARCHAR(64) NOT NULL,
   request_hash       CHAR(64)    NOT NULL,
+  -- One-time handover code the customer shows when collecting (spec FR-13, section 7.3):
+  -- stored hashed, valid 15 minutes, locked after 5 wrong tries.
+  handover_code_hash       CHAR(64),
+  handover_code_expires_at TIMESTAMPTZ,
+  handover_failed_attempts INTEGER NOT NULL DEFAULT 0,
   created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
   CHECK (total_cents = subtotal_cents + delivery_fee_cents),
@@ -176,6 +183,20 @@ CREATE TABLE payments (
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Physical cash, kept separate from digital payments (spec BR-11).
+-- collected = what the collector received; remitted = what reached the business.
+-- For pickup the seller collects directly, so both are equal at once.
+CREATE TABLE cash_receipts (
+  id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  order_id        BIGINT      NOT NULL UNIQUE REFERENCES orders(id),
+  collected_by    BIGINT      NOT NULL REFERENCES users(id),
+  collected_cents INTEGER     NOT NULL CHECK (collected_cents >= 0),
+  remitted_cents  INTEGER     NOT NULL DEFAULT 0 CHECK (remitted_cents >= 0),
+  collected_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  remitted_at     TIMESTAMPTZ,
+  CHECK (remitted_cents <= collected_cents)
+);
+
 -- Every status change is recorded: who, when, from what, to what.
 CREATE TABLE order_status_history (
   id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -187,3 +208,4 @@ CREATE TABLE order_status_history (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_history_order ON order_status_history(order_id);
+CREATE INDEX idx_history_to_status ON order_status_history(to_status, created_at);

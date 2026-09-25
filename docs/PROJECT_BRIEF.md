@@ -121,6 +121,7 @@ npm run dev
 Website: http://localhost:5173 · API health: http://localhost:4000/api/health
 
 Reset the database with demo data (deletes everything): `npm run db:setup` then `npm run db:seed` in `server`.
+KPI check against the spec's worked example: `npm run test:kpi` in `server` (changes nothing).
 
 **Demo accounts** (synthetic) — see the output of `npm run db:seed` for the passphrase.
 
@@ -130,6 +131,7 @@ Reset the database with demo data (deletes everything): `npm run db:setup` then 
 | 071 000 0002 | Kgomotso | entrepreneur |
 | 071 000 0003 | Pieter | courier |
 | 071 000 0004 | Support | support |
+| 071 000 0005 | Naledi | entrepreneur (second seller) |
 
 ---
 
@@ -163,6 +165,8 @@ Reset the database with demo data (deletes everything): `npm run db:setup` then 
 - [x] Cart: one seller per order (explicit "start a new cart?" choice), saved on the phone as a draft, re-checked against the server
 - [x] Order submission (TX-01): products locked in id order, stock reserved atomically, snapshot items, history row, duplicate-tap protection (Idempotency-Key)
 - [x] Customer can cancel while waiting for the seller; unanswered orders expire after 30 min and release stock
-- [ ] Seller dashboard: accept / decline / mark ready, KPIs
-- [ ] Pickup handover with one-time code, cash collection
+- [x] Seller dashboard: accept / decline with reason / mark ready, auto-refresh, KPIs per spec Table 32
+- [x] KPI fixture test TC-18 (`npm run test:kpi` in `server`) matches spec Table 33
+- [x] Pickup handover: customer's one-time 6-digit code (15 min, 5 tries), stock consumed once, cash receipt
+- [x] Seller products: list with available / held stock, add and edit, hide/show; stock can't drop below reservations
 - [ ] Courier flow, Payfast sandbox, offline PWA, AI category model, support console

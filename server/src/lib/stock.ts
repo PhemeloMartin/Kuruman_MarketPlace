@@ -18,6 +18,23 @@ export async function releaseReservation(client: PoolClient, orderId: number): P
   }
 }
 
+// Goods physically handed over: the held units leave the shelf for good (spec BR-04, FR-06).
+// Both counters drop together, so "available" (stock - reserved) doesn't change.
+export async function consumeReservation(client: PoolClient, orderId: number): Promise<void> {
+  const items = await client.query(
+    "SELECT product_id, quantity FROM order_items WHERE order_id = $1 ORDER BY product_id",
+    [orderId]
+  );
+  for (const item of items.rows) {
+    await client.query("SELECT id FROM products WHERE id = $1 FOR UPDATE", [item.product_id]);
+    await client.query(
+      `UPDATE products SET stock_qty = stock_qty - $2, reserved_qty = reserved_qty - $2, updated_at = now()
+        WHERE id = $1`,
+      [item.product_id, item.quantity]
+    );
+  }
+}
+
 // Every status change is written to order_status_history (business rule 8).
 export async function recordStatusChange(
   client: PoolClient,
