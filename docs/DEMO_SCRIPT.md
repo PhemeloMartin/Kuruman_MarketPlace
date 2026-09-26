@@ -149,9 +149,16 @@ notification does, after we check the signature, merchant, amount, source and Pa
 notification is ignored, and money that arrives after an order expired is recorded for a refund — it never revives the order."
 (5.5, TX-02, BR-08)
 
-Then run the proof (section 8, `test:payfast`).
+Then show it live (your own sandbox account is set up in `server/.env`):
 
-If you set up your own Payfast sandbox account (see "Payfast" below), you can also click **Pay with Payfast** live.
+1. Window A: add an item, choose **Pay online**, send. Window B: **Accept**.
+2. Window A → **Orders** → **Pay with Payfast** → Payfast's sandbox page → **Complete Payment**.
+3. You're sent back and the order still says **Accepted – pay now**.
+   **Say:** "Payfast took the payment, but our server hasn't received Payfast's signed notification — it can't reach
+   my laptop. So the order is correctly *not* marked paid. Coming back from Payfast is not proof. The next test
+   shows what happens when notifications do arrive." (BR-07)
+
+Then run the proof (section 8, `test:payfast`).
 
 ---
 
@@ -199,7 +206,7 @@ npm run test:payfast
 
 ---
 
-## Payfast: using your own sandbox account (optional, 5 minutes)
+## Payfast: your own sandbox account (done — kept here for reference)
 
 1. Sign up free at **https://sandbox.payfast.co.za**.
 2. In the sandbox dashboard copy your **Merchant ID** and **Merchant Key**, and set a **passphrase** (Settings → Developer settings).
