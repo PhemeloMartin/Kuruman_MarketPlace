@@ -68,6 +68,11 @@ export function ProfilePage() {
           translated for now and are being checked by fluent speakers.
         </p>
       </section>
+      {user.role !== 'support' && (
+        <Link to="/notifications" className="btn btn-outline btn-block" style={{ marginBottom: 10 }}>
+          Notifications
+        </Link>
+      )}
       {user.role === 'consumer' && <ApplySection />}
       {user.role !== 'support' && <PrivacySection />}
       {user.role === 'support' && (

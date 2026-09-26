@@ -238,6 +238,45 @@ supportOpsRouter.post("/cases/:id/close", async (req, res) => {
   });
 });
 
+// Notifications the worker gave up on after 5 tries (spec Table 79: "visible dead-letter/support
+// handling"). The orders themselves are fine - only the message is stuck.
+supportOpsRouter.get("/outbox", async (_req, res) => {
+  const r = await pool.query(
+    `SELECT id, event_type, aggregate_id, attempts, last_error, created_at FROM outbox_events
+      WHERE status = 'failed' ORDER BY id LIMIT 50`
+  );
+  res.json(
+    r.rows.map((e) => ({
+      id: Number(e.id),
+      type: e.event_type,
+      aggregateId: Number(e.aggregate_id),
+      attempts: e.attempts,
+      lastError: e.last_error,
+      createdAt: e.created_at,
+    }))
+  );
+});
+
+// POST /api/support/ops/outbox/retry { reason } - try every failed notification again.
+supportOpsRouter.post("/outbox/retry", async (req, res) => {
+  const reason = reasonFrom(req, res);
+  if (!reason) return;
+  const r = await pool.query(
+    `UPDATE outbox_events SET status = 'pending', attempts = 0, available_at = now()
+      WHERE status = 'failed' RETURNING id`
+  );
+  await audit(pool, {
+    actorId: req.user!.id,
+    action: "outbox.retry",
+    resourceType: "outbox",
+    resourceId: "failed",
+    outcome: "success",
+    reason,
+    changes: { events: r.rowCount },
+  });
+  res.json({ retried: r.rowCount });
+});
+
 supportOpsRouter.post("/cases/:id/notes", async (req, res) => {
   const note = reasonFrom(req, res);
   if (!note) return;

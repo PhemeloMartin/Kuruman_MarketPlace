@@ -4,6 +4,7 @@ import { pool } from "../db";
 import { requireStaff } from "../auth/session";
 import { audit } from "../lib/audit";
 import { closeCase, inTransaction, reasonFrom } from "./supportShared";
+import { enqueue } from "../lib/outbox";
 
 // Money exceptions in the support console (spec FR-16, FR-21, TX-04, BR-08, BR-11).
 // Mounted at /api/support/money; everything here needs the "payments" scope.
@@ -245,6 +246,12 @@ supportMoneyRouter.post("/refunds/:id/complete", async (req, res) => {
     if (done.rows[0].cents === payment.amount_cents) {
       await client.query("UPDATE payments SET status = 'refunded', updated_at = now() WHERE id = $1", [payment.id]);
     }
+    await enqueue(client, {
+      type: "refund.succeeded",
+      aggregateId: Number(refund.order_id),
+      dedupeKey: `refund-succeeded:${refund.id}`,
+      payload: { amountCents: refund.amount_cents },
+    });
     await audit(client, {
       actorId: req.user!.id,
       action: "refund.complete",

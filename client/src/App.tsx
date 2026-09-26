@@ -13,35 +13,40 @@ import { RequireRole } from './auth/RequireRole'
 import { CourierPage } from './pages/courier/CourierPage'
 import { SupportPage } from './pages/support/SupportPage'
 import { PrivacyPage } from './pages/PrivacyPage'
+import { NotificationsPage } from './pages/NotificationsPage'
+import { UnreadProvider } from './notifications/UnreadContext'
 
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <CartProvider>
-          <Routes>
-            <Route element={<Layout />}>
-              <Route index element={<HomePage />} />
-              <Route path="cart" element={<CartPage />} />
-              <Route path="orders" element={<OrdersPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="signin" element={<SignInPage />} />
-              <Route path="register" element={<RegisterPage />} />
-              <Route path="privacy" element={<PrivacyPage />} />
-              <Route element={<RequireRole role="entrepreneur" />}>
-                <Route path="seller" element={<SellerDashboardPage />} />
-                <Route path="seller/products" element={<SellerProductsPage />} />
-                <Route path="seller/products/:id" element={<SellerProductFormPage />} />
+          <UnreadProvider>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route index element={<HomePage />} />
+                <Route path="cart" element={<CartPage />} />
+                <Route path="orders" element={<OrdersPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="signin" element={<SignInPage />} />
+                <Route path="register" element={<RegisterPage />} />
+                <Route path="privacy" element={<PrivacyPage />} />
+                <Route path="notifications" element={<NotificationsPage />} />
+                <Route element={<RequireRole role="entrepreneur" />}>
+                  <Route path="seller" element={<SellerDashboardPage />} />
+                  <Route path="seller/products" element={<SellerProductsPage />} />
+                  <Route path="seller/products/:id" element={<SellerProductFormPage />} />
+                </Route>
+                <Route element={<RequireRole role="courier" />}>
+                  <Route path="courier" element={<CourierPage />} />
+                </Route>
+                <Route element={<RequireRole role="support" />}>
+                  <Route path="support" element={<SupportPage />} />
+                </Route>
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
-              <Route element={<RequireRole role="courier" />}>
-                <Route path="courier" element={<CourierPage />} />
-              </Route>
-              <Route element={<RequireRole role="support" />}>
-                <Route path="support" element={<SupportPage />} />
-              </Route>
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Route>
-          </Routes>
+            </Routes>
+          </UnreadProvider>
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>

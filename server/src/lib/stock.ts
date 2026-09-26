@@ -1,4 +1,5 @@
 import { PoolClient } from "pg";
+import { enqueue } from "./outbox";
 
 // Gives back the units an order was holding (on decline, cancel or expiry).
 // Must be called inside a transaction that has already locked the order row.
@@ -35,7 +36,9 @@ export async function consumeReservation(client: PoolClient, orderId: number): P
   }
 }
 
-// Every status change is written to order_status_history (business rule 8).
+// Every status change is written to order_status_history (business rule 8) - and, in the same
+// transaction, queued in the outbox so the right people are notified (spec FR-17). Because
+// every status change in the app goes through this one function, none can be missed.
 export async function recordStatusChange(
   client: PoolClient,
   orderId: number,
@@ -44,11 +47,17 @@ export async function recordStatusChange(
   changedBy: number | null,
   reason: string | null = null
 ): Promise<void> {
-  await client.query(
+  const h = await client.query(
     `INSERT INTO order_status_history (order_id, from_status, to_status, changed_by, reason)
-     VALUES ($1, $2, $3, $4, $5)`,
+     VALUES ($1, $2, $3, $4, $5) RETURNING id`,
     [orderId, from, to, changedBy, reason]
   );
+  await enqueue(client, {
+    type: "order.status_changed",
+    aggregateId: orderId,
+    dedupeKey: `order-status:${h.rows[0].id}`, // one history row = one event
+    payload: { from, to, changedBy, reason },
+  });
 }
 
 // Goods came back after a cancelled delivery AND the seller checked they can be sold again

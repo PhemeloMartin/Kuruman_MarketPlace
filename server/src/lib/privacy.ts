@@ -55,8 +55,9 @@ export async function holdsFor(db: Db, userId: number): Promise<string[]> {
 // Erases what identifies or contacts the person. Call inside a transaction, after holdsFor()
 // returned nothing. Every step is listed so it can be checked against spec section 6.4.
 export async function closeAccount(client: PoolClient, userId: number, staffId: number, reason: string): Promise<void> {
-  // 1. Sign them out everywhere.
+  // 1. Sign them out everywhere, and remove their notifications (they're only for them).
   await client.query("DELETE FROM sessions WHERE user_id = $1", [userId]);
+  await client.query("DELETE FROM notifications WHERE user_id = $1", [userId]);
   // 2. Login details and name: erased; the row stays as a neutral surrogate for old records.
   await client.query(
     `UPDATE users SET phone = NULL, password_hash = NULL, display_name = 'Closed account', is_active = FALSE,
@@ -147,6 +148,10 @@ export async function exportFor(db: Db, userId: number) {
        FROM support_cases WHERE requester_id = $1 ORDER BY id`,
     [userId]
   );
+  const notifications = await db.query(
+    "SELECT template_key, arguments, created_at, read_at FROM notifications WHERE user_id = $1 ORDER BY id",
+    [userId]
+  );
   const sessions = await db.query(
     "SELECT created_at, last_seen_at, expires_at FROM sessions WHERE user_id = $1 ORDER BY id",
     [userId]
@@ -169,5 +174,6 @@ export async function exportFor(db: Db, userId: number) {
     courierProfile: courier.rows[0] ?? null,
     deliveriesYouMade: deliveries.rows,
     requestsAndApplications: requests.rows,
+    notifications: notifications.rows,
   };
 }

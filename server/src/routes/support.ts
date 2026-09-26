@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express";
 import rateLimit from "express-rate-limit";
 import { PoolClient } from "pg";
 import { closeCase, inTransaction, reasonFrom } from "./supportShared";
+import { enqueue } from "../lib/outbox";
 import { pool } from "../db";
 import { requireRole, requireStaff } from "../auth/session";
 import { audit } from "../lib/audit";
@@ -197,6 +198,12 @@ supportRouter.post("/applications/:id/approve", requireStaff("approvals"), async
       changes = { role: ["consumer", "courier"] };
     }
     await closeCase(client, Number(app.id), "approved", reason, req.user!.id);
+    await enqueue(client, {
+      type: "application.decided",
+      aggregateId: Number(app.id),
+      dedupeKey: `application:${app.id}`,
+      payload: { userId: Number(applicant.id), approved: true, kind: app.case_type === "seller_application" ? "seller" : "courier" },
+    });
     await audit(client, {
       actorId: req.user!.id,
       action: "application.approve",
@@ -218,6 +225,12 @@ supportRouter.post("/applications/:id/reject", requireStaff("approvals"), async 
     const found = await lockOpenApplication(client, req, res);
     if (!found) return;
     await closeCase(client, Number(found.app.id), "rejected", reason, req.user!.id);
+    await enqueue(client, {
+      type: "application.decided",
+      aggregateId: Number(found.app.id),
+      dedupeKey: `application:${found.app.id}`,
+      payload: { userId: Number(found.app.requester_id), approved: false, kind: found.app.case_type === "seller_application" ? "seller" : "courier", reason },
+    });
     await audit(client, {
       actorId: req.user!.id,
       action: "application.reject",

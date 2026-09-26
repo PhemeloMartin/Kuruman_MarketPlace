@@ -2,6 +2,8 @@
 -- Money is always stored as whole cents (INTEGER), never as decimals.
 -- WARNING: running this file drops and re-creates all tables (development only).
 
+DROP TABLE IF EXISTS notifications CASCADE;
+DROP TABLE IF EXISTS outbox_events CASCADE;
 DROP TABLE IF EXISTS refunds CASCADE;
 DROP TABLE IF EXISTS audit_events CASCADE;
 DROP TABLE IF EXISTS support_cases CASCADE;
@@ -398,3 +400,45 @@ CREATE TABLE refunds (
   CHECK ((status = 'pending') = (completed_at IS NULL))
 );
 CREATE INDEX idx_refunds_payment ON refunds(payment_id);
+
+-- ---------------------------------------------------------------
+-- Notifications (spec FR-17, TC-17, Tables 76 and 79)
+-- ---------------------------------------------------------------
+
+-- Transactional outbox: "something happened that people should hear about", written in the SAME
+-- transaction as the business change. If the change rolls back, so does the event; if sending
+-- fails later, the order is already safely committed. A separate worker delivers events.
+--   pending - waiting (or waiting to retry after available_at)
+--   sent    - notifications created
+--   failed  - gave up after 5 tries; visible to support, who can retry
+CREATE TABLE outbox_events (
+  id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  event_type   VARCHAR(60)  NOT NULL,             -- e.g. order.status_changed, refund.succeeded
+  aggregate_id BIGINT       NOT NULL,             -- the order (or case) it is about
+  dedupe_key   VARCHAR(160) NOT NULL UNIQUE,      -- the same event can never be queued twice
+  payload      JSONB        NOT NULL DEFAULT '{}', -- identifiers only; the worker re-reads current data
+  status       VARCHAR(10)  NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed')),
+  attempts     INTEGER      NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+  last_error   VARCHAR(200),
+  available_at TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  created_at   TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  sent_at      TIMESTAMPTZ
+);
+CREATE INDEX idx_outbox_due ON outbox_events(status, available_at);
+
+-- In-app notifications each person can read in the app. The text isn't stored: a template key
+-- plus a few non-sensitive values (order number, amount), turned into words by the app - so the
+-- same notification can be shown in any language.
+CREATE TABLE notifications (
+  id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id      BIGINT       NOT NULL REFERENCES users(id),
+  order_id     BIGINT       REFERENCES orders(id),
+  event_key    VARCHAR(160) NOT NULL,             -- which outbox event created it
+  template_key VARCHAR(80)  NOT NULL,             -- e.g. customer.order_ready_pickup
+  arguments    JSONB        NOT NULL DEFAULT '{}',
+  created_at   TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  read_at      TIMESTAMPTZ,
+  -- Delivering the same event twice (a retry) can't give anyone a second copy.
+  UNIQUE (user_id, event_key)
+);
+CREATE INDEX idx_notifications_user ON notifications(user_id, created_at DESC);

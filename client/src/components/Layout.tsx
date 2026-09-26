@@ -4,8 +4,9 @@ import { useCart } from '../cart/CartContext'
 import { LANGUAGES, currentLanguage, setLanguage } from '../lib/translate'
 import type { LanguageCode } from '../lib/translate'
 import { useOnline } from '../lib/useOnline'
+import { useUnread } from '../notifications/UnreadContext'
 import { DuneRibbon, LogoMark } from './Art'
-import { CartIcon, HomeIcon, OrdersIcon, ProfileIcon, ShieldIcon, ShopIcon, TruckIcon } from './Icons'
+import { BellIcon, CartIcon, HomeIcon, OrdersIcon, ProfileIcon, ShieldIcon, ShopIcon, TruckIcon } from './Icons'
 
 export function Layout() {
   const online = useOnline()
@@ -37,8 +38,27 @@ export function SiteHeader() {
           <span className="brand-tagline">The oasis of the Kalahari, online</span>
         </span>
       </Link>
-      <LanguageSelect />
+      <div className="header-actions">
+        <NotificationBell />
+        <LanguageSelect />
+      </div>
     </header>
+  )
+}
+
+function NotificationBell() {
+  const { user } = useAuth()
+  const { unread } = useUnread()
+  if (!user || user.role === 'support') return null
+  return (
+    <Link to="/notifications" className="bell" aria-label={unread ? `Notifications, ${unread} new` : 'Notifications'}>
+      <BellIcon />
+      {unread > 0 && (
+        <span className="nav-badge" aria-hidden="true">
+          {unread}
+        </span>
+      )}
+    </Link>
   )
 }
 
@@ -68,6 +88,7 @@ function LanguageSelect() {
 function BottomNav() {
   const { itemCount } = useCart()
   const { user } = useAuth()
+  const { unread } = useUnread()
   const isSeller = user?.role === 'entrepreneur'
   const isCourier = user?.role === 'courier'
   // Support staff don't shop: they get the catalogue (to check listings), the console and their profile.
@@ -120,9 +141,14 @@ function BottomNav() {
         <OrdersIcon />
         Orders
       </NavLink>
-      <NavLink to="/profile">
+      <NavLink to="/profile" aria-label={unread ? `Profile, ${unread} new notifications` : 'Profile'}>
         <ProfileIcon />
         Profile
+        {unread > 0 && (
+          <span className="nav-badge" aria-hidden="true">
+            {unread}
+          </span>
+        )}
       </NavLink>
     </nav>
   )

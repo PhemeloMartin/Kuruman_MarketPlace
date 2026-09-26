@@ -57,11 +57,17 @@ export function OperationsTab() {
   const [error, setError] = useState<string | null>(null)
   const [action, setAction] = useState<{ kind: ActionKind; c: OpsCase } | null>(null)
   const [contacts, setContacts] = useState<Record<number, Contacts>>({})
+  const [failedNotes, setFailedNotes] = useState(0)
+  const [retrying, setRetrying] = useState(false)
 
   const load = useCallback(() => {
     api<OpsCase[]>('/support/ops/cases')
       .then(setCases)
       .catch((err) => setError(err.message))
+    // Notifications the worker gave up on (spec Table 79: visible dead letters).
+    api<unknown[]>('/support/ops/outbox')
+      .then((list) => setFailedNotes(list.length))
+      .catch(() => {})
   }, [])
   useEffect(load, [load])
 
@@ -83,6 +89,28 @@ export function OperationsTab() {
   return (
     <>
       {error && <p className="notice error">{error}</p>}
+      {failedNotes > 0 && (
+        <div className="notice error" style={{ marginBottom: 12 }}>
+          <strong>{failedNotes} notification(s) couldn’t be sent</strong> after 5 tries. The orders are fine; only the
+          messages are stuck.{' '}
+          <button type="button" className="link-btn" onClick={() => setRetrying(true)}>
+            Retry
+          </button>
+        </div>
+      )}
+      {retrying && (
+        <ReasonDialog
+          title="Retry failed notifications?"
+          description="They go back into the queue and the worker tries again within a few seconds."
+          confirmLabel="Retry"
+          onClose={() => setRetrying(false)}
+          onConfirm={async (reason) => {
+            await api('/support/ops/outbox/retry', { method: 'POST', body: { reason } })
+            setRetrying(false)
+            load()
+          }}
+        />
+      )}
       <div className="section-head">
         <h2>Open delivery cases</h2>
       </div>

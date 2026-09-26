@@ -210,4 +210,9 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       phone, passphrase, name, addresses and sessions but keeps transactions as "Closed account"; retention job
       (addresses 30 days after an order ends unless a case is open, dead sessions, AI outcomes 30 days, closed-case
       details 90 days); TC-20 tests (`npm run test:privacy`, 15 checks)
-- [ ] Notifications, reviewed translations, remaining tables, hosting
+- [x] Notifications (FR-17, TC-17): transactional outbox written in the same transaction as every status change
+      (one function, recordStatusChange), refunds, application decisions and privacy holds; worker every 5 s with
+      SKIP LOCKED, backoff and 'failed' after 5 tries (visible and retryable in the support console); in-app
+      notifications stored as template key + values, UNIQUE per person per event; bell and badges; 30-day retention;
+      tests `npm run test:notifications` (9 checks)
+- [ ] Reviewed translations, remaining tables, hosting

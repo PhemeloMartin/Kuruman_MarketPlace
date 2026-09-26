@@ -25,6 +25,7 @@ const FILTERS = [
   { value: 'order.', label: 'Orders (cancel, retry, returns)' },
   { value: 'privacy.', label: 'Privacy requests' },
   { value: 'account.', label: 'Account closures' },
+  { value: 'outbox.', label: 'Notification retries' },
   { value: 'mfa.', label: 'Authenticator codes' },
   { value: 'auth.', label: 'Sign-ins' },
 ]

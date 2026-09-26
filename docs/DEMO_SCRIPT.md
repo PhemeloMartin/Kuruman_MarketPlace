@@ -117,6 +117,12 @@ nobody can sign up as support."
 
 ---
 
+**Notifications:** during sections 2-4, point at the bell (Home) and the badge on **Profile**. The seller's bell
+shows the new order; the customer gets "accepted", "ready", "on its way".
+**Say:** "Every status change writes a notification event in the same database transaction. A separate worker
+delivers it, so if notifying fails, the order is already safe and the message is retried - never duplicated."
+(FR-17, TC-17)
+
 ## 5. The AI part (Window B, 2 minutes)
 
 1. **Your products and stock → + Add a product.**
@@ -233,6 +239,13 @@ npm run test:support
 suspension, and the database refusing to edit audit history: **TC-02 / TC-21 / TC-22: 19 checks PASSED**.
 
 ```
+npm run test:notifications
+```
+→ 9 checks: worker stopped - order still committed, message waiting; simulated provider failure; retry delivers exactly
+once; duplicate Payfast notification → one message; failed after 5 tries → visible to support and retryable:
+**TC-17: 9 checks PASSED**. (Stop the running API first - its worker would deliver the messages.)
+
+```
 npm run test:privacy
 ```
 → 15 checks: passphrase needed, download holds only your own data, holds block closure, closure erases contact
@@ -252,7 +265,7 @@ npm run test:refunds
 refunds → exactly one accepted, no "refunded" without Payfast's reference, cash shortfall resolved:
 **TC-16: 14 checks PASSED**.
 
-(`test:payfast`, `test:support`, `test:refunds`, `test:operations` and `test:privacy` change demo data — reset the data afterwards if you'll demo again.)
+(`test:payfast`, `test:support`, `test:refunds`, `test:operations`, `test:privacy` and `test:notifications` change demo data — reset the data afterwards if you'll demo again.)
 
 ---
 
@@ -264,7 +277,8 @@ refunds → exactly one accepted, no "refunded" without Payfast's reference, cas
   The first version scored 0.66; I changed the tuning method to grouped cross-validation and I disclose that in the model card."
 - **Languages:** "Phase 1 uses Google Translate. Payment and legal wording must be reviewed by fluent speakers before real use (NFR-09)."
 - **Payments:** "Sandbox only. The design doesn't claim one merchant account can collect for every seller in production."
-- **Scope still to build:** notifications (FR-17), reviewed translations, hosting.
+- **Scope still to build:** reviewed translations, hosting. Notifications are in-app only; SMS/push are optional
+  enhancements the outbox is ready for (spec FR-17).
 - **Privacy notice is a draft:** the responsible party and Information Officer must be named, and retention periods
   approved, before any real person registers. Changing a login phone number needs a verification code (future work).
 - **Refunds are recorded, not sent automatically:** staff do the refund in Payfast's dashboard and record its

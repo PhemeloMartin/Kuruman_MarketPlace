@@ -5,6 +5,7 @@ import { requireStaff } from "../auth/session";
 import { audit } from "../lib/audit";
 import { closeAccount, holdsFor } from "../lib/privacy";
 import { closeCase, inTransaction, reasonFrom } from "./supportShared";
+import { enqueue } from "../lib/outbox";
 
 // Privacy requests in the support console (spec FR-20, UC-16, TC-20).
 // Mounted at /api/support/privacy; needs the "privacy" scope - staff without it can't even list
@@ -85,6 +86,7 @@ supportPrivacyRouter.post("/cases/:id/hold", async (req, res) => {
     if (!c) return void res.status(404).json({ error: "Request not found." });
     if (c.status !== "open") return void res.status(409).json({ error: "This request has already been handled." });
     await closeCase(client, Number(c.id), "held", reason, req.user!.id);
+    await enqueue(client, { type: "privacy.held", aggregateId: Number(c.id), dedupeKey: `privacy-held:${c.id}`, payload: { userId: Number(c.requester_id) } });
     await audit(client, { actorId: req.user!.id, action: "privacy.hold", resourceType: "support_case", resourceId: c.id, outcome: "success", reason });
     res.json({ status: "held" });
   });

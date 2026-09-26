@@ -49,6 +49,7 @@ In `server`:
 - `npm run test:payfast` — Payfast notification contract tests (TC-11); reset the data afterwards
 - `npm run test:refunds` — refunds capped at what was paid, evidence required, cash disputes (TC-16); reset the data afterwards
 - `npm run test:operations` — failed deliveries, retries, support cancellation with refund, returns and restock, unclaimed jobs, problem reports (TC-15, TC-16, BR-10); reset the data afterwards
+- `npm run test:notifications` — notifications survive a stopped/failing worker and are never duplicated (TC-17); stop any running API first; reset the data afterwards
 - `npm run test:privacy` — download my data, corrections, account closure with lawful holds, retention (TC-20); reset the data afterwards
 - `npm run test:support` — support console: applications, MFA, scopes, suspensions, audit log (TC-02, TC-21, TC-22); reset the data afterwards
 

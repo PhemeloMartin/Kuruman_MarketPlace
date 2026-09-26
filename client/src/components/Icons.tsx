@@ -92,3 +92,10 @@ export const ShieldIcon = () => (
     <path d="M9 12l2 2 4-4" />
   </svg>
 )
+
+export const BellIcon = () => (
+  <svg {...common}>
+    <path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z" />
+    <path d="M10 20a2 2 0 0 0 4 0" />
+  </svg>
+)

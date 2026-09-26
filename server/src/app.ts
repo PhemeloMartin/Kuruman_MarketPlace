@@ -17,6 +17,7 @@ import { supportMoneyRouter } from "./routes/supportMoney";
 import { supportOpsRouter } from "./routes/supportOps";
 import { supportPrivacyRouter } from "./routes/supportPrivacy";
 import { privacyRouter } from "./routes/privacy";
+import { notificationsRouter } from "./routes/notifications";
 import { POLICY } from "./lib/policy";
 
 export const app = express();
@@ -77,6 +78,7 @@ app.use("/api/support/money", supportMoneyRouter);
 app.use("/api/support/ops", supportOpsRouter);
 app.use("/api/support/privacy", supportPrivacyRouter);
 app.use("/api/privacy", privacyRouter);
+app.use("/api/notifications", notificationsRouter);
 app.use("/api/support", supportRouter);
 app.use("/api", paymentsRouter);
 app.use("/api", catalogueRouter);

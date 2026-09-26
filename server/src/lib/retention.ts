@@ -23,6 +23,9 @@ export async function runRetention() {
   );
   // AI suggestion outcomes: 30 days (spec 8.2).
   const ai = await pool.query(`DELETE FROM ai_suggestions WHERE created_at < now() - interval '30 days'`);
+  // Notifications: 30 days (Table 38). Delivered outbox events are only a delivery log: 30 days too.
+  const notes = await pool.query(`DELETE FROM notifications WHERE created_at < now() - interval '30 days'`);
+  const outbox = await pool.query(`DELETE FROM outbox_events WHERE status = 'sent' AND sent_at < now() - interval '30 days'`);
   // Closed cases: keep the decision, erase what people wrote, after 90 days.
   const cases = await pool.query(
     `UPDATE support_cases SET details = '{"erased": true}'
@@ -34,6 +37,7 @@ export async function runRetention() {
     sessionsDeleted: sessions.rowCount ?? 0,
     aiSuggestionsDeleted: ai.rowCount ?? 0,
     caseDetailsErased: cases.rowCount ?? 0,
+    notificationsDeleted: (notes.rowCount ?? 0) + (outbox.rowCount ?? 0),
   };
   if (Object.values(counts).some((n) => n > 0)) {
     await audit(pool, { actorId: null, action: "retention.run", resourceType: "system", resourceId: "retention", outcome: "success", changes: counts });
