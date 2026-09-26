@@ -186,7 +186,14 @@ Authenticator on your phone (delete the old "KurumanMarketPlace" entry in the ap
 5. **Audit log** → the approval, suspension and reinstatement, each with who, when and why.
    **Say:** "The audit log is append-only. It's not just that there's no edit button — a database trigger
    refuses any UPDATE or DELETE on that table." (FR-22) The `test:support` run proves it.
-6. Optional: sign in as **Sipho (071 000 0007)**, approvals only — there's no Audit log tab, and the server
+6. **Money** (needs a money case — easiest: in section 4 step 7 tap **Different amount** and enter R65 instead of
+   R75, which opens a cash case). Show the case: collected R75, received R65, **missing R10**.
+   **Say:** "There's deliberately no write-off button. The shortfall stays in the seller's 'cash still to reach you'
+   until support confirms it was handed over." Tap **Add a note**, then **Rest handed over** with a reason.
+   For refunds, point to the `test:refunds` run: "Refunds are separate records, capped at what was captured —
+   the spec's example, R50 then a conflicting R50 against R75, is refused — and a refund only counts as done with
+   Payfast's refund reference as evidence. The database enforces that too." (FR-16, TC-16, BR-11)
+7. Optional: sign in as **Sipho (071 000 0007)**, approvals only — there's no Audit log tab, and the server
    refuses the audit route with 403. **Say:** "Staff only get the scopes their job needs." (TC-21)
 
 ---
@@ -212,7 +219,14 @@ npm run test:support
 → 19 checks: sign-up can't create staff, MFA required and codes not reusable, scopes enforced, applications,
 suspension, and the database refusing to edit audit history: **TC-02 / TC-21 / TC-22: 19 checks PASSED**.
 
-(`test:payfast` and `test:support` change demo data — reset the data afterwards if you'll demo again.)
+```
+npm run test:refunds
+```
+→ 14 checks: a second payment opens a refund case, R50 + conflicting R50 against R75 refused, two simultaneous
+refunds → exactly one accepted, no "refunded" without Payfast's reference, cash shortfall resolved:
+**TC-16: 14 checks PASSED**.
+
+(`test:payfast`, `test:support` and `test:refunds` change demo data — reset the data afterwards if you'll demo again.)
 
 ---
 

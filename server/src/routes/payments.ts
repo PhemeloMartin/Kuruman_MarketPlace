@@ -12,6 +12,7 @@ import {
   payfastConfig,
 } from "../lib/payfast";
 import { recordStatusChange } from "../lib/stock";
+import { openOrderCase } from "../lib/cases";
 
 export const paymentsRouter = Router();
 
@@ -194,7 +195,16 @@ paymentsRouter.post(
         await logEvent({ ...meta, outcome: "applied" });
       } else {
         // Real money that can't be applied (order expired/cancelled, or already paid):
-        // never resurrect the order, never ignore the money - it needs a refund (spec 5.6).
+        // never resurrect the order, never ignore the money - it needs a refund (spec 5.6),
+        // so a refund case for support is opened in the same transaction.
+        const consumer = await client.query("SELECT consumer_id FROM orders WHERE id = $1", [order.id]);
+        await openOrderCase(client, {
+          type: "refund",
+          orderId: order.id,
+          requesterId: Number(consumer.rows[0].consumer_id),
+          details: { why: alreadyPaid.rowCount ? "second_payment" : "late_payment" },
+          actorId: null,
+        });
         await client.query("COMMIT");
         await logEvent({ ...meta, outcome: "unapplied_needs_refund" });
       }

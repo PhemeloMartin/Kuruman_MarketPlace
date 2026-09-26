@@ -1,6 +1,7 @@
 import { Request, Response, Router } from "express";
 import rateLimit from "express-rate-limit";
 import { PoolClient } from "pg";
+import { closeCase, inTransaction, reasonFrom } from "./supportShared";
 import { pool } from "../db";
 import { requireRole, requireStaff } from "../auth/session";
 import { audit } from "../lib/audit";
@@ -96,35 +97,11 @@ supportRouter.post("/mfa/verify", requireRole("support"), mfaLimiter, async (req
 // Shared helpers
 // ---------------------------------------------------------------------------
 
-// Every support decision needs a reason a colleague or auditor can read later.
-function reasonFrom(req: Request, res: Response): string | null {
-  const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
-  if (reason.length < 5 || reason.length > 500) {
-    res.status(422).json({ error: "Write a short reason for this decision.", fields: { reason: "5 to 500 characters." } });
-    return null;
-  }
-  return reason;
-}
-
-// Runs `work` in a transaction; any error rolls everything back, including the audit row.
-async function inTransaction(work: (client: PoolClient) => Promise<void>) {
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    await work(client);
-    await client.query("COMMIT");
-  } catch (err) {
-    await client.query("ROLLBACK");
-    throw err;
-  } finally {
-    client.release();
-  }
-}
-
 // GET /api/support/overview - how many open items in each queue this person may see.
 supportRouter.get("/overview", requireStaff(), async (req, res) => {
   const r = await pool.query(
-    `SELECT count(*) FILTER (WHERE case_type IN ('seller_application', 'courier_application'))::int AS applications
+    `SELECT count(*) FILTER (WHERE case_type IN ('seller_application', 'courier_application'))::int AS applications,
+            count(*) FILTER (WHERE case_type IN ('refund', 'cash_dispute'))::int AS money
        FROM support_cases WHERE status = 'open'`
   );
   res.json({ scopes: req.user!.staffScopes, counts: r.rows[0] });
@@ -183,15 +160,6 @@ async function lockOpenApplication(client: PoolClient, req: Request, res: Respon
   }
   const u = await client.query("SELECT id, role FROM users WHERE id = $1 FOR UPDATE", [app.requester_id]);
   return { app, applicant: u.rows[0] };
-}
-
-async function closeCase(client: PoolClient, caseId: number, resolution: string, reason: string, staffId: number) {
-  await client.query(
-    `UPDATE support_cases SET status = 'closed', resolution = $2, resolution_reason = $3,
-            resolved_by = $4, closed_at = now()
-      WHERE id = $1`,
-    [caseId, resolution, reason, staffId]
-  );
 }
 
 // POST /api/support/applications/:id/approve { reason }

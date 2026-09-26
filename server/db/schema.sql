@@ -2,6 +2,7 @@
 -- Money is always stored as whole cents (INTEGER), never as decimals.
 -- WARNING: running this file drops and re-creates all tables (development only).
 
+DROP TABLE IF EXISTS refunds CASCADE;
 DROP TABLE IF EXISTS audit_events CASCADE;
 DROP TABLE IF EXISTS support_cases CASCADE;
 DROP TABLE IF EXISTS courier_profiles CASCADE;
@@ -298,7 +299,11 @@ CREATE INDEX idx_history_to_status ON order_status_history(to_status, created_at
 CREATE TABLE support_cases (
   id                BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   case_type         VARCHAR(24) NOT NULL
-                    CHECK (case_type IN ('seller_application', 'courier_application')),
+                    CHECK (case_type IN (
+                      'seller_application', 'courier_application',
+                      'refund',        -- verified money that must go back (late/second payment, cancelled paid order)
+                      'cash_dispute'   -- a seller received a different amount of cash than was collected
+                    )),
   status            VARCHAR(12) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
   requester_id      BIGINT      NOT NULL REFERENCES users(id),
   order_id          BIGINT      REFERENCES orders(id),
@@ -311,6 +316,9 @@ CREATE TABLE support_cases (
   CHECK ((status = 'open') = (closed_at IS NULL))
 );
 CREATE INDEX idx_cases_open ON support_cases(case_type) WHERE status = 'open';
+-- At most one open case of each kind per order: a second problem joins the open case.
+CREATE UNIQUE INDEX one_open_case_per_order ON support_cases(order_id, case_type)
+  WHERE status = 'open' AND order_id IS NOT NULL;
 -- A person can only have one application waiting at a time.
 CREATE UNIQUE INDEX one_open_application_per_user ON support_cases(requester_id)
   WHERE status = 'open' AND case_type IN ('seller_application', 'courier_application');
@@ -345,3 +353,29 @@ CREATE TRIGGER audit_events_no_update_or_delete
 CREATE TRIGGER audit_events_no_truncate
   BEFORE TRUNCATE ON audit_events
   FOR EACH STATEMENT EXECUTE FUNCTION refuse_audit_change();
+
+-- Money going back to a customer (spec Table 72, TX-04). A refund is its own record: it never
+-- edits or deletes the payment it refunds, so the history of what happened stays complete.
+--   pending   - support has started it and the amount is reserved
+--   succeeded - done, with the provider's refund reference as evidence
+--   failed    - didn't happen; the amount can be refunded again
+-- purpose: unapplied_capture = money that was never applied to the order (late/second payment);
+--          order_refund      = money for an order that was applied and is being given back.
+CREATE TABLE refunds (
+  id                 BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  order_id           BIGINT       NOT NULL REFERENCES orders(id),
+  payment_id         BIGINT       NOT NULL REFERENCES payments(id),
+  purpose            VARCHAR(20)  NOT NULL CHECK (purpose IN ('unapplied_capture', 'order_refund')),
+  amount_cents       INTEGER      NOT NULL CHECK (amount_cents > 0),
+  status             VARCHAR(10)  NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'succeeded', 'failed')),
+  provider_reference VARCHAR(100),
+  reason             TEXT         NOT NULL,
+  requested_by       BIGINT       NOT NULL REFERENCES users(id),
+  completed_by       BIGINT       REFERENCES users(id),
+  requested_at       TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  completed_at       TIMESTAMPTZ,
+  -- "Succeeded" needs evidence: nobody can mark money as returned without the provider's reference.
+  CHECK (status <> 'succeeded' OR provider_reference IS NOT NULL),
+  CHECK ((status = 'pending') = (completed_at IS NULL))
+);
+CREATE INDEX idx_refunds_payment ON refunds(payment_id);

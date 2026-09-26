@@ -19,6 +19,8 @@ interface OrderSummary {
   courierName: string | null
   paymentDueAt: string | null
   paymentStatus: 'pending' | 'paid' | 'unapplied' | 'failed' | 'refunded' | null
+  refundedCents: number
+  refundPendingCents: number
   statusReason: string | null
   items: { name: string; unitLabel: string; quantity: number }[]
 }
@@ -237,11 +239,15 @@ export function OrdersPage() {
                   <p className="fine-print">You’ll pay on Payfast’s secure page. We never see your card details.</p>
                 </div>
               )}
-              {o.status === 'expired' && o.paymentStatus === 'unapplied' && (
+              {o.status === 'expired' && o.paymentStatus === 'unapplied' && o.refundPendingCents === 0 && (
                 <p className="fine-print">
                   Your payment arrived after the time ran out. It is recorded and will be refunded.
                 </p>
               )}
+              {o.refundPendingCents > 0 && (
+                <p className="fine-print">Refund of {formatRand(o.refundPendingCents)} is being processed by Payfast.</p>
+              )}
+              {o.refundedCents > 0 && <p className="fine-print">✓ {formatRand(o.refundedCents)} refunded to you.</p>}
               {o.status === 'confirmed' && (
                 <p className="fine-print">
                   The seller is preparing your order.{o.paymentMethod === 'cash' && ' Cash still due.'}

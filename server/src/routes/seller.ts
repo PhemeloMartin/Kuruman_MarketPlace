@@ -6,6 +6,7 @@ import { computeKpis } from "../lib/kpi";
 import { checkHandoverCode } from "../lib/handover";
 import { predictCategory } from "../lib/aiClient";
 import { POLICY } from "../lib/policy";
+import { openOrderCase } from "../lib/cases";
 import { consumeReservation, recordStatusChange, releaseReservation } from "../lib/stock";
 
 // Everything here is for an approved entrepreneur, and only ever about THEIR business.
@@ -349,6 +350,16 @@ sellerRouter.post("/cash/:orderId/acknowledge", async (req, res) => {
         WHERE id = $1`,
       [receipt.id, received, status, req.user!.id]
     );
+    // A shortfall goes to support to resolve with the courier (spec BR-11: investigate, never write off).
+    if (status === "disputed") {
+      await openOrderCase(client, {
+        type: "cash_dispute",
+        orderId,
+        requesterId: req.user!.id,
+        details: { collectedCents: receipt.collected_cents, receivedCents: received },
+        actorId: req.user!.id,
+      });
+    }
     await client.query("COMMIT");
     res.json({ status });
   } catch (err) {

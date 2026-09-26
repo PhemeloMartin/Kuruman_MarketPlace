@@ -12,7 +12,8 @@
     "db:seed": "tsx src/scripts/seed.ts",
     "test:kpi": "tsx src/scripts/testKpis.ts",
     "test:payfast": "tsx src/scripts/testPayfast.ts",
-    "test:support": "tsx src/scripts/testSupport.ts"
+    "test:support": "tsx src/scripts/testSupport.ts",
+    "test:refunds": "tsx src/scripts/testRefunds.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

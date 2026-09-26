@@ -19,6 +19,9 @@ const FILTERS = [
   { value: 'application.', label: 'Applications' },
   { value: 'business.', label: 'Shops' },
   { value: 'courier.', label: 'Couriers' },
+  { value: 'refund.', label: 'Refunds' },
+  { value: 'cash.', label: 'Cash' },
+  { value: 'case.', label: 'Cases and notes' },
   { value: 'mfa.', label: 'Authenticator codes' },
   { value: 'auth.', label: 'Sign-ins' },
 ]

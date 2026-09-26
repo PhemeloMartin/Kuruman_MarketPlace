@@ -6,6 +6,7 @@ import type { StaffScope } from '../../lib/types'
 import { AccountsTab } from './AccountsTab'
 import { ApplicationsTab } from './ApplicationsTab'
 import { AuditTab } from './AuditTab'
+import { MoneyTab } from './MoneyTab'
 
 // Restricted support console (spec UI-13). The server checks every request again - these
 // screens only decide what to show.
@@ -152,6 +153,7 @@ function MfaStep() {
 const TABS: { key: string; label: string; scope: StaffScope }[] = [
   { key: 'applications', label: 'Applications', scope: 'approvals' },
   { key: 'accounts', label: 'Accounts', scope: 'approvals' },
+  { key: 'money', label: 'Money', scope: 'payments' },
   { key: 'audit', label: 'Audit log', scope: 'audit' },
 ]
 
@@ -172,6 +174,7 @@ function Console({ scopes }: { scopes: StaffScope[] }) {
       </div>
       {tab === 'applications' && <ApplicationsTab />}
       {tab === 'accounts' && <AccountsTab />}
+      {tab === 'money' && <MoneyTab />}
       {tab === 'audit' && <AuditTab />}
     </>
   )
