@@ -7,7 +7,7 @@ import { audit } from "./audit";
 // one_open_case_per_order makes the INSERT do nothing, and support sees one case per problem.
 export async function openOrderCase(
   client: PoolClient,
-  c: { type: "refund" | "cash_dispute"; orderId: number; requesterId: number; details: Record<string, unknown>; actorId: number | null }
+  c: { type: "refund" | "cash_dispute" | "fulfilment" | "order_problem"; orderId: number; requesterId: number; details: Record<string, unknown>; actorId: number | null }
 ): Promise<void> {
   const r = await client.query(
     `INSERT INTO support_cases (case_type, requester_id, order_id, details)

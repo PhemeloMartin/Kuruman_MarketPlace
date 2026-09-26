@@ -75,8 +75,10 @@ export function SellerDashboardPage() {
 
   const k = dashboard.kpis
   const waiting = orders.filter((o) => o.status === 'pending_acceptance')
-  const active = orders.filter((o) => ['awaiting_payment', 'confirmed', 'ready', 'out_for_delivery'].includes(o.status))
-  const recent = orders.filter((o) => ['completed', 'declined', 'cancelled', 'expired'].includes(o.status))
+  const active = orders.filter(
+    (o) => ['awaiting_payment', 'confirmed', 'ready', 'out_for_delivery', 'delivery_failed'].includes(o.status) || o.delivery?.awaitingReturn,
+  )
+  const recent = orders.filter((o) => ['completed', 'declined', 'cancelled', 'expired'].includes(o.status) && !o.delivery?.awaitingReturn)
 
   return (
     <main className="page seller">
@@ -203,9 +205,10 @@ const PILL: Record<string, { label: string; tone: string }> = {
   confirmed: { label: 'Confirmed', tone: 'good' },
   ready: { label: 'Ready', tone: 'good' },
   out_for_delivery: { label: 'With courier', tone: 'good' },
+  delivery_failed: { label: 'Not delivered', tone: 'bad' },
   completed: { label: 'Completed', tone: 'good' },
   declined: { label: 'Declined', tone: 'bad' },
-  cancelled: { label: 'Cancelled by customer', tone: 'bad' },
+  cancelled: { label: 'Cancelled', tone: 'bad' },
   expired: { label: 'Expired', tone: 'bad' },
 }
 
@@ -357,6 +360,27 @@ function OrderCard({ order: o, onChanged }: { order: SellerOrder; onChanged: () 
       )}
       {o.status === 'out_for_delivery' && o.delivery?.courierName && (
         <p className="fine-print">{o.delivery.courierName} is delivering it.</p>
+      )}
+      {o.status === 'delivery_failed' && (
+        <p className="notice" style={{ marginTop: 8 }}>
+          {o.delivery?.courierName} couldn’t hand it over. Support is deciding: another delivery attempt, or cancel.
+        </p>
+      )}
+      {o.delivery?.awaitingReturn && (
+        <div style={{ marginTop: 8 }}>
+          <p className="notice">
+            Cancelled after a failed delivery. {o.delivery.courierName} is bringing the goods back. When you have them,
+            check them:
+          </p>
+          <div className="btn-row" style={{ marginTop: 8 }}>
+            <button type="button" className="btn btn-primary" disabled={busy} onClick={() => act('returned', { restock: true })}>
+              Back in stock
+            </button>
+            <button type="button" className="btn btn-outline" disabled={busy} onClick={() => act('returned', { restock: false })}>
+              Can’t resell
+            </button>
+          </div>
+        </div>
       )}
 
       {error && (

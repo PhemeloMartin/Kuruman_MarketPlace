@@ -101,7 +101,8 @@ supportRouter.post("/mfa/verify", requireRole("support"), mfaLimiter, async (req
 supportRouter.get("/overview", requireStaff(), async (req, res) => {
   const r = await pool.query(
     `SELECT count(*) FILTER (WHERE case_type IN ('seller_application', 'courier_application'))::int AS applications,
-            count(*) FILTER (WHERE case_type IN ('refund', 'cash_dispute'))::int AS money
+            count(*) FILTER (WHERE case_type IN ('refund', 'cash_dispute'))::int AS money,
+            count(*) FILTER (WHERE case_type IN ('fulfilment', 'order_problem'))::int AS operations
        FROM support_cases WHERE status = 'open'`
   );
   res.json({ scopes: req.user!.staffScopes, counts: r.rows[0] });

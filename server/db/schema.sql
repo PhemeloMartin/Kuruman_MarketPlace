@@ -137,6 +137,7 @@ CREATE TABLE orders (
                        'confirmed',           -- accepted (cash) or paid (online)
                        'ready',               -- packed, ready for pickup / courier
                        'out_for_delivery',
+                       'delivery_failed',     -- courier couldn't hand it over; support decides what next
                        'completed',
                        'declined',
                        'cancelled',
@@ -191,7 +192,7 @@ CREATE TABLE deliveries (
   order_id              BIGINT      NOT NULL UNIQUE REFERENCES orders(id),
   courier_id            BIGINT      REFERENCES users(id),      -- NULL until a courier claims it
   status                VARCHAR(20) NOT NULL DEFAULT 'open'
-                        CHECK (status IN ('open', 'claimed', 'collected', 'delivered', 'failed')),
+                        CHECK (status IN ('open', 'claimed', 'collected', 'delivered', 'failed', 'cancelled')),
   -- The seller confirms handing the goods to THIS courier; collection needs it (spec FR-15).
   released_to_courier_id BIGINT     REFERENCES users(id),
   released_at           TIMESTAMPTZ,
@@ -201,8 +202,13 @@ CREATE TABLE deliveries (
   claimed_at            TIMESTAMPTZ,
   collected_at          TIMESTAMPTZ,
   delivered_at          TIMESTAMPTZ,
+  -- Failed handover (spec FR-15): why, and when the goods got back to the seller.
+  failed_reason         VARCHAR(40),
+  failed_at             TIMESTAMPTZ,
+  returned_at           TIMESTAMPTZ,
   created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CHECK (status = 'open' OR courier_id IS NOT NULL)
+  -- Every job past "open" has a courier - except one cancelled before anyone took it.
+  CHECK (status IN ('open', 'cancelled') OR courier_id IS NOT NULL)
 );
 CREATE INDEX idx_deliveries_status ON deliveries(status);
 
@@ -302,7 +308,9 @@ CREATE TABLE support_cases (
                     CHECK (case_type IN (
                       'seller_application', 'courier_application',
                       'refund',        -- verified money that must go back (late/second payment, cancelled paid order)
-                      'cash_dispute'   -- a seller received a different amount of cash than was collected
+                      'cash_dispute',  -- a seller received a different amount of cash than was collected
+                      'fulfilment',    -- delivery failed, or no courier took the job in time (BR-10)
+                      'order_problem'  -- the customer reported a problem after receiving the order (FR-16)
                     )),
   status            VARCHAR(12) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
   requester_id      BIGINT      NOT NULL REFERENCES users(id),

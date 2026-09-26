@@ -55,7 +55,13 @@ export interface SellerOrder {
   createdAt: string
   updatedAt: string
   customerName: string
-  delivery: { status: string; courierName: string | null; released: boolean } | null
+  delivery: {
+    status: string
+    courierName: string | null
+    released: boolean
+    failedReason: string | null
+    awaitingReturn: boolean // cancelled after a failed delivery; goods on their way back
+  } | null
   cashStatus: 'collected' | 'remitted' | 'disputed' | null
   items: { name: string; unitLabel: string; quantity: number }[]
 }

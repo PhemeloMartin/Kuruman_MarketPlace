@@ -4,6 +4,8 @@ import { pool } from "../db";
 import { requireRole } from "../auth/session";
 import { checkHandoverCode } from "../lib/handover";
 import { consumeReservation, recordStatusChange } from "../lib/stock";
+import { openOrderCase } from "../lib/cases";
+import { POLICY } from "../lib/policy";
 
 // Courier flow (spec FR-14, FR-15, TX-03). Only approved couriers get here.
 export const courierRouter = Router();
@@ -52,7 +54,7 @@ courierRouter.get("/jobs", requireActiveCourier, async (_req, res) => {
 courierRouter.get("/my-jobs", async (req, res) => {
   const r = await pool.query(
     `SELECT d.id, d.status, d.fee_cents, d.cash_to_collect_cents, d.released_to_courier_id = $1 AS released,
-            d.claimed_at, d.collected_at, d.delivered_at,
+            d.claimed_at, d.collected_at, d.delivered_at, d.failed_reason, d.returned_at, o.status AS order_status,
             o.order_number, o.delivery_address, o.notes,
             u.display_name AS customer_name, u.phone AS customer_phone,
             b.name AS business_name, b.area AS business_area, b.pickup_address, b.phone AS business_phone,
@@ -65,13 +67,18 @@ courierRouter.get("/my-jobs", async (req, res) => {
        JOIN businesses b ON b.id = o.business_id
        LEFT JOIN cash_receipts c ON c.order_id = o.id
       WHERE d.courier_id = $1
-        AND (d.status IN ('claimed', 'collected') OR d.delivered_at > now() - interval '3 days')
+        AND (d.status IN ('claimed', 'collected')
+             OR d.delivered_at > now() - interval '3 days'
+             OR (d.status = 'failed' AND d.returned_at IS NULL))   -- goods still to take back
       ORDER BY d.status = 'delivered', d.claimed_at DESC`,
     [req.user!.id]
   );
   res.json(
     r.rows.map((j) => {
       const active = j.status === "claimed" || j.status === "collected";
+      // After a failed delivery the courier needs the seller's address to bring the goods back -
+      // but no longer the customer's details.
+      const returning = j.status === "failed" && !j.returned_at;
       return {
         id: Number(j.id),
         status: j.status,
@@ -83,8 +90,8 @@ courierRouter.get("/my-jobs", async (req, res) => {
         business: {
           name: j.business_name,
           area: j.business_area,
-          pickupAddress: active ? j.pickup_address : null,
-          phone: active ? j.business_phone : null,
+          pickupAddress: active || returning ? j.pickup_address : null,
+          phone: active || returning ? j.business_phone : null,
         },
         customer: active
           ? { name: j.customer_name, phone: j.customer_phone, address: j.delivery_address, notes: j.notes }
@@ -93,6 +100,8 @@ courierRouter.get("/my-jobs", async (req, res) => {
         claimedAt: j.claimed_at,
         collectedAt: j.collected_at,
         deliveredAt: j.delivered_at,
+        failedReason: j.failed_reason,
+        orderStatus: j.order_status, // delivery_failed = support deciding; cancelled = bring the goods back
       };
     })
   );
@@ -203,6 +212,49 @@ courierRouter.post("/jobs/:id/deliver", (req, res) =>
     }
     await recordStatusChange(client, job.order.id, "out_for_delivery", "completed", req.user!.id, "Delivered by courier");
     res.json({ status: "delivered" });
+  })
+);
+
+// Plain words for the customer's order history.
+const FAIL_TEXT: Record<string, string> = {
+  customer_absent: "Nobody was there to receive the order",
+  wrong_address: "The courier couldn't find the address",
+  customer_refused: "The order was refused at the door",
+  no_payment: "The cash payment couldn't be collected",
+};
+
+// POST /api/courier/jobs/:id/fail { reason } - the order couldn't be handed over (spec FR-15).
+// It is NOT completed: the courier keeps the goods, the customer's code stops working, and
+// support decides whether to try again or cancel (and refund if paid).
+courierRouter.post("/jobs/:id/fail", (req, res) =>
+  withMyJob(req, res, async (client, job) => {
+    const reason = req.body?.reason;
+    if (!POLICY.deliveryFailReasons.includes(reason)) {
+      await client.query("ROLLBACK");
+      res.status(422).json({ error: "Choose why the delivery didn't work." });
+      return;
+    }
+    if (job.status !== "collected" || job.order.status !== "out_for_delivery") {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "Only an order you're delivering can be marked as not delivered." });
+      return;
+    }
+    await client.query("UPDATE deliveries SET status = 'failed', failed_reason = $2, failed_at = now() WHERE id = $1", [job.id, reason]);
+    await client.query(
+      `UPDATE orders SET status = 'delivery_failed', handover_code_hash = NULL, handover_code_expires_at = NULL,
+              updated_at = now() WHERE id = $1`,
+      [job.order.id]
+    );
+    await recordStatusChange(client, job.order.id, "out_for_delivery", "delivery_failed", req.user!.id, FAIL_TEXT[reason]);
+    const o = await client.query("SELECT consumer_id FROM orders WHERE id = $1", [job.order.id]);
+    await openOrderCase(client, {
+      type: "fulfilment",
+      orderId: job.order.id,
+      requesterId: Number(o.rows[0].consumer_id),
+      details: { why: "delivery_failed", reason },
+      actorId: req.user!.id,
+    });
+    res.json({ status: "failed" });
   })
 );
 

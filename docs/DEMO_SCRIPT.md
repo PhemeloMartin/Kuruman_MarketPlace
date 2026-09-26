@@ -193,7 +193,14 @@ Authenticator on your phone (delete the old "KurumanMarketPlace" entry in the ap
    For refunds, point to the `test:refunds` run: "Refunds are separate records, capped at what was captured —
    the spec's example, R50 then a conflicting R50 against R75, is refused — and a refund only counts as done with
    Payfast's refund reference as evidence. The database enforces that too." (FR-16, TC-16, BR-11)
-7. Optional: sign in as **Sipho (071 000 0007)**, approvals only — there's no Audit log tab, and the server
+7. **Deliveries** (optional, 2 minutes): repeat section 4 but at the last step the courier taps **Couldn’t
+   deliver?** → *Nobody was there* → **Report not delivered**.
+   **Say:** "A failed handover is never marked delivered. The customer's code stops working, and support gets a case."
+   In the console → **Deliveries** → **Show contact details** ("even looking at phone numbers is audited") →
+   **Cancel order** with a reason. The courier now sees *Take the goods back*, and the seller chooses **Back in
+   stock** or **Can’t resell**. **Say:** "Returned goods are only restocked after the seller inspects them. If the
+   customer had paid online, a refund case would open automatically." (FR-15, UC-13, BR-10)
+8. Optional: sign in as **Sipho (071 000 0007)**, approvals only — there's no Audit log tab, and the server
    refuses the audit route with 403. **Say:** "Staff only get the scopes their job needs." (TC-21)
 
 ---
@@ -220,13 +227,20 @@ npm run test:support
 suspension, and the database refusing to edit audit history: **TC-02 / TC-21 / TC-22: 19 checks PASSED**.
 
 ```
+npm run test:operations
+```
+→ 15 checks: failed delivery needs a reason and opens a case, retry, cancel of a paid order opens a refund case,
+returned goods restocked only on the seller's say-so, unclaimed job flagged once after 30 min, problem reports:
+**Operations: 15 checks PASSED**.
+
+```
 npm run test:refunds
 ```
 → 14 checks: a second payment opens a refund case, R50 + conflicting R50 against R75 refused, two simultaneous
 refunds → exactly one accepted, no "refunded" without Payfast's reference, cash shortfall resolved:
 **TC-16: 14 checks PASSED**.
 
-(`test:payfast`, `test:support` and `test:refunds` change demo data — reset the data afterwards if you'll demo again.)
+(`test:payfast`, `test:support`, `test:refunds` and `test:operations` change demo data — reset the data afterwards if you'll demo again.)
 
 ---
 
@@ -238,8 +252,10 @@ refunds → exactly one accepted, no "refunded" without Payfast's reference, cas
   The first version scored 0.66; I changed the tuning method to grouped cross-validation and I disclose that in the model card."
 - **Languages:** "Phase 1 uses Google Translate. Payment and legal wording must be reviewed by fluent speakers before real use (NFR-09)."
 - **Payments:** "Sandbox only. The design doesn't claim one merchant account can collect for every seller in production."
-- **Scope still to build:** refunds and returns, failed-delivery handling (support console stages 2 and 3),
-  privacy requests, and the remaining tables.
+- **Scope still to build:** privacy requests (FR-20), notifications (FR-17), reviewed translations, hosting.
+- **Refunds are recorded, not sent automatically:** staff do the refund in Payfast's dashboard and record its
+  reference. Calling Payfast's refund API directly is the documented next step. Cash refunds are arranged with the
+  seller and recorded as a note.
 - **One role per account:** the spec allows one person to be both seller and courier; this MVP keeps one role
   per account (a seller or courier can still buy). A `user_roles` table is the documented upgrade.
 - **MFA reset:** a support member who loses their phone is reset by an administrator in the database, deliberately

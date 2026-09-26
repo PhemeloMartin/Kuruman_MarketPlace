@@ -1,4 +1,6 @@
 import { pool } from "../db";
+import { openOrderCase } from "./cases";
+import { POLICY } from "./policy";
 import { recordStatusChange, releaseReservation } from "./stock";
 
 // Orders the seller didn't answer in time become "expired" and their stock is released (BR-06, FR-10).
@@ -52,11 +54,49 @@ export async function expireOverdueOrders(): Promise<number> {
   return expired;
 }
 
+// BR-10: a delivery job nobody has claimed within 30 minutes goes to support. We never promise
+// the customer a courier; support offers a new time or a cancellation. Each order is flagged
+// once only (NOT EXISTS), even after support closes the case.
+export async function flagUnclaimedDeliveries(): Promise<number> {
+  const due = await pool.query(
+    `SELECT o.id, o.consumer_id
+       FROM deliveries d JOIN orders o ON o.id = d.order_id
+      WHERE d.status = 'open' AND o.status = 'ready'
+        AND d.created_at < now() - make_interval(mins => $1)
+        AND NOT EXISTS (SELECT 1 FROM support_cases c
+                         WHERE c.order_id = o.id AND c.case_type = 'fulfilment' AND c.details->>'why' = 'no_courier')
+      ORDER BY o.id LIMIT 100`,
+    [POLICY.courierClaimMinutes]
+  );
+  for (const row of due.rows) {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await openOrderCase(client, {
+        type: "fulfilment",
+        orderId: Number(row.id),
+        requesterId: Number(row.consumer_id),
+        details: { why: "no_courier" },
+        actorId: null,
+      });
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      console.error("Could not flag unclaimed delivery", row.id, err);
+    } finally {
+      client.release();
+    }
+  }
+  return due.rowCount ?? 0;
+}
+
 // Checks once a minute while the server is running.
 export function startExpiryTimer(): void {
   const run = () =>
     expireOverdueOrders()
       .then((n) => n > 0 && console.log(`Expired ${n} unanswered order(s).`))
+      .then(() => flagUnclaimedDeliveries())
+      .then((n) => n > 0 && console.log(`Sent ${n} unclaimed delivery job(s) to support.`))
       .catch((err) => console.error("Expiry check failed:", err));
   run();
   setInterval(run, 60_000).unref();

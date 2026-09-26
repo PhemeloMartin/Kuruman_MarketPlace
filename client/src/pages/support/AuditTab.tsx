@@ -22,6 +22,7 @@ const FILTERS = [
   { value: 'refund.', label: 'Refunds' },
   { value: 'cash.', label: 'Cash' },
   { value: 'case.', label: 'Cases and notes' },
+  { value: 'order.', label: 'Orders (cancel, retry, returns)' },
   { value: 'mfa.', label: 'Authenticator codes' },
   { value: 'auth.', label: 'Sign-ins' },
 ]

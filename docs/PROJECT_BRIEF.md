@@ -182,7 +182,7 @@ open the console: scan the QR code shown, then enter the 6-digit code.
 - [x] Cash from couriers: courier collection and seller confirmation are separate events;
       a different amount is recorded as disputed and stays visible as unreconciled cash
 - [x] Disputed-cash resolution (support console, stage 2)
-- [ ] Failed delivery / returns (support console, stage 3)
+- [x] Failed delivery / returns (support console, stage 3)
 - [x] AI category assistant (ai/): 720-text student-authored dataset, grouped split, grouped CV, keyword and
       majority baselines, model card with artefact hash, private token-protected service, seller confirms every
       suggestion; category-v2 meets 5 of 6 spec 8.3 targets (macro-F1 0.71 vs 0.75 - needs better data)
@@ -199,5 +199,9 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       refunds are separate records, capped at the captured amount under a row lock, and only "succeeded" with
       Payfast's refund reference (also a database CHECK); cash shortfalls stay visible until handed over (no
       write-off); notes kept in the audit log; TC-16 tests (`npm run test:refunds`, 14 checks)
-- [ ] Support console, stage 3: failed deliveries, unclaimed jobs, support cancellation
+- [x] Support console, stage 3 (operations): courier reports "not delivered" with a reason (order becomes
+      delivery_failed, code stops working, case opens); support tries again or cancels (paid -> refund case
+      automatically); courier returns goods, seller inspects and chooses restock; jobs unclaimed for 30 min go to
+      support once (BR-10); customers report problems for 7 days after completion; viewing phone numbers is
+      audited; tests `npm run test:operations` (15 checks)
 - [ ] Privacy requests, notifications, reviewed translations, remaining tables, hosting

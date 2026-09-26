@@ -7,7 +7,8 @@ import { checkHandoverCode } from "../lib/handover";
 import { predictCategory } from "../lib/aiClient";
 import { POLICY } from "../lib/policy";
 import { openOrderCase } from "../lib/cases";
-import { consumeReservation, recordStatusChange, releaseReservation } from "../lib/stock";
+import { consumeReservation, recordStatusChange, releaseReservation, returnToStock } from "../lib/stock";
+import { audit } from "../lib/audit";
 
 // Everything here is for an approved entrepreneur, and only ever about THEIR business.
 // The business is looked up from the session user - never taken from the request (BR-13).
@@ -71,6 +72,9 @@ sellerRouter.get("/orders", async (req, res) => {
             u.display_name AS customer_name,
             d.status AS delivery_status, cu.display_name AS courier_name,
             d.released_to_courier_id IS NOT NULL AND d.released_to_courier_id = d.courier_id AS released,
+            d.failed_reason,
+            -- Cancelled after a failed delivery: the courier is bringing the goods back.
+            (d.status = 'failed' AND d.returned_at IS NULL AND o.status = 'cancelled') AS awaiting_return,
             cr.status AS cash_status,
             (SELECT json_agg(json_build_object('name', i.product_name, 'unitLabel', i.unit_label,
                                                'quantity', i.quantity) ORDER BY i.id)
@@ -81,7 +85,8 @@ sellerRouter.get("/orders", async (req, res) => {
        LEFT JOIN users cu ON cu.id = d.courier_id
        LEFT JOIN cash_receipts cr ON cr.order_id = o.id
       WHERE o.business_id = $1
-        AND (o.status IN ('pending_acceptance', 'awaiting_payment', 'confirmed', 'ready', 'out_for_delivery')
+        AND (o.status IN ('pending_acceptance', 'awaiting_payment', 'confirmed', 'ready', 'out_for_delivery', 'delivery_failed')
+             OR (d.status = 'failed' AND d.returned_at IS NULL)
              OR o.updated_at > now() - interval '3 days')
       ORDER BY o.accept_by ASC`,
     [req.business!.id]
@@ -103,7 +108,13 @@ sellerRouter.get("/orders", async (req, res) => {
       // Minimum disclosure: the seller sees the customer's name, not their phone or address.
       customerName: o.customer_name,
       delivery: o.delivery_status
-        ? { status: o.delivery_status, courierName: o.courier_name, released: Boolean(o.released) }
+        ? {
+            status: o.delivery_status,
+            courierName: o.courier_name,
+            released: Boolean(o.released),
+            failedReason: o.failed_reason,
+            awaitingReturn: Boolean(o.awaiting_return),
+          }
         : null,
       cashStatus: o.cash_status,
       items: o.items ?? [],
@@ -279,6 +290,35 @@ sellerRouter.post("/orders/:id/release", (req, res) =>
       return;
     }
     res.json({ status: "released" });
+  })
+);
+
+// Goods back from the courier after support cancelled a failed delivery (spec FR-15, 5.6).
+// The seller inspects them: restock = true puts the units back on sale; false (damaged,
+// perishable gone off) records the return without restocking. Either way it's audited.
+sellerRouter.post("/orders/:id/returned", (req, res) =>
+  withMyOrder(req, res, async (client, order) => {
+    const d = await client.query(
+      "SELECT id FROM deliveries WHERE order_id = $1 AND status = 'failed' AND returned_at IS NULL FOR UPDATE",
+      [order.id]
+    );
+    if (order.status !== "cancelled" || d.rowCount === 0) {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "There are no goods waiting to come back for this order." });
+      return;
+    }
+    const restock = req.body?.restock === true;
+    await client.query("UPDATE deliveries SET returned_at = now() WHERE id = $1", [d.rows[0].id]);
+    if (restock) await returnToStock(client, order.id);
+    await audit(client, {
+      actorId: req.user!.id,
+      action: "order.goods_returned",
+      resourceType: "order",
+      resourceId: order.id,
+      outcome: "success",
+      changes: { restocked: restock },
+    });
+    res.json({ returned: true, restocked: restock });
   })
 );
 

@@ -23,6 +23,16 @@ interface MyJob {
   business: { name: string; area: string; pickupAddress: string | null; phone: string | null }
   customer: { name: string; phone: string; address: string; notes: string | null } | null
   items: { name: string; quantity: number }[]
+  failedReason: string | null
+  orderStatus: string // after a failure: delivery_failed = support deciding, cancelled = take goods back
+}
+
+// Why a delivery didn't work (the server accepts exactly these codes).
+const FAIL_REASONS: Record<string, string> = {
+  customer_absent: 'Nobody was there',
+  wrong_address: 'Couldn’t find the address',
+  customer_refused: 'Customer refused the order',
+  no_payment: 'Customer couldn’t pay the cash',
 }
 
 const REFRESH_MS = 15_000
@@ -99,6 +109,7 @@ export function CourierPage() {
 
   const active = myJobs.filter((j) => j.status === 'claimed' || j.status === 'collected')
   const done = myJobs.filter((j) => j.status === 'delivered')
+  const returning = myJobs.filter((j) => j.status === 'failed')
 
   return (
     <main className="page">
@@ -137,6 +148,34 @@ export function CourierPage() {
           </div>
           {active.map((j) => (
             <ActiveJob key={j.id} job={j} onChanged={load} />
+          ))}
+        </section>
+      )}
+
+      {returning.length > 0 && (
+        <section aria-labelledby="return-heading" style={{ marginBottom: 20 }}>
+          <div className="section-head">
+            <h2 id="return-heading">Not delivered</h2>
+          </div>
+          {returning.map((j) => (
+            <article className="card" key={j.id}>
+              <div className="order-card-head">
+                <strong translate="no">Order {j.orderNumber}</strong>
+                <span className="status-pill bad">{j.failedReason ? FAIL_REASONS[j.failedReason] : 'Not delivered'}</span>
+              </div>
+              {j.orderStatus === 'delivery_failed' ? (
+                <p className="notice" style={{ margin: '8px 0 0' }}>
+                  Keep the goods safe. Support is deciding whether you deliver again or bring them back.
+                </p>
+              ) : (
+                <div className="job-step">
+                  <strong>Take the goods back to {j.business.name}</strong>
+                  <span>{j.business.pickupAddress}</span>
+                  {j.business.phone && <PhoneLink e164={j.business.phone} />}
+                  <span className="fine-print">The order was cancelled. The seller confirms when they have the goods.</span>
+                </div>
+              )}
+            </article>
           ))}
         </section>
       )}
@@ -220,6 +259,8 @@ function ActiveJob({ job: j, onChanged }: { job: MyJob; onChanged: () => void })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [code, setCode] = useState('')
+  const [failing, setFailing] = useState(false)
+  const [failReason, setFailReason] = useState('')
 
   async function act(path: string, body?: unknown) {
     setBusy(true)
@@ -308,6 +349,32 @@ function ActiveJob({ job: j, onChanged }: { job: MyJob; onChanged: () => void })
               </button>
             </div>
           </form>
+          {/* Spec FR-15: a failed handover goes to support - it is never marked as delivered. */}
+          {!failing ? (
+            <button type="button" className="link-btn" style={{ marginTop: 10 }} onClick={() => setFailing(true)}>
+              Couldn’t deliver?
+            </button>
+          ) : (
+            <fieldset className="choice-group" style={{ marginTop: 12 }}>
+              <legend>What happened? Keep the goods – support will tell you what to do next.</legend>
+              <div className="reason-list">
+                {Object.entries(FAIL_REASONS).map(([value, label]) => (
+                  <label key={value} className="choice">
+                    <input type="radio" name={`fail-${j.id}`} checked={failReason === value} onChange={() => setFailReason(value)} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+              <div className="btn-row">
+                <button type="button" className="btn btn-danger" disabled={busy || !failReason} onClick={() => act('fail', { reason: failReason })}>
+                  Report not delivered
+                </button>
+                <button type="button" className="btn btn-outline" onClick={() => setFailing(false)}>
+                  Back
+                </button>
+              </div>
+            </fieldset>
+          )}
         </>
       )}
 

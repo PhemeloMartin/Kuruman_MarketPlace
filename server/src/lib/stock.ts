@@ -50,3 +50,20 @@ export async function recordStatusChange(
     [orderId, from, to, changedBy, reason]
   );
 }
+
+// Goods came back after a cancelled delivery AND the seller checked they can be sold again
+// (spec 5.6: "physical returns are inspected before any restock"). Only then do the units go
+// back on the shelf. The reservation was already consumed at collection, so only stock_qty rises.
+export async function returnToStock(client: PoolClient, orderId: number): Promise<void> {
+  const items = await client.query(
+    "SELECT product_id, quantity FROM order_items WHERE order_id = $1 ORDER BY product_id",
+    [orderId]
+  );
+  for (const item of items.rows) {
+    await client.query("SELECT id FROM products WHERE id = $1 FOR UPDATE", [item.product_id]);
+    await client.query("UPDATE products SET stock_qty = stock_qty + $2, updated_at = now() WHERE id = $1", [
+      item.product_id,
+      item.quantity,
+    ]);
+  }
+}

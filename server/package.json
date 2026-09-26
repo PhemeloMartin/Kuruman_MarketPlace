@@ -13,7 +13,8 @@
     "test:kpi": "tsx src/scripts/testKpis.ts",
     "test:payfast": "tsx src/scripts/testPayfast.ts",
     "test:support": "tsx src/scripts/testSupport.ts",
-    "test:refunds": "tsx src/scripts/testRefunds.ts"
+    "test:refunds": "tsx src/scripts/testRefunds.ts",
+    "test:operations": "tsx src/scripts/testOperations.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

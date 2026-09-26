@@ -21,6 +21,8 @@ interface OrderSummary {
   paymentStatus: 'pending' | 'paid' | 'unapplied' | 'failed' | 'refunded' | null
   refundedCents: number
   refundPendingCents: number
+  problemReported: boolean
+  canReportProblem: boolean
   statusReason: string | null
   items: { name: string; unitLabel: string; quantity: number }[]
 }
@@ -33,6 +35,7 @@ const STATUS: Record<string, { label: string; tone: 'wait' | 'good' | 'bad' }> =
   confirmed: { label: 'Accepted', tone: 'good' },
   ready: { label: 'Ready', tone: 'good' },
   out_for_delivery: { label: 'On the way', tone: 'good' },
+  delivery_failed: { label: 'Not delivered', tone: 'bad' },
   completed: { label: 'Completed', tone: 'good' },
   declined: { label: 'Declined by seller', tone: 'bad' },
   cancelled: { label: 'Cancelled', tone: 'bad' },
@@ -219,6 +222,16 @@ export function OrdersPage() {
               {o.status === 'declined' && o.statusReason && (
                 <p className="fine-print">Seller’s reason: {o.statusReason}</p>
               )}
+              {o.status === 'delivery_failed' && (
+                <p className="fine-print">
+                  {o.statusReason}. Our support team will contact you to arrange another delivery or cancel the order.
+                </p>
+              )}
+              {o.status === 'cancelled' && o.statusReason?.startsWith('Cancelled by support') && (
+                <p className="fine-print">{o.statusReason}</p>
+              )}
+              {o.problemReported && <p className="fine-print">Problem reported. Our support team will contact you.</p>}
+              {o.canReportProblem && <ReportProblem orderId={o.id} onDone={load} />}
               {o.status === 'awaiting_payment' && (
                 <div className="collection-code">
                   <p style={{ margin: '0 0 8px' }}>
@@ -304,5 +317,51 @@ export function OrdersPage() {
         })
       )}
     </main>
+  )
+}
+
+// "Something was wrong with my order" (spec FR-16: later requests go to support as a case).
+function ReportProblem({ orderId, onDone }: { orderId: number; onDone: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [text, setText] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  if (!open) {
+    return (
+      <button type="button" className="link-btn" style={{ marginTop: 6 }} onClick={() => setOpen(true)}>
+        Report a problem
+      </button>
+    )
+  }
+
+  async function send() {
+    setBusy(true)
+    setError(null)
+    try {
+      await api(`/orders/${orderId}/problem`, { method: 'POST', body: { description: text } })
+      onDone()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.')
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="field" style={{ marginTop: 10 }}>
+      <label htmlFor={`problem-${orderId}`}>What went wrong?</label>
+      <div className="input-wrap">
+        <textarea id={`problem-${orderId}`} rows={3} maxLength={500} value={text} onChange={(e) => setText(e.target.value)} />
+      </div>
+      {error && <p className="field-error">{error}</p>}
+      <div className="btn-row" style={{ marginTop: 8 }}>
+        <button type="button" className="btn btn-primary" disabled={busy || text.trim().length < 10} onClick={send}>
+          {busy ? 'Sending…' : 'Send to support'}
+        </button>
+        <button type="button" className="btn btn-outline" onClick={() => setOpen(false)}>
+          Cancel
+        </button>
+      </div>
+    </div>
   )
 }

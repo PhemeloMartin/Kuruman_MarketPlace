@@ -54,6 +54,8 @@ type Action =
 const WHY: Record<string, string> = {
   late_payment: 'Payment arrived after the order had expired',
   second_payment: 'Customer paid twice for the same order',
+  order_cancelled: 'Order was cancelled by support after payment',
+  customer_problem: 'Customer’s problem with the order was upheld',
 }
 
 const PAYMENT_LABEL: Record<Payment['status'], string> = {

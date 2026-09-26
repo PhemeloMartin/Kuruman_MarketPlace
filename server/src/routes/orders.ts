@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { pool } from "../db";
+import { openOrderCase } from "../lib/cases";
 import { requireRole } from "../auth/session";
 import { POLICY } from "../lib/policy";
 import { recordStatusChange, releaseReservation } from "../lib/stock";
@@ -257,6 +258,10 @@ ordersRouter.get("/mine", shopper, async (req, res) => {
             -- Refunds shown separately: "being processed" is never presented as "refunded" (FR-16).
             (SELECT COALESCE(sum(f.amount_cents), 0)::int FROM refunds f WHERE f.order_id = o.id AND f.status = 'succeeded') AS refunded_cents,
             (SELECT COALESCE(sum(f.amount_cents), 0)::int FROM refunds f WHERE f.order_id = o.id AND f.status = 'pending') AS refund_pending_cents,
+            EXISTS (SELECT 1 FROM support_cases c WHERE c.order_id = o.id AND c.case_type = 'order_problem'
+                     AND c.status = 'open') AS problem_reported,
+            -- A problem can be reported for 7 days after completion (spec FR-16: later requests use a case).
+            (o.status = 'completed' AND o.updated_at > now() - interval '7 days') AS can_report_problem,
             b.name AS business_name, b.area AS business_area,
             (SELECT cu.display_name FROM deliveries d JOIN users cu ON cu.id = d.courier_id
               WHERE d.order_id = o.id) AS courier_name,
@@ -291,6 +296,8 @@ ordersRouter.get("/mine", shopper, async (req, res) => {
       paymentStatus: o.payment_status,
       refundedCents: o.refunded_cents,
       refundPendingCents: o.refund_pending_cents,
+      problemReported: o.problem_reported,
+      canReportProblem: o.can_report_problem && !o.problem_reported,
       businessName: o.business_name,
       businessArea: o.business_area,
       courierName: o.courier_name,
@@ -298,6 +305,48 @@ ordersRouter.get("/mine", shopper, async (req, res) => {
       items: o.items,
     }))
   );
+});
+
+// POST /api/orders/:id/problem { description } - something was wrong with a completed order
+// (spec FR-16, UC-13). It opens a case for support; nothing about the order or money changes here.
+ordersRouter.post("/:id/problem", shopper, async (req, res) => {
+  const orderId = Number(req.params.id);
+  const description = typeof req.body?.description === "string" ? req.body.description.trim() : "";
+  if (description.length < 10 || description.length > 500) {
+    return res.status(422).json({ error: "Tell us what went wrong (10 to 500 characters).", fields: { description: "10 to 500 characters." } });
+  }
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const r = await client.query(
+      `SELECT id, status, updated_at > now() - interval '7 days' AS recent FROM orders
+        WHERE id = $1 AND consumer_id = $2 FOR UPDATE`,
+      [orderId, req.user!.id]
+    );
+    const order = r.rows[0];
+    if (!order) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Order not found." });
+    }
+    if (order.status !== "completed" || !order.recent) {
+      await client.query("ROLLBACK");
+      return res.status(409).json({ error: "Problems can be reported for 7 days after you receive an order." });
+    }
+    await openOrderCase(client, {
+      type: "order_problem",
+      orderId,
+      requesterId: req.user!.id,
+      details: { description },
+      actorId: req.user!.id,
+    });
+    await client.query("COMMIT");
+    res.status(201).json({ reported: true });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 });
 
 // POST /api/orders/:id/cancel - a shopper may cancel while the seller hasn't decided yet (BR-12).
