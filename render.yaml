@@ -1,0 +1,71 @@
+# Render "Blueprint": describes the two hosted services so Render can create them from this
+# repository (Render dashboard -> New -> Blueprint). See docs/HOSTING.md for the steps.
+#
+# Values marked `sync: false` are secrets or addresses you type into the Render dashboard -
+# they are never stored in this public repository.
+
+services:
+  # The website + API: one Node service. It builds the React app, then serves it together with
+  # the API from the same address (server/src/app.ts), and runs the background jobs (expiry,
+  # notifications, retention).
+  - type: web
+    name: kurumanmarketplace
+    runtime: node
+    plan: free
+    region: frankfurt # closest Render region to South Africa at the time of writing
+    buildCommand: >-
+      cd client && npm ci --include=dev && npm run build &&
+      cd ../server && npm ci --include=dev && npm run build
+    startCommand: cd server && node dist/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: NODE_ENV
+        value: production # also makes the login cookie HTTPS-only
+      - key: DATABASE_URL
+        sync: false # from Neon
+      - key: DATABASE_SSL
+        value: "true"
+      - key: CLIENT_ORIGIN
+        sync: false # https://<your-service>.onrender.com
+      - key: PUBLIC_APP_URL
+        sync: false # the same address
+      - key: TRUST_PROXY
+        value: "1" # Render's proxy in front of the app (check the Payfast IP check after the first payment)
+      - key: DATA_ENCRYPTION_KEY
+        sync: false # 32 random bytes, base64 - make a NEW one, don't reuse your laptop's
+      - key: AI_SERVICE_URL
+        sync: false # https://<your-ai-service>.onrender.com
+      - key: AI_SERVICE_TOKEN
+        fromService:
+          type: web
+          name: kurumanmarketplace-ai
+          envVarKey: AI_SERVICE_TOKEN
+      - key: PAYFAST_SANDBOX
+        value: "true"
+      - key: PAYFAST_MERCHANT_ID
+        sync: false
+      - key: PAYFAST_MERCHANT_KEY
+        sync: false
+      - key: PAYFAST_PASSPHRASE
+        sync: false
+      - key: PAYFAST_NOTIFY_URL
+        sync: false # https://<your-service>.onrender.com/api/payments/payfast/notify
+
+  # The AI category model (Python). Only answers requests carrying the secret token.
+  - type: web
+    name: kurumanmarketplace-ai
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pip install -r ai/requirements.txt
+    startCommand: python ai/service.py
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.2"
+      - key: AI_SERVICE_HOST
+        value: 0.0.0.0 # listen on the network interface, not only on this machine
+      - key: AI_SERVICE_TOKEN
+        generateValue: true # Render makes a random secret; the website service reads it from here

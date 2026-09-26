@@ -2,6 +2,8 @@
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import fs from "fs";
+import path from "path";
 import "dotenv/config";
 import { pool } from "./db";
 import { loadSession } from "./auth/session";
@@ -82,6 +84,30 @@ app.use("/api/notifications", notificationsRouter);
 app.use("/api/support", supportRouter);
 app.use("/api", paymentsRouter);
 app.use("/api", catalogueRouter);
+
+// Hosted (production): this same server also serves the built website from client/dist, so the
+// site and the API share one address - the login cookie and the Origin check just work.
+// In development Vite serves the website instead (npm run dev in client/), so this is skipped.
+const CLIENT_DIST = path.join(__dirname, "..", "..", "client", "dist");
+if (process.env.NODE_ENV === "production" && fs.existsSync(CLIENT_DIST)) {
+  app.use(
+    express.static(CLIENT_DIST, {
+      setHeaders(res, filePath) {
+        // Files in assets/ have a content hash in their name, so they can be cached for a year.
+        // Everything else (index.html, the service worker, the manifest) must be re-checked,
+        // or phones would keep running an old version of the app.
+        const hashed = filePath.includes(`${path.sep}assets${path.sep}`);
+        res.set("Cache-Control", hashed ? "public, max-age=31536000, immutable" : "no-cache");
+      },
+    })
+  );
+  // Any other page address (e.g. /orders) is the React app, which does its own routing.
+  app.use((req, res, next) => {
+    if (req.method !== "GET" || req.path.startsWith("/api/")) return next();
+    res.set("Cache-Control", "no-cache");
+    res.sendFile(path.join(CLIENT_DIST, "index.html"));
+  });
+}
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });

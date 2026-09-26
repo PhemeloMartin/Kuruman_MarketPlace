@@ -4,7 +4,10 @@ import { pool } from "../db";
 // Synthetic demo data only - no real people or businesses.
 // Every demo account uses the same passphrase so the demo is easy to run.
 // It meets the 15-character minimum from spec section 7.3.
-const DEMO_PASSPHRASE = "Kuruman Oasis 2026";
+// On a HOSTED copy, set SEED_PASSPHRASE to a private one: this repository is public, so the
+// default below is known to anyone - including for the support accounts.
+const DEMO_PASSPHRASE = process.env.SEED_PASSPHRASE || "Kuruman Oasis 2026";
+if (DEMO_PASSPHRASE.length < 15) throw new Error("SEED_PASSPHRASE must be at least 15 characters.");
 
 async function main() {
   const client = await pool.connect();

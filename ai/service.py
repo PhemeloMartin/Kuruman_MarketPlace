@@ -12,6 +12,7 @@ Private prediction service for the listing-category assistant (spec 8.2 "Deploym
 """
 
 import hashlib
+import hmac
 import json
 import os
 import sys
@@ -35,7 +36,8 @@ def token_from_server_env() -> str:
 
 TOKEN = os.environ.get("AI_SERVICE_TOKEN") or token_from_server_env()
 HOST = os.environ.get("AI_SERVICE_HOST", "127.0.0.1")
-PORT = int(os.environ.get("AI_SERVICE_PORT", "5001"))
+# Hosting platforms such as Render tell the app which port to use in PORT.
+PORT = int(os.environ.get("AI_SERVICE_PORT") or os.environ.get("PORT") or "5001")
 SUPPORTED_LOCALES = {"en", "tn", "af"}
 MAX_TEXT = 1000
 
@@ -87,7 +89,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path != "/predict":
             return self._send(404, {"error": "not found"})
-        if not TOKEN or self.headers.get("X-AI-Token") != TOKEN:
+        # compare_digest takes the same time whether the first or last character is wrong,
+        # so the token can't be guessed character by character from response times.
+        if not TOKEN or not hmac.compare_digest(self.headers.get("X-AI-Token", ""), TOKEN):
             return self._send(401, {"error": "unauthorised"})
         try:
             length = min(int(self.headers.get("Content-Length", 0)), 10_000)

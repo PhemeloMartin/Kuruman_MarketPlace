@@ -7,6 +7,7 @@ A mobile-first marketplace PWA connecting Kuruman SMMEs, consumers and delivery 
 - `ai/` – Python category-suggestion model (TF-IDF + logistic regression) and its private service
 - Database – PostgreSQL
 - `docs/PROJECT_BRIEF.md` – scope, rules, design and progress · `docs/DEMO_SCRIPT.md` – presentation walkthrough
+- `docs/HOSTING.md` – putting it online (Render + Neon, free plans) · `render.yaml` – the Render blueprint
 
 ## Run it (Windows, PowerShell, from this folder)
 

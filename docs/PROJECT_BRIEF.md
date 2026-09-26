@@ -215,4 +215,8 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       SKIP LOCKED, backoff and 'failed' after 5 tries (visible and retryable in the support console); in-app
       notifications stored as template key + values, UNIQUE per person per event; bell and badges; 30-day retention;
       tests `npm run test:notifications` (9 checks)
-- [ ] Reviewed translations, remaining tables, hosting
+- [x] Hosting preparation: production mode serves the built website and API from one address (hashed assets cached
+      a year, app shell/service worker re-checked, HTTPS-only cookie), render.yaml blueprint (website+API service
+      and AI service with a generated token), pinned AI library versions, private SEED_PASSPHRASE for hosted demo
+      data, constant-time AI token check, step-by-step docs/HOSTING.md
+- [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables
