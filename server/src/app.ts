@@ -14,9 +14,12 @@ import { paymentsRouter } from "./routes/payments";
 import { POLICY } from "./lib/policy";
 
 export const app = express();
-// Behind a tunnel or hosting proxy, trust it to report the real caller's IP (needed for
-// Payfast's source-IP check). Only switch on when a proxy you control is in front.
-app.set("trust proxy", process.env.TRUST_PROXY === "true");
+// Behind a tunnel or hosting proxy, the real caller's IP arrives in the X-Forwarded-For header
+// (needed for Payfast's source-IP check). TRUST_PROXY is the NUMBER of proxies we run in front
+// of the API (1 for the Cloudflare tunnel). Express then takes the address that our own proxy
+// added and ignores anything further left, which a caller could have typed in themselves.
+// Unset or 0 = no proxy: use the connection's own address.
+app.set("trust proxy", Number(process.env.TRUST_PROXY) || false);
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 
 // Only our own client (the React app) may call this API from a browser.

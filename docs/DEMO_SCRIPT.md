@@ -153,10 +153,12 @@ Then show it live (your own sandbox account is set up in `server/.env`):
 
 1. Window A: add an item, choose **Pay online**, send. Window B: **Accept**.
 2. Window A → **Orders** → **Pay with Payfast** → Payfast's sandbox page → **Complete Payment**.
-3. You're sent back and the order still says **Accepted – pay now**.
-   **Say:** "Payfast took the payment, but our server hasn't received Payfast's signed notification — it can't reach
-   my laptop. So the order is correctly *not* marked paid. Coming back from Payfast is not proof. The next test
-   shows what happens when notifications do arrive." (BR-07)
+3. **With the tunnel running** (see "Tunnel" below): within a few seconds the order changes to **Accepted** with
+   **✓ Paid online with Payfast**, and the seller sees it as **Confirmed**.
+   **Say:** "Coming back from Payfast proved nothing. What changed the order is Payfast's server calling mine through
+   the tunnel, and my server checking the signature, merchant, amount, Payfast's address, and asking Payfast
+   directly if it's valid." (BR-07)
+   **Without the tunnel** the order correctly stays **Accepted – pay now** — say the same point the other way round.
 
 Then run the proof (section 8, `test:payfast`).
 
@@ -219,6 +221,28 @@ npm run test:payfast
    ```
 4. Restart the API. "Pay online" is now available at checkout.
 
-Payfast's notification can't reach `localhost`. To see a real notification arrive, you need a public tunnel address
-(for example Cloudflare Tunnel or ngrok) in `PAYFAST_NOTIFY_URL`, plus `TRUST_PROXY=true`. Without it, the customer can
-pay on Payfast, but the order correctly stays "waiting for payment" — which is itself a good demonstration of rule BR-07.
+## Tunnel: so Payfast can reach your laptop (do this before starting the API)
+
+Payfast's server must call `/api/payments/payfast/notify`, but `localhost` isn't on the internet. A Cloudflare quick
+tunnel gives the API a temporary public address. `cloudflared` is already installed. **The address is new every time**,
+so repeat these steps before each demo.
+
+**Terminal 5 — start the tunnel** (prompt can be any folder; leave this terminal running):
+```
+cloudflared tunnel --url http://localhost:4000
+```
+In its output, copy the line that looks like `https://some-random-words.trycloudflare.com`.
+
+**Edit `server/.env`** — replace the address on the `PAYFAST_NOTIFY_URL` line with yours, keeping the path:
+```
+PAYFAST_NOTIFY_URL=https://some-random-words.trycloudflare.com/api/payments/payfast/notify
+TRUST_PROXY=1
+```
+Then (re)start the API in Terminal 1 (`npm run dev` from `Kuruman_MarketPlace\server>`).
+
+**Check it:** open `https://some-random-words.trycloudflare.com/api/health` in the browser — you should see `"status":"ok"`.
+
+`TRUST_PROXY=1` means "exactly one proxy (the tunnel) is in front of the API", so the server reads Payfast's real
+address from the header the tunnel adds, and ignores anything a caller might have faked further along.
+
+Without the tunnel everything else still works; online orders just stay "Accepted – pay now" after paying.

@@ -247,6 +247,8 @@ export function OrdersPage() {
                   The seller is preparing your order.{o.paymentMethod === 'cash' && ' Cash still due.'}
                 </p>
               )}
+              {/* Only shown once Payfast's verified notification has marked the payment paid. */}
+              {o.paymentStatus === 'paid' && <p className="fine-print">✓ Paid online with Payfast.</p>}
               {o.status === 'ready' && o.fulfilment === 'delivery' && (
                 <p className="fine-print">Packed and waiting for a courier.</p>
               )}
