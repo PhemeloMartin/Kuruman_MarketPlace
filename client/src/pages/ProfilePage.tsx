@@ -6,6 +6,7 @@ import { MokalaScene } from '../components/Art'
 import { localPhone } from '../lib/labels'
 import { LANGUAGES, currentLanguage } from '../lib/translate'
 import { ApplySection } from './ApplySection'
+import { PrivacySection } from './PrivacySection'
 
 const ROLE_LABEL = {
   consumer: 'Customer',
@@ -68,6 +69,7 @@ export function ProfilePage() {
         </p>
       </section>
       {user.role === 'consumer' && <ApplySection />}
+      {user.role !== 'support' && <PrivacySection />}
       {user.role === 'support' && (
         <Link to="/support" className="btn btn-primary btn-block" style={{ marginBottom: 10 }}>
           Go to the support console

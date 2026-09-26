@@ -27,9 +27,11 @@ DROP FUNCTION IF EXISTS refuse_audit_change CASCADE;
 -- ---------------------------------------------------------------
 CREATE TABLE users (
   id                 BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  phone              VARCHAR(15)  NOT NULL UNIQUE,
+  -- phone and password_hash are erased when an account is closed (spec BR-16, Table 38);
+  -- the row itself stays so old orders and payments still point at "a closed account".
+  phone              VARCHAR(15)  UNIQUE,
   display_name       VARCHAR(80)  NOT NULL,
-  password_hash      TEXT         NOT NULL,
+  password_hash      TEXT,
   role               VARCHAR(20)  NOT NULL
                      CHECK (role IN ('consumer', 'entrepreneur', 'courier', 'support')),
   preferred_language VARCHAR(2)   NOT NULL DEFAULT 'en'
@@ -40,8 +42,9 @@ CREATE TABLE users (
   --   payments   - refunds and cash disputes
   --   operations - failed or stuck deliveries
   --   audit      - read the audit log
+  --   privacy    - access, correction and account-closure requests
   staff_scopes       TEXT[]       NOT NULL DEFAULT '{}'
-                     CHECK (staff_scopes <@ ARRAY['approvals', 'payments', 'operations', 'audit']),
+                     CHECK (staff_scopes <@ ARRAY['approvals', 'payments', 'operations', 'audit', 'privacy']),
   -- Two-step sign-in for support (spec FR-21 "MFA"). The authenticator-app secret is stored
   -- ENCRYPTED (lib/secretBox.ts). totp_last_step stops the same code being used twice.
   totp_secret_enc    TEXT,
@@ -49,7 +52,10 @@ CREATE TABLE users (
   totp_last_step     BIGINT,
   created_at         TIMESTAMPTZ  NOT NULL DEFAULT now(),
   updated_at         TIMESTAMPTZ  NOT NULL DEFAULT now(),
-  CHECK (role = 'support' OR staff_scopes = '{}')
+  closed_at          TIMESTAMPTZ,                 -- set when the account is closed at the person's request
+  CHECK (role = 'support' OR staff_scopes = '{}'),
+  -- An open account must have its login details; a closed one has them erased.
+  CHECK (closed_at IS NOT NULL OR (phone IS NOT NULL AND password_hash IS NOT NULL))
 );
 
 -- Login sessions. The browser only holds a random token in an HttpOnly cookie;
@@ -310,7 +316,8 @@ CREATE TABLE support_cases (
                       'refund',        -- verified money that must go back (late/second payment, cancelled paid order)
                       'cash_dispute',  -- a seller received a different amount of cash than was collected
                       'fulfilment',    -- delivery failed, or no courier took the job in time (BR-10)
-                      'order_problem'  -- the customer reported a problem after receiving the order (FR-16)
+                      'order_problem', -- the customer reported a problem after receiving the order (FR-16)
+                      'privacy_access', 'privacy_correction', 'privacy_deletion'   -- FR-20 rights requests
                     )),
   status            VARCHAR(12) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
   requester_id      BIGINT      NOT NULL REFERENCES users(id),
@@ -319,6 +326,7 @@ CREATE TABLE support_cases (
   resolution        VARCHAR(20),                  -- e.g. approved, rejected
   resolution_reason TEXT,                         -- shown to the requester where relevant
   resolved_by       BIGINT      REFERENCES users(id),
+  due_at            TIMESTAMPTZ,                  -- privacy requests: target of 30 days (spec NFR-06)
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
   closed_at         TIMESTAMPTZ,
   CHECK ((status = 'open') = (closed_at IS NULL))
@@ -330,6 +338,9 @@ CREATE UNIQUE INDEX one_open_case_per_order ON support_cases(order_id, case_type
 -- A person can only have one application waiting at a time.
 CREATE UNIQUE INDEX one_open_application_per_user ON support_cases(requester_id)
   WHERE status = 'open' AND case_type IN ('seller_application', 'courier_application');
+-- ...and one open privacy request of each kind.
+CREATE UNIQUE INDEX one_open_privacy_request ON support_cases(requester_id, case_type)
+  WHERE status = 'open' AND case_type IN ('privacy_correction', 'privacy_deletion');
 
 -- Who did what, when and why. Identifiers and outcomes only - never passphrases, codes,
 -- addresses or card data (spec FR-22).

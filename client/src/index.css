@@ -1181,3 +1181,24 @@ body {
 .case-notes li {
   padding: 4px 0;
 }
+
+/* ---------- Privacy ---------- */
+.privacy-actions {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+.danger-link {
+  color: var(--accent);
+}
+.prose h2 {
+  font-size: 1.1rem;
+  margin: 20px 0 6px;
+}
+.prose ul {
+  padding-left: 20px;
+  margin: 0 0 8px;
+}
+.prose li {
+  margin-bottom: 6px;
+}

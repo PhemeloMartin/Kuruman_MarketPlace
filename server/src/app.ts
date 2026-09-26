@@ -15,6 +15,8 @@ import { applicationsRouter } from "./routes/applications";
 import { supportRouter } from "./routes/support";
 import { supportMoneyRouter } from "./routes/supportMoney";
 import { supportOpsRouter } from "./routes/supportOps";
+import { supportPrivacyRouter } from "./routes/supportPrivacy";
+import { privacyRouter } from "./routes/privacy";
 import { POLICY } from "./lib/policy";
 
 export const app = express();
@@ -73,6 +75,8 @@ app.use("/api/courier", courierRouter);
 app.use("/api/applications", applicationsRouter);
 app.use("/api/support/money", supportMoneyRouter);
 app.use("/api/support/ops", supportOpsRouter);
+app.use("/api/support/privacy", supportPrivacyRouter);
+app.use("/api/privacy", privacyRouter);
 app.use("/api/support", supportRouter);
 app.use("/api", paymentsRouter);
 app.use("/api", catalogueRouter);

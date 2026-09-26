@@ -204,4 +204,10 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       automatically); courier returns goods, seller inspects and chooses restock; jobs unclaimed for 30 min go to
       support once (BR-10); customers report problems for 7 days after completion; viewing phone numbers is
       audited; tests `npm run test:operations` (15 checks)
-- [ ] Privacy requests, notifications, reviewed translations, remaining tables, hosting
+- [x] Privacy (FR-20, BR-16): draft privacy notice (responsible party left as a marked placeholder); download my
+      data (passphrase re-check, own data only, tracked); correct name; correction and account-closure requests
+      handled by support with the "privacy" scope and a 30-day due date; lawful holds checked live; closure erases
+      phone, passphrase, name, addresses and sessions but keeps transactions as "Closed account"; retention job
+      (addresses 30 days after an order ends unless a case is open, dead sessions, AI outcomes 30 days, closed-case
+      details 90 days); TC-20 tests (`npm run test:privacy`, 15 checks)
+- [ ] Notifications, reviewed translations, remaining tables, hosting

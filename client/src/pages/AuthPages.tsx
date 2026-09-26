@@ -222,6 +222,9 @@ export function RegisterPage() {
             invalid={Boolean(fields.passphrase)}
           />
         </Field>
+        <p className="fine-print" style={{ margin: '0 0 10px' }}>
+          We use your phone number and name to run your orders. <Link to="/privacy">How we use your information</Link>
+        </p>
         <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
           {busy ? 'Creating account…' : 'Create account'}
         </button>

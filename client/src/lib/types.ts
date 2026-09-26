@@ -10,7 +10,7 @@ export interface User {
   mfaVerified: boolean // support: this session passed the authenticator-code step
 }
 
-export type StaffScope = 'approvals' | 'payments' | 'operations' | 'audit'
+export type StaffScope = 'approvals' | 'payments' | 'operations' | 'audit' | 'privacy'
 
 export interface Category {
   id: number

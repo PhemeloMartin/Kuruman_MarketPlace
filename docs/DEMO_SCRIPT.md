@@ -200,7 +200,13 @@ Authenticator on your phone (delete the old "KurumanMarketPlace" entry in the ap
    **Cancel order** with a reason. The courier now sees *Take the goods back*, and the seller chooses **Back in
    stock** or **Can’t resell**. **Say:** "Returned goods are only restocked after the seller inspects them. If the
    customer had paid online, a refund case would open automatically." (FR-15, UC-13, BR-10)
-8. Optional: sign in as **Sipho (071 000 0007)**, approvals only — there's no Audit log tab, and the server
+8. **Privacy** (2 minutes): as Boitumelo (071 000 0008) → **Profile** → **How we use your information**, then
+   **Download my information** (asks for the passphrase again) and **Close my account**. In the console →
+   **Privacy** → **Close account** with a reason. Boitumelo is signed out.
+   **Say:** "Closing an account isn't deleting every row. Phone, passphrase, name and addresses are erased, but orders
+   and payments stay as 'Closed account', because sellers need them and the law may require them. If an order or
+   refund were still in progress, the server would refuse and support explains the hold." (FR-20, BR-16, TC-20)
+9. Optional: sign in as **Sipho (071 000 0007)**, approvals only — there's no Audit log tab, and the server
    refuses the audit route with 403. **Say:** "Staff only get the scopes their job needs." (TC-21)
 
 ---
@@ -227,6 +233,12 @@ npm run test:support
 suspension, and the database refusing to edit audit history: **TC-02 / TC-21 / TC-22: 19 checks PASSED**.
 
 ```
+npm run test:privacy
+```
+→ 15 checks: passphrase needed, download holds only your own data, holds block closure, closure erases contact
+details but keeps orders, the number can register again, addresses removed after 30 days: **TC-20: 15 checks PASSED**.
+
+```
 npm run test:operations
 ```
 → 15 checks: failed delivery needs a reason and opens a case, retry, cancel of a paid order opens a refund case,
@@ -240,7 +252,7 @@ npm run test:refunds
 refunds → exactly one accepted, no "refunded" without Payfast's reference, cash shortfall resolved:
 **TC-16: 14 checks PASSED**.
 
-(`test:payfast`, `test:support`, `test:refunds` and `test:operations` change demo data — reset the data afterwards if you'll demo again.)
+(`test:payfast`, `test:support`, `test:refunds`, `test:operations` and `test:privacy` change demo data — reset the data afterwards if you'll demo again.)
 
 ---
 
@@ -252,7 +264,9 @@ refunds → exactly one accepted, no "refunded" without Payfast's reference, cas
   The first version scored 0.66; I changed the tuning method to grouped cross-validation and I disclose that in the model card."
 - **Languages:** "Phase 1 uses Google Translate. Payment and legal wording must be reviewed by fluent speakers before real use (NFR-09)."
 - **Payments:** "Sandbox only. The design doesn't claim one merchant account can collect for every seller in production."
-- **Scope still to build:** privacy requests (FR-20), notifications (FR-17), reviewed translations, hosting.
+- **Scope still to build:** notifications (FR-17), reviewed translations, hosting.
+- **Privacy notice is a draft:** the responsible party and Information Officer must be named, and retention periods
+  approved, before any real person registers. Changing a login phone number needs a verification code (future work).
 - **Refunds are recorded, not sent automatically:** staff do the refund in Payfast's dashboard and record its
   reference. Calling Payfast's refund API directly is the documented next step. Cash refunds are arranged with the
   seller and recorded as a note.

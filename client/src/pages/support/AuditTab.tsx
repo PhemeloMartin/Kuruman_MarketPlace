@@ -23,6 +23,8 @@ const FILTERS = [
   { value: 'cash.', label: 'Cash' },
   { value: 'case.', label: 'Cases and notes' },
   { value: 'order.', label: 'Orders (cancel, retry, returns)' },
+  { value: 'privacy.', label: 'Privacy requests' },
+  { value: 'account.', label: 'Account closures' },
   { value: 'mfa.', label: 'Authenticator codes' },
   { value: 'auth.', label: 'Sign-ins' },
 ]

@@ -55,7 +55,7 @@ async function main() {
 
     // Support scopes (spec Table 58). The main support account can do everything; the second
     // one only approvals, to show that scopes are enforced (TC-21).
-    await client.query("UPDATE users SET staff_scopes = $2 WHERE id = $1", [userIds.support, ["approvals", "payments", "operations", "audit"]]);
+    await client.query("UPDATE users SET staff_scopes = $2 WHERE id = $1", [userIds.support, ["approvals", "payments", "operations", "audit", "privacy"]]);
     await client.query("UPDATE users SET staff_scopes = $2 WHERE id = $1", [userIds.support2, ["approvals"]]);
 
     // The demo couriers are already approved.

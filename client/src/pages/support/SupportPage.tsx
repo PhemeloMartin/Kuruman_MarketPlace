@@ -8,6 +8,7 @@ import { ApplicationsTab } from './ApplicationsTab'
 import { AuditTab } from './AuditTab'
 import { MoneyTab } from './MoneyTab'
 import { OperationsTab } from './OperationsTab'
+import { PrivacyTab } from './PrivacyTab'
 
 // Restricted support console (spec UI-13). The server checks every request again - these
 // screens only decide what to show.
@@ -156,6 +157,7 @@ const TABS: { key: string; label: string; scope: StaffScope }[] = [
   { key: 'accounts', label: 'Accounts', scope: 'approvals' },
   { key: 'money', label: 'Money', scope: 'payments' },
   { key: 'deliveries', label: 'Deliveries', scope: 'operations' },
+  { key: 'privacy', label: 'Privacy', scope: 'privacy' },
   { key: 'audit', label: 'Audit', scope: 'audit' },
 ]
 
@@ -178,6 +180,7 @@ function Console({ scopes }: { scopes: StaffScope[] }) {
       {tab === 'accounts' && <AccountsTab />}
       {tab === 'money' && <MoneyTab />}
       {tab === 'deliveries' && <OperationsTab />}
+      {tab === 'privacy' && <PrivacyTab />}
       {tab === 'audit' && <AuditTab />}
     </>
   )

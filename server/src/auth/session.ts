@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { pool } from "../db";
 
 export type Role = "consumer" | "entrepreneur" | "courier" | "support";
-export type StaffScope = "approvals" | "payments" | "operations" | "audit";
+export type StaffScope = "approvals" | "payments" | "operations" | "audit" | "privacy";
 
 export interface SessionUser {
   id: number;
