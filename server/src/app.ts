@@ -11,6 +11,8 @@ import { ordersRouter } from "./routes/orders";
 import { sellerRouter } from "./routes/seller";
 import { courierRouter } from "./routes/courier";
 import { paymentsRouter } from "./routes/payments";
+import { applicationsRouter } from "./routes/applications";
+import { supportRouter } from "./routes/support";
 import { POLICY } from "./lib/policy";
 
 export const app = express();
@@ -66,6 +68,8 @@ app.use("/api/auth", authRouter);
 app.use("/api/orders", ordersRouter);
 app.use("/api/seller", sellerRouter);
 app.use("/api/courier", courierRouter);
+app.use("/api/applications", applicationsRouter);
+app.use("/api/support", supportRouter);
 app.use("/api", paymentsRouter);
 app.use("/api", catalogueRouter);
 

@@ -37,7 +37,9 @@ Every time — three terminals:
 | 3 | `cd ai` then `python service.py` | AI suggestions (optional — the app works without it) |
 
 Demo accounts (synthetic): 071 000 0001 customer · 0002 seller · 0003 courier · 0004 support ·
-0005 second seller · 0006 second courier. Passphrase: `Kuruman Oasis 2026`.
+0005 second seller · 0006 second courier · 0007 support (approvals only) · 0008 customer with a seller
+application waiting. Passphrase: `Kuruman Oasis 2026`. Support accounts set up an authenticator app
+(Google/Microsoft Authenticator) the first time they open the console.
 
 ## Tests
 
@@ -45,5 +47,6 @@ In `server`:
 
 - `npm run test:kpi` — seller KPIs against the specification's worked example (TC-18)
 - `npm run test:payfast` — Payfast notification contract tests (TC-11); reset the data afterwards
+- `npm run test:support` — support console: applications, MFA, scopes, suspensions, audit log (TC-02, TC-21, TC-22); reset the data afterwards
 
 In `ai`: `python train.py` retrains and re-evaluates the model (`reports/evaluation.md`).

@@ -6,7 +6,11 @@ export interface User {
   displayName: string
   role: Role
   preferredLanguage: 'en' | 'tn' | 'af'
+  staffScopes: StaffScope[] // support staff only
+  mfaVerified: boolean // support: this session passed the authenticator-code step
 }
+
+export type StaffScope = 'approvals' | 'payments' | 'operations' | 'audit'
 
 export interface Category {
   id: number

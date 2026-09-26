@@ -1,8 +1,11 @@
+import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useCart } from '../cart/CartContext'
 import { MokalaScene } from '../components/Art'
+import { localPhone } from '../lib/labels'
 import { LANGUAGES, currentLanguage } from '../lib/translate'
+import { ApplySection } from './ApplySection'
 
 const ROLE_LABEL = {
   consumer: 'Customer',
@@ -11,16 +14,15 @@ const ROLE_LABEL = {
   support: 'Support',
 }
 
-// Shows 071 234 5678 instead of +27712345678.
-function localPhone(e164: string): string {
-  const n = '0' + e164.slice(3)
-  return `${n.slice(0, 3)} ${n.slice(3, 6)} ${n.slice(6)}`
-}
-
 export function ProfilePage() {
-  const { user, loading, logout } = useAuth()
+  const { user, loading, logout, refresh } = useAuth()
   const { clear: clearCart } = useCart()
   const navigate = useNavigate()
+
+  // Your role can change on the server (support approves an application), so check again here.
+  useEffect(() => {
+    refresh().catch(() => {})
+  }, [refresh])
 
   if (loading) return null
 
@@ -65,6 +67,12 @@ export function ProfilePage() {
           translated for now and are being checked by fluent speakers.
         </p>
       </section>
+      {user.role === 'consumer' && <ApplySection />}
+      {user.role === 'support' && (
+        <Link to="/support" className="btn btn-primary btn-block" style={{ marginBottom: 10 }}>
+          Go to the support console
+        </Link>
+      )}
       {user.role === 'courier' && (
         <Link to="/courier" className="btn btn-primary btn-block" style={{ marginBottom: 10 }}>
           Go to deliveries

@@ -1084,3 +1084,69 @@ body {
   gap: 8px;
   margin: -6px 0 14px;
 }
+
+.bottom-nav.three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* ---------- Support console ---------- */
+.details {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 10px 0;
+  font-size: 0.9rem;
+}
+.details dt {
+  color: var(--muted);
+}
+.details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.account-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.account-row:last-child {
+  border-bottom: 0;
+}
+.account-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.audit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.audit-list code {
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.setup-steps {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+.mfa-qr {
+  display: block;
+  margin: 4px auto 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+.mfa-key {
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  overflow-wrap: anywhere;
+}

@@ -15,15 +15,25 @@ export const sellerRouter = Router();
 declare global {
   namespace Express {
     interface Request {
-      business?: { id: number; name: string };
+      business?: { id: number; name: string; active: boolean };
     }
   }
 }
 
+// A suspended business (is_active = false) still loads, so the seller can see why and finish
+// orders already in progress; requireActiveShop below blocks listing products.
 async function loadMyBusiness(req: Request, res: Response, next: NextFunction) {
-  const r = await pool.query("SELECT id, name FROM businesses WHERE owner_id = $1 AND is_active", [req.user!.id]);
-  if (r.rowCount === 0) return res.status(403).json({ error: "You don't have an active business yet." });
-  req.business = { id: Number(r.rows[0].id), name: r.rows[0].name };
+  const r = await pool.query("SELECT id, name, is_active FROM businesses WHERE owner_id = $1", [req.user!.id]);
+  if (r.rowCount === 0) return res.status(403).json({ error: "You don't have a business yet." });
+  req.business = { id: Number(r.rows[0].id), name: r.rows[0].name, active: r.rows[0].is_active };
+  next();
+}
+
+// Spec UC-02: "suspended applicants cannot publish".
+function requireActiveShop(req: Request, res: Response, next: NextFunction) {
+  if (!req.business!.active) {
+    return res.status(403).json({ error: "Your shop is suspended, so you can't change your listings. Contact support." });
+  }
   next();
 }
 
@@ -440,7 +450,7 @@ sellerRouter.post("/ai/category-suggestion", async (req, res) => {
   });
 });
 
-sellerRouter.post("/products", async (req, res) => {
+sellerRouter.post("/products", requireActiveShop, async (req, res) => {
   const { fields, out } = parseProduct(req.body, false);
   const cat = await pool.query("SELECT id FROM categories WHERE slug = $1", [req.body?.category]);
   if (cat.rowCount === 0) fields.category = "Choose a category.";
@@ -482,7 +492,7 @@ sellerRouter.post("/products", async (req, res) => {
 });
 
 // Update price, stock, details, or hide/show. Past orders are unaffected: they keep their snapshot (BR-15).
-sellerRouter.patch("/products/:id", async (req, res) => {
+sellerRouter.patch("/products/:id", requireActiveShop, async (req, res) => {
   const id = Number(req.params.id);
   const { fields, out } = parseProduct(req.body, true);
   if (Object.keys(fields).length) return res.status(422).json({ error: "Please check the highlighted fields.", fields });

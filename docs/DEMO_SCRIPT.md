@@ -164,6 +164,33 @@ Then run the proof (section 8, `test:payfast`).
 
 ---
 
+## 7b. Support console (Window D, 3 minutes)
+
+Use a fourth window (another private window, or your phone) for **Support, 071 000 0004**.
+
+**Before presenting:** resetting the data (`db:setup`) wipes the support authenticator set-up, so after each
+reset open **Console** once, tap **Start set-up**, and scan the QR code with Google Authenticator or Microsoft
+Authenticator on your phone (delete the old "KurumanMarketPlace" entry in the app first).
+
+1. Sign in as Support → **Console**. It asks for the 6-digit code.
+   **Say:** "Support can see personal details and make money decisions, so a passphrase isn't enough — it needs
+   a code from an authenticator app. That's time-based one-time passwords, RFC 6238. The secret is stored encrypted,
+   and a code can't be used twice." (FR-21)
+2. **Applications** → Boitumelo's Kitchen → **Approve**. Try to confirm with no reason — it refuses.
+   Type a reason ("Phoned and checked the pickup address") → **Approve**.
+   **Say:** "Nobody can sign up as a seller or courier. Everyone starts as a customer and applies; only support
+   approves, and one transaction gives the role, creates the business and records the decision." (FR-02, UC-02)
+3. Sign in as Boitumelo (071 000 0008) somewhere → **Profile** shows **Seller** and a **My shop** tab.
+4. **Accounts** → **Suspend** Kgomotso's Fresh Corner with a reason → Window A: the shop's products vanish from
+   Home. **Reinstate** it. **Say:** "Suspended shops can't publish, but orders already in progress can finish."
+5. **Audit log** → the approval, suspension and reinstatement, each with who, when and why.
+   **Say:** "The audit log is append-only. It's not just that there's no edit button — a database trigger
+   refuses any UPDATE or DELETE on that table." (FR-22) The `test:support` run proves it.
+6. Optional: sign in as **Sipho (071 000 0007)**, approvals only — there's no Audit log tab, and the server
+   refuses the audit route with 403. **Say:** "Staff only get the scopes their job needs." (TC-21)
+
+---
+
 ## 8. Automated evidence (Terminal 4, 1 minute)
 
 ```
@@ -179,7 +206,13 @@ npm run test:payfast
 ```
 → 13 payment checks: forged, wrong amount, wrong merchant, duplicate, late payment… **TC-11: 13 checks PASSED**.
 
-(`test:payfast` adds test orders — reset the data afterwards if you'll demo again.)
+```
+npm run test:support
+```
+→ 19 checks: sign-up can't create staff, MFA required and codes not reusable, scopes enforced, applications,
+suspension, and the database refusing to edit audit history: **TC-02 / TC-21 / TC-22: 19 checks PASSED**.
+
+(`test:payfast` and `test:support` change demo data — reset the data afterwards if you'll demo again.)
 
 ---
 
@@ -191,7 +224,12 @@ npm run test:payfast
   The first version scored 0.66; I changed the tuning method to grouped cross-validation and I disclose that in the model card."
 - **Languages:** "Phase 1 uses Google Translate. Payment and legal wording must be reviewed by fluent speakers before real use (NFR-09)."
 - **Payments:** "Sandbox only. The design doesn't claim one merchant account can collect for every seller in production."
-- **Scope still to build:** support console, refunds and returns, failed-delivery handling, privacy requests, and the remaining tables.
+- **Scope still to build:** refunds and returns, failed-delivery handling (support console stages 2 and 3),
+  privacy requests, and the remaining tables.
+- **One role per account:** the spec allows one person to be both seller and courier; this MVP keeps one role
+  per account (a seller or courier can still buy). A `user_roles` table is the documented upgrade.
+- **MFA reset:** a support member who loses their phone is reset by an administrator in the database, deliberately
+  not self-service.
 - **Passwords:** bcrypt now; the spec's Argon2id is the documented upgrade.
 
 ## 10. Likely questions

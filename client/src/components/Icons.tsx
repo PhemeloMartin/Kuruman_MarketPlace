@@ -85,3 +85,10 @@ export const TruckIcon = () => (
     <circle cx="17.5" cy="18" r="1.6" />
   </svg>
 )
+
+export const ShieldIcon = () => (
+  <svg {...common}>
+    <path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z" />
+    <path d="M9 12l2 2 4-4" />
+  </svg>
+)

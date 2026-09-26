@@ -5,7 +5,7 @@ import { formatRand, parseRandToCents } from '../../lib/money'
 import type { CashToConfirm, Kpis, SellerOrder } from '../../lib/types'
 
 interface Dashboard {
-  business: { id: number; name: string }
+  business: { id: number; name: string; active: boolean }
   period: string
   asOf: string
   kpis: Kpis
@@ -84,6 +84,12 @@ export function SellerDashboardPage() {
       <h1 className="page-title" style={{ marginTop: 0 }}>
         {dashboard.business.name}
       </h1>
+      {!dashboard.business.active && (
+        <p className="notice error" role="status" style={{ marginBottom: 12 }}>
+          <strong>Your shop is suspended by support.</strong> Customers can’t see it and you can’t change your listings.
+          You can still finish the orders below. Contact support to resolve this.
+        </p>
+      )}
 
       <div className="chips" role="group" aria-label="Report period" style={{ marginBottom: 12 }}>
         {PERIODS.map((p) => (

@@ -11,6 +11,7 @@ import { SellerDashboardPage } from './pages/seller/SellerDashboardPage'
 import { SellerProductFormPage, SellerProductsPage } from './pages/seller/SellerProductsPage'
 import { RequireRole } from './auth/RequireRole'
 import { CourierPage } from './pages/courier/CourierPage'
+import { SupportPage } from './pages/support/SupportPage'
 
 export default function App() {
   return (
@@ -32,6 +33,9 @@ export default function App() {
               </Route>
               <Route element={<RequireRole role="courier" />}>
                 <Route path="courier" element={<CourierPage />} />
+              </Route>
+              <Route element={<RequireRole role="support" />}>
+                <Route path="support" element={<SupportPage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>

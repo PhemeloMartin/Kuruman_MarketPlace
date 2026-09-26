@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { pool } from "../db";
 
 export type Role = "consumer" | "entrepreneur" | "courier" | "support";
+export type StaffScope = "approvals" | "payments" | "operations" | "audit";
 
 export interface SessionUser {
   id: number;
@@ -10,6 +11,8 @@ export interface SessionUser {
   displayName: string;
   role: Role;
   preferredLanguage: string;
+  staffScopes: StaffScope[]; // empty for everyone except support
+  mfaVerified: boolean; // support: this session passed the authenticator-code step
 }
 
 // Lets TypeScript know that requireAuth puts the logged-in user on req.user.
@@ -61,7 +64,8 @@ export async function loadSession(req: Request, _res: Response, next: NextFuncti
 
   const tokenHash = hashToken(token);
   const r = await pool.query(
-    `SELECT u.id, u.phone, u.display_name, u.role, u.preferred_language
+    `SELECT u.id, u.phone, u.display_name, u.role, u.preferred_language, u.staff_scopes,
+            s.mfa_verified_at IS NOT NULL AS mfa_verified
        FROM sessions s
        JOIN users u ON u.id = s.user_id
       WHERE s.token_hash = $1
@@ -79,6 +83,8 @@ export async function loadSession(req: Request, _res: Response, next: NextFuncti
     displayName: u.display_name,
     role: u.role,
     preferredLanguage: u.preferred_language,
+    staffScopes: u.staff_scopes,
+    mfaVerified: u.mfa_verified,
   };
   req.sessionTokenHash = tokenHash;
 
@@ -98,6 +104,24 @@ export function requireRole(...roles: Role[]) {
     if (!req.user) return res.status(401).json({ error: "Please sign in first." });
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({ error: "Your account can't do this." });
+    }
+    next();
+  };
+}
+
+// Support console guard (spec FR-21, TC-21). Three separate checks, in order:
+//   1. the account is support staff (set up in the database - nobody can sign up as support);
+//   2. THIS session passed the authenticator-code step (a stolen passphrase alone isn't enough);
+//   3. the staff member holds the scope for this kind of work.
+export function requireStaff(scope?: StaffScope) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) return res.status(401).json({ error: "Please sign in first." });
+    if (req.user.role !== "support") return res.status(403).json({ error: "Your account can't do this." });
+    if (!req.user.mfaVerified) {
+      return res.status(403).json({ error: "Enter the code from your authenticator app first.", code: "mfa_required" });
+    }
+    if (scope && !req.user.staffScopes.includes(scope)) {
+      return res.status(403).json({ error: "Your support role doesn't cover this kind of case.", code: "scope" });
     }
     next();
   };

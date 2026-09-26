@@ -9,6 +9,7 @@ interface AuthState {
   login: (phone: string, passphrase: string) => Promise<void>
   register: (input: { phone: string; displayName: string; passphrase: string }) => Promise<void>
   logout: () => Promise<void>
+  refresh: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -36,13 +37,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(r.user)
   }, [])
 
+  // Asks the server again - e.g. after support approves you as a seller, or after the
+  // authenticator-code step - because the server, not the browser, knows your role.
+  const refresh = useCallback(async () => {
+    const r = await api<{ user: User | null }>('/auth/me')
+    setUser(r.user)
+  }, [])
+
   const logout = useCallback(async () => {
     await api('/auth/logout', { method: 'POST' })
     setUser(null)
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refresh }}>{children}</AuthContext.Provider>
   )
 }
 

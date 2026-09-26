@@ -1,4 +1,4 @@
-import { Request, Response, Router } from "express";
+import { NextFunction, Request, Response, Router } from "express";
 import { PoolClient } from "pg";
 import { pool } from "../db";
 import { requireRole } from "../auth/session";
@@ -9,10 +9,20 @@ import { consumeReservation, recordStatusChange } from "../lib/stock";
 export const courierRouter = Router();
 courierRouter.use(requireRole("courier"));
 
+// Spec UC-02: a suspended courier "cannot claim jobs". Jobs they already hold can still be
+// finished, so the customer still gets their order.
+async function requireActiveCourier(req: Request, res: Response, next: NextFunction) {
+  const r = await pool.query("SELECT is_active FROM courier_profiles WHERE user_id = $1", [req.user!.id]);
+  if (!r.rows[0]?.is_active) {
+    return res.status(403).json({ error: "Your courier access is suspended, so you can't take new jobs. Contact support." });
+  }
+  next();
+}
+
 // GET /api/courier/jobs - open jobs anyone can claim.
 // Minimum disclosure (BR-13): before claiming, a courier sees the seller's area, the fee
 // and whether cash is involved - never the customer's name, address or phone.
-courierRouter.get("/jobs", async (_req, res) => {
+courierRouter.get("/jobs", requireActiveCourier, async (_req, res) => {
   const r = await pool.query(
     `SELECT d.id, d.fee_cents, d.cash_to_collect_cents, d.created_at,
             b.name AS business_name, b.area AS business_area,
@@ -91,7 +101,7 @@ courierRouter.get("/my-jobs", async (req, res) => {
 // POST /api/courier/jobs/:id/claim - first courier wins (spec TX-03 "compare-and-set").
 // The WHERE status = 'open' is the whole trick: PostgreSQL updates the row for only one
 // of two simultaneous requests; the other finds no open row and gets 409.
-courierRouter.post("/jobs/:id/claim", async (req, res) => {
+courierRouter.post("/jobs/:id/claim", requireActiveCourier, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(404).json({ error: "Job not found." });
 

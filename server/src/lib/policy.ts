@@ -7,6 +7,10 @@ export const POLICY = {
   maxLinesPerOrder: 20,
   maxQuantityPerLine: 99,
   maxOrderTotalCents: 1_000_000, // R10 000
+  // Pilot areas (spec 2.1: "explicitly configured Kuruman areas"). Sellers and couriers
+  // choose from this list when they apply, so names always match.
+  serviceAreas: ["Kuruman town", "Wrenchville", "Mothibistad", "Seoding", "Batlharos", "Bankhara-Bodulong"],
+  vehicleTypes: ["on_foot", "bicycle", "motorbike", "car", "bakkie"],
   // On when Payfast is configured in .env (a getter, so it reads the settings when asked).
   get onlinePaymentAvailable() {
     return Boolean(process.env.PAYFAST_MERCHANT_ID && process.env.PAYFAST_MERCHANT_KEY);

@@ -40,6 +40,8 @@ async function main() {
       ["support", "+27710000004", "Support (demo)", "support"],
       ["seller2", "+27710000005", "Naledi (demo seller)", "entrepreneur"],
       ["courier2", "+27710000006", "Lerato (demo courier)", "courier"],
+      ["support2", "+27710000007", "Sipho (demo support, approvals only)", "support"],
+      ["applicant", "+27710000008", "Boitumelo (demo customer who applied to sell)", "consumer"],
     ];
     const userIds: Record<string, number> = {};
     for (const [key, phone, name, role] of users) {
@@ -50,6 +52,31 @@ async function main() {
       );
       userIds[key] = r.rows[0].id;
     }
+
+    // Support scopes (spec Table 58). The main support account can do everything; the second
+    // one only approvals, to show that scopes are enforced (TC-21).
+    await client.query("UPDATE users SET staff_scopes = $2 WHERE id = $1", [userIds.support, ["approvals", "payments", "operations", "audit"]]);
+    await client.query("UPDATE users SET staff_scopes = $2 WHERE id = $1", [userIds.support2, ["approvals"]]);
+
+    // The demo couriers are already approved.
+    for (const [key, vehicle, area] of [["courier", "motorbike", "Wrenchville"], ["courier2", "bicycle", "Mothibistad"]]) {
+      await client.query("INSERT INTO courier_profiles (user_id, vehicle_type, area) VALUES ($1, $2, $3)", [userIds[key], vehicle, area]);
+    }
+
+    // One application waiting for support, so the approvals queue isn't empty in the demo.
+    await client.query(
+      `INSERT INTO support_cases (case_type, requester_id, details) VALUES ('seller_application', $1, $2)`,
+      [
+        userIds.applicant,
+        {
+          businessName: "Boitumelo's Kitchen (demo)",
+          description: "Home-made atchar and chakalaka.",
+          area: "Seoding",
+          pickupAddress: "[Demo pickup address], Seoding, Kuruman",
+          phone: "+27710000008",
+        },
+      ]
+    );
 
     // Two demo businesses, so the "one seller per order" rule can be demonstrated.
     const biz = await client.query(

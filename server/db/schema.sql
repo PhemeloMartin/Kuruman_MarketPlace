@@ -2,6 +2,9 @@
 -- Money is always stored as whole cents (INTEGER), never as decimals.
 -- WARNING: running this file drops and re-creates all tables (development only).
 
+DROP TABLE IF EXISTS audit_events CASCADE;
+DROP TABLE IF EXISTS support_cases CASCADE;
+DROP TABLE IF EXISTS courier_profiles CASCADE;
 DROP TABLE IF EXISTS payment_events CASCADE;
 DROP TABLE IF EXISTS ai_suggestions CASCADE;
 DROP TABLE IF EXISTS cash_receipts CASCADE;
@@ -16,6 +19,7 @@ DROP TABLE IF EXISTS categories CASCADE;
 DROP TABLE IF EXISTS businesses CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP SEQUENCE IF EXISTS order_number_seq;
+DROP FUNCTION IF EXISTS refuse_audit_change CASCADE;
 
 -- ---------------------------------------------------------------
 -- People
@@ -30,8 +34,21 @@ CREATE TABLE users (
   preferred_language VARCHAR(2)   NOT NULL DEFAULT 'en'
                      CHECK (preferred_language IN ('en', 'tn', 'af')),
   is_active          BOOLEAN      NOT NULL DEFAULT TRUE,
+  -- Support staff only (spec Table 58 "scope"): what this staff member may do.
+  --   approvals  - seller/courier applications, suspensions
+  --   payments   - refunds and cash disputes
+  --   operations - failed or stuck deliveries
+  --   audit      - read the audit log
+  staff_scopes       TEXT[]       NOT NULL DEFAULT '{}'
+                     CHECK (staff_scopes <@ ARRAY['approvals', 'payments', 'operations', 'audit']),
+  -- Two-step sign-in for support (spec FR-21 "MFA"). The authenticator-app secret is stored
+  -- ENCRYPTED (lib/secretBox.ts). totp_last_step stops the same code being used twice.
+  totp_secret_enc    TEXT,
+  totp_pending_enc   TEXT,                        -- set up but not yet confirmed with a code
+  totp_last_step     BIGINT,
   created_at         TIMESTAMPTZ  NOT NULL DEFAULT now(),
-  updated_at         TIMESTAMPTZ  NOT NULL DEFAULT now()
+  updated_at         TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  CHECK (role = 'support' OR staff_scopes = '{}')
 );
 
 -- Login sessions. The browser only holds a random token in an HttpOnly cookie;
@@ -42,7 +59,8 @@ CREATE TABLE sessions (
   token_hash   CHAR(64)    NOT NULL UNIQUE,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  expires_at   TIMESTAMPTZ NOT NULL             -- absolute limit (12 hours after login)
+  expires_at   TIMESTAMPTZ NOT NULL,            -- absolute limit (12 hours after login)
+  mfa_verified_at TIMESTAMPTZ                   -- support: when THIS session passed the second step
 );
 CREATE INDEX idx_sessions_user ON sessions(user_id);
 
@@ -55,8 +73,19 @@ CREATE TABLE businesses (
   area           VARCHAR(80)  NOT NULL,
   pickup_address TEXT         NOT NULL,
   phone          VARCHAR(15)  NOT NULL,
-  is_active      BOOLEAN      NOT NULL DEFAULT TRUE,
+  is_active      BOOLEAN      NOT NULL DEFAULT TRUE,   -- FALSE = suspended by support: hidden, no new orders
+  approved_by    BIGINT       REFERENCES users(id),    -- the support member who approved it (NULL for demo seed)
   created_at     TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
+-- Approved couriers (spec Table 61). No licence scans or location history are stored.
+CREATE TABLE courier_profiles (
+  user_id      BIGINT      PRIMARY KEY REFERENCES users(id),
+  vehicle_type VARCHAR(20) NOT NULL CHECK (vehicle_type IN ('on_foot', 'bicycle', 'motorbike', 'car', 'bakkie')),
+  area         VARCHAR(80) NOT NULL,
+  is_active    BOOLEAN     NOT NULL DEFAULT TRUE,    -- FALSE = suspended: can't take new jobs
+  approved_by  BIGINT      REFERENCES users(id),
+  approved_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- ---------------------------------------------------------------
@@ -259,3 +288,60 @@ CREATE TABLE order_status_history (
 );
 CREATE INDEX idx_history_order ON order_status_history(order_id);
 CREATE INDEX idx_history_to_status ON order_status_history(to_status, created_at);
+
+-- ---------------------------------------------------------------
+-- Restricted support (spec FR-21, FR-22, Tables 77-78)
+-- ---------------------------------------------------------------
+
+-- One row per thing a person on the support team must look at and decide.
+-- details holds only what the decision needs (e.g. the business name on an application).
+CREATE TABLE support_cases (
+  id                BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  case_type         VARCHAR(24) NOT NULL
+                    CHECK (case_type IN ('seller_application', 'courier_application')),
+  status            VARCHAR(12) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
+  requester_id      BIGINT      NOT NULL REFERENCES users(id),
+  order_id          BIGINT      REFERENCES orders(id),
+  details           JSONB       NOT NULL DEFAULT '{}',
+  resolution        VARCHAR(20),                  -- e.g. approved, rejected
+  resolution_reason TEXT,                         -- shown to the requester where relevant
+  resolved_by       BIGINT      REFERENCES users(id),
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  closed_at         TIMESTAMPTZ,
+  CHECK ((status = 'open') = (closed_at IS NULL))
+);
+CREATE INDEX idx_cases_open ON support_cases(case_type) WHERE status = 'open';
+-- A person can only have one application waiting at a time.
+CREATE UNIQUE INDEX one_open_application_per_user ON support_cases(requester_id)
+  WHERE status = 'open' AND case_type IN ('seller_application', 'courier_application');
+
+-- Who did what, when and why. Identifiers and outcomes only - never passphrases, codes,
+-- addresses or card data (spec FR-22).
+CREATE TABLE audit_events (
+  id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  actor_user_id BIGINT       REFERENCES users(id),   -- NULL for automatic actions
+  action        VARCHAR(60)  NOT NULL,              -- e.g. application.approve
+  resource_type VARCHAR(40)  NOT NULL,              -- e.g. support_case
+  resource_id   VARCHAR(100) NOT NULL,
+  outcome       VARCHAR(20)  NOT NULL,              -- success, refused, failed
+  reason        TEXT,
+  changes       JSONB,
+  occurred_at   TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_audit_time ON audit_events(occurred_at DESC);
+CREATE INDEX idx_audit_resource ON audit_events(resource_type, resource_id);
+
+-- The audit log is append-only: the database itself refuses to change or delete a row,
+-- whatever the application code tries (spec: "application roles cannot rewrite audit history").
+CREATE FUNCTION refuse_audit_change() RETURNS trigger AS $$
+BEGIN
+  RAISE EXCEPTION 'audit_events is append-only: % is not allowed', TG_OP;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER audit_events_no_update_or_delete
+  BEFORE UPDATE OR DELETE ON audit_events
+  FOR EACH ROW EXECUTE FUNCTION refuse_audit_change();
+CREATE TRIGGER audit_events_no_truncate
+  BEFORE TRUNCATE ON audit_events
+  FOR EACH STATEMENT EXECUTE FUNCTION refuse_audit_change();

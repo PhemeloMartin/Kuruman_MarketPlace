@@ -4,6 +4,7 @@ import rateLimit from "express-rate-limit";
 import { pool } from "../db";
 import { normaliseSaPhone } from "../lib/phone";
 import { endSession, startSession } from "../auth/session";
+import { audit } from "../lib/audit";
 
 export const authRouter = Router();
 
@@ -25,13 +26,22 @@ const authLimiter = rateLimit({
 // and an attacker can't tell which numbers have accounts.
 const DUMMY_HASH = bcrypt.hashSync("not-a-real-passphrase-placeholder", 10);
 
-function publicUser(u: { id: string | number; phone: string; display_name: string; role: string; preferred_language: string }) {
+function publicUser(u: {
+  id: string | number;
+  phone: string;
+  display_name: string;
+  role: string;
+  preferred_language: string;
+  staff_scopes?: string[];
+}) {
   return {
     id: Number(u.id),
     phone: u.phone,
     displayName: u.display_name,
     role: u.role,
     preferredLanguage: u.preferred_language,
+    staffScopes: u.staff_scopes ?? [],
+    mfaVerified: false, // a brand-new session never starts verified
   };
 }
 
@@ -83,7 +93,7 @@ authRouter.post("/login", authLimiter, async (req, res) => {
 
   const r = normalPhone
     ? await pool.query(
-        `SELECT id, phone, display_name, role, preferred_language, password_hash, is_active
+        `SELECT id, phone, display_name, role, preferred_language, staff_scopes, password_hash, is_active
            FROM users WHERE phone = $1`,
         [normalPhone]
       )
@@ -92,11 +102,16 @@ authRouter.post("/login", authLimiter, async (req, res) => {
 
   const passwordOk = await bcrypt.compare(given, user?.password_hash ?? DUMMY_HASH);
   if (!user || !passwordOk || !user.is_active) {
+    // Recorded against the account only when it exists; the phone number itself isn't logged.
+    if (user) {
+      await audit(pool, { actorId: null, action: "auth.login", resourceType: "user", resourceId: user.id, outcome: "failed" });
+    }
     // Same message whatever went wrong, so it doesn't reveal whether the number exists.
     return res.status(401).json({ error: "Phone number or passphrase is incorrect." });
   }
 
   await startSession(res, Number(user.id));
+  await audit(pool, { actorId: Number(user.id), action: "auth.login", resourceType: "user", resourceId: user.id, outcome: "success" });
   res.json({ user: publicUser(user) });
 });
 

@@ -135,6 +135,11 @@ KPI check against the spec's worked example: `npm run test:kpi` in `server` (cha
 | 071 000 0004 | Support | support |
 | 071 000 0005 | Naledi | entrepreneur (second seller) |
 | 071 000 0006 | Lerato | courier (second courier) |
+| 071 000 0007 | Sipho | support, **approvals only** (shows scope refusal) |
+| 071 000 0008 | Boitumelo | consumer with a seller application waiting for support |
+
+Support accounts also need an authenticator app (Google/Microsoft Authenticator) the first time they
+open the console: scan the QR code shown, then enter the 6-digit code.
 
 ---
 
@@ -185,5 +190,10 @@ KPI check against the spec's worked example: `npm run test:kpi` in `server` (cha
 - [x] Offline PWA: installable, app shell cached, public catalogue saved with its age (24 h stale / 7 days discard),
       "Not submitted" cart drafts, private API answers no-store, sign-out clears the cart
 - [x] Presentation walkthrough: docs/DEMO_SCRIPT.md
-- [ ] Support console (approvals, disputes, refunds of unapplied payments, disputed cash, failed deliveries)
+- [x] Support console, stage 1: authenticator-app MFA for support (RFC 6238, secret encrypted with AES-256-GCM,
+      codes can't be reused), staff scopes, seller/courier applications with approve/reject + reason,
+      suspend/reinstate shops and couriers, append-only audit log (database trigger refuses UPDATE/DELETE);
+      TC-02/TC-21/TC-22 tests (`npm run test:support`, 19 checks)
+- [ ] Support console, stage 2: refunds (late/second payments, cancelled paid orders), disputed cash
+- [ ] Support console, stage 3: failed deliveries, unclaimed jobs, support cancellation
 - [ ] Privacy requests, notifications, reviewed translations, remaining tables, hosting

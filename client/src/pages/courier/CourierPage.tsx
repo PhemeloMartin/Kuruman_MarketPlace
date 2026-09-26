@@ -42,14 +42,25 @@ export function CourierPage() {
   const [myJobs, setMyJobs] = useState<MyJob[] | null>(null)
   const [holdingCents, setHoldingCents] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [suspended, setSuspended] = useState<string | null>(null)
   const [busy, setBusy] = useState<number | null>(null)
 
   const load = useCallback(() => {
-    Promise.all([
-      api<OpenJob[]>('/courier/jobs'),
-      api<MyJob[]>('/courier/my-jobs'),
-      api<{ holdingCents: number }>('/courier/cash'),
-    ])
+    // Open jobs are loaded on their own: a suspended courier gets 403 there (no NEW jobs),
+    // but must still see and finish the jobs they already hold.
+    const open = api<OpenJob[]>('/courier/jobs')
+      .then((o) => {
+        setSuspended(null)
+        return o
+      })
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 403) {
+          setSuspended(err.message)
+          return []
+        }
+        throw err
+      })
+    Promise.all([open, api<MyJob[]>('/courier/my-jobs'), api<{ holdingCents: number }>('/courier/cash')])
       .then(([o, m, c]) => {
         setOpenJobs(o)
         setMyJobs(m)
@@ -111,6 +122,11 @@ export function CourierPage() {
       {error && (
         <p className="notice error" role="alert" style={{ marginBottom: 12 }}>
           {error}
+        </p>
+      )}
+      {suspended && (
+        <p className="notice error" role="status" style={{ marginBottom: 12 }}>
+          {suspended}
         </p>
       )}
 

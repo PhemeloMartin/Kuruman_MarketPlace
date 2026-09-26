@@ -5,7 +5,7 @@ import { LANGUAGES, currentLanguage, setLanguage } from '../lib/translate'
 import type { LanguageCode } from '../lib/translate'
 import { useOnline } from '../lib/useOnline'
 import { DuneRibbon, LogoMark } from './Art'
-import { CartIcon, HomeIcon, OrdersIcon, ProfileIcon, ShopIcon, TruckIcon } from './Icons'
+import { CartIcon, HomeIcon, OrdersIcon, ProfileIcon, ShieldIcon, ShopIcon, TruckIcon } from './Icons'
 
 export function Layout() {
   const online = useOnline()
@@ -70,6 +70,25 @@ function BottomNav() {
   const { user } = useAuth()
   const isSeller = user?.role === 'entrepreneur'
   const isCourier = user?.role === 'courier'
+  // Support staff don't shop: they get the catalogue (to check listings), the console and their profile.
+  if (user?.role === 'support') {
+    return (
+      <nav className="bottom-nav three" aria-label="Main">
+        <NavLink to="/" end>
+          <HomeIcon />
+          Home
+        </NavLink>
+        <NavLink to="/support">
+          <ShieldIcon />
+          Console
+        </NavLink>
+        <NavLink to="/profile">
+          <ProfileIcon />
+          Profile
+        </NavLink>
+      </nav>
+    )
+  }
   return (
     <nav className={`bottom-nav${isSeller || isCourier ? ' five' : ''}`} aria-label="Main">
       <NavLink to="/" end>
