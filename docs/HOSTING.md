@@ -137,7 +137,16 @@ SELECT outcome, received_at FROM payment_events ORDER BY id DESC LIMIT 5;
 - **Resetting hosted data**: repeat section 1's commands (new terminal, set the three `$env:` lines, `db:setup`,
   `db:seed`, close the terminal). This wipes the hosted data, including the support authenticator set-up.
 
-## 7. Later: Google Play Store
+## 7. Which version is online?
+
+The bottom of the **Profile** page shows e.g. `version i:20/10/26,11:26`: the version number in Roman numerals,
+then the date and time (South African) that copy of the app was made. After a push, Render rebuilds and the time
+changes. If a phone still shows an older time, refresh the page once.
+
+For a new release, raise the first number of `"version"` in `client/package.json` (`1.0.0` → `2.0.0` shows
+`version ii`), commit and push.
+
+## 8. Later: Google Play Store
 
 Once the hosted site works, it can be wrapped as an Android app with **PWABuilder** (https://www.pwabuilder.com):
 enter the site's address and download the Android package. You'll need a Google Play developer account (one-off

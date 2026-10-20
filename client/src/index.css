@@ -1249,3 +1249,11 @@ body {
   border-radius: 50%;
   background: var(--primary);
 }
+
+/* Which version of the app this is (Profile page) */
+.version-label {
+  margin: 20px 0 0;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--muted);
+}

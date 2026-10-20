@@ -1,9 +1,32 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import pkg from './package.json' with { type: 'json' }
+
+// The version label shown on the Profile page, e.g. "version i:20/10/26,09:10".
+// The number is the first part of "version" in package.json (1.0.0 -> i). Raise it by hand for
+// each new release (2.0.0 -> ii). The date and time are when this copy of the app was made, in
+// South African time - so you can see at a glance whether a phone has the latest version.
+const versionNumber = Number(pkg.version.split('.')[0])
+const versionTime = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Africa/Johannesburg',
+  day: '2-digit',
+  month: '2-digit',
+  year: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+})
+  .format(new Date())
+  .replace(', ', ',') // "20/10/26, 09:10" -> "20/10/26,09:10"
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Replaced with fixed values when the app is built (see src/lib/version.ts).
+  define: {
+    __APP_VERSION__: JSON.stringify(versionNumber),
+    __VERSION_TIME__: JSON.stringify(versionTime),
+  },
   plugins: [
     react(),
     // Makes the site an installable PWA (spec 5.1, 5.3).

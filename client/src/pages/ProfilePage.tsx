@@ -5,6 +5,7 @@ import { useCart } from '../cart/CartContext'
 import { MokalaScene } from '../components/Art'
 import { localPhone } from '../lib/labels'
 import { LANGUAGES, currentLanguage } from '../lib/translate'
+import { VERSION_LABEL } from '../lib/version'
 import { ApplySection } from './ApplySection'
 import { PrivacySection } from './PrivacySection'
 
@@ -45,6 +46,7 @@ export function ProfilePage() {
             Create an account
           </Link>
         </div>
+        <p className="version-label">{VERSION_LABEL}</p>
       </main>
     )
   }
@@ -102,6 +104,7 @@ export function ProfilePage() {
       >
         Sign out
       </button>
+      <p className="version-label">{VERSION_LABEL}</p>
     </main>
   )
 }
