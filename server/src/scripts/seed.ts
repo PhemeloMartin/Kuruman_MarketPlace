@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { pool } from "../db";
+import { describeError } from "../lib/describeError";
 
 // Synthetic demo data only - no real people or businesses.
 // Every demo account uses the same passphrase so the demo is easy to run.
@@ -153,7 +154,7 @@ async function main() {
 
 main()
   .catch((err) => {
-    console.error("Seeding failed:", err.message);
+    console.error("Seeding failed:", describeError(err));
     process.exitCode = 1;
   })
   .finally(() => pool.end());

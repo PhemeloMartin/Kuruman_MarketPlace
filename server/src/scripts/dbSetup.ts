@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { pool } from "../db";
+import { describeError } from "../lib/describeError";
 
 // Creates (or re-creates) every table from db/schema.sql.
 // WARNING: this deletes all existing data. Use it in development only.
@@ -13,7 +14,7 @@ async function main() {
 
 main()
   .catch((err) => {
-    console.error("Database setup failed:", err.message);
+    console.error("Database setup failed:", describeError(err));
     process.exitCode = 1;
   })
   .finally(() => pool.end());
