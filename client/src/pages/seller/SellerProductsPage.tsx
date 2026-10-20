@@ -355,7 +355,8 @@ function AiSuggestionBox({
       <span className="ai-label">AI suggestion</span>
       <p style={{ margin: '4px 0 8px' }}>
         <strong>{categoryName(ai.suggestion)}</strong>{' '}
-        <span className="product-meta">(confidence {Math.round((ai.score ?? 0) * 100)}%)</span>
+        {/* Capped at 99%: a model is never certain, and 0.996 rounding to "100%" would claim it is. */}
+        <span className="product-meta">(confidence {Math.min(99, Math.round((ai.score ?? 0) * 100))}%)</span>
         <br />
         <span className="fine-print">Suggested by a trained model ({ai.modelVersion}). It can be wrong – please check.</span>
       </p>
