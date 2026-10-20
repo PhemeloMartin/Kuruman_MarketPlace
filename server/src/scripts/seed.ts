@@ -142,7 +142,12 @@ async function main() {
 
     await client.query("COMMIT");
     console.log("Demo data added.");
-    console.log(`Demo logins (passphrase for all: ${DEMO_PASSPHRASE}):`);
+    // A private SEED_PASSPHRASE is never printed - terminals get screenshotted and logged.
+    console.log(
+      process.env.SEED_PASSPHRASE
+        ? "Demo logins (passphrase for all: the SEED_PASSPHRASE you set):"
+        : `Demo logins (passphrase for all: ${DEMO_PASSPHRASE}):`
+    );
     for (const [, phone, name] of users) console.log(`  ${phone}  ${name}`);
   } catch (err) {
     await client.query("ROLLBACK");
