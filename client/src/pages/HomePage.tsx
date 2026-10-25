@@ -2,12 +2,11 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { useCart } from '../cart/CartContext'
+import { useAddToCart } from '../cart/useAddToCart'
 import { BackIcon, CheckIcon, SearchIcon } from '../components/Icons'
 import { KurumanPanorama, marketInfo, orderMarkets } from '../components/Markets'
 import { ProductCard } from '../components/ProductCard'
 import { SiteHeader } from '../components/Layout'
-import { SwitchSellerDialog } from '../components/SwitchSellerDialog'
 import { api, ApiError } from '../lib/api'
 import { STALE_AFTER_MS, filterSaved, loadCatalogue, saveCatalogue } from '../lib/catalogueCache'
 import type { Category, Product } from '../lib/types'
@@ -39,7 +38,7 @@ function mixMarkets(products: Product[], categories: Category[]): Product[] {
 // Keeping the choice in the address means the phone's Back button works and a link to a market can
 // be shared (for example on WhatsApp).
 export function HomePage() {
-  const cart = useCart()
+  const { add, quantityOf, dialog } = useAddToCart()
   const [params, setParams] = useSearchParams()
   const market = params.get('market') ?? ''
   const query = (params.get('q') ?? '').trim()
@@ -53,7 +52,6 @@ export function HomePage() {
   const [loaded, setLoaded] = useState<{ key: string; products: Product[] } | null>(null)
   const products = loaded?.key === listKey ? loaded.products : null
   const [error, setError] = useState<string | null>(null)
-  const [pending, setPending] = useState<Product | null>(null) // waiting on "switch seller?"
   const [savedAt, setSavedAt] = useState<string | null>(null) // set when showing the offline copy
   const [savedIsStale, setSavedIsStale] = useState(false)
   const online = useOnline()
@@ -102,10 +100,6 @@ export function HomePage() {
     }
   }, [category, query, online])
 
-  function handleAdd(product: Product) {
-    if (cart.add(product) === 'other-seller') setPending(product)
-  }
-
   // Opens the results view. An empty market with no words means "everything".
   function showMarket(nextMarket: string, words: string) {
     const next = new URLSearchParams()
@@ -114,8 +108,6 @@ export function HomePage() {
     setParams(next)
     window.scrollTo({ top: 0 })
   }
-
-  const quantityOf = (id: number) => cart.lines.find((l) => l.productId === id)?.quantity ?? 0
 
   const productList = error ? (
     <p className="notice error" role="alert">
@@ -134,7 +126,7 @@ export function HomePage() {
   ) : (
     <div className="product-grid">
       {(showResults ? products : mixMarkets(products, categories).slice(0, LANDING_PRODUCTS)).map((p) => (
-        <ProductCard key={p.id} product={p} quantityInCart={quantityOf(p.id)} onAdd={handleAdd} />
+        <ProductCard key={p.id} product={p} quantityInCart={quantityOf(p.id)} onAdd={add} />
       ))}
     </div>
   )
@@ -228,17 +220,7 @@ export function HomePage() {
         </main>
       )}
 
-      {pending && cart.business && (
-        <SwitchSellerDialog
-          currentSeller={cart.business.name}
-          newSeller={pending.business.name}
-          onKeep={() => setPending(null)}
-          onReplace={() => {
-            cart.replaceWith(pending)
-            setPending(null)
-          }}
-        />
-      )}
+      {dialog}
     </>
   )
 }

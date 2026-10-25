@@ -151,6 +151,16 @@ The domain is registered at **domains.co.za** (bought 25/10/2026, renews every y
 
 ---
 
+## 6b. Photos on Cloudinary
+
+1. Sign up free at **https://cloudinary.com**. On the dashboard, copy the **API environment variable**
+   (`cloudinary://API_KEY:API_SECRET@CLOUD_NAME`). It contains a secret: don't put it in the repository.
+2. Render → `kurumanmarketplace` → **Environment** → `CLOUDINARY_URL` → paste the value **without** the
+   `CLOUDINARY_URL=` part → **Save Changes**.
+3. New photos now go to Cloudinary. Photos uploaded before stay in the database and keep working.
+
+Database changes no longer need a reset: the server applies `server/db/migrations.sql` every time it starts.
+
 ## 7. Things to know about the free plans
 
 - **Render free services sleep** after 15 minutes without visitors; the next visit takes about a minute to wake

@@ -44,6 +44,10 @@ services:
           envVarKey: AI_SERVICE_TOKEN
       # Sign-in codes: no SMS gateway yet, so the hosted DEMO shows the code on screen.
       # Synthetic demo data only - switch this off (and connect a gateway) before any real person signs up.
+      # Product and shop photos (cloudinary://API_KEY:API_SECRET@CLOUD_NAME from the Cloudinary dashboard).
+      # Without it, photos are kept in the database instead.
+      - key: CLOUDINARY_URL
+        sync: false
       - key: SMS_DEMO_SHOW_CODES
         value: "true"
       - key: PAYFAST_SANDBOX

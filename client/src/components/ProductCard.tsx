@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { formatRand } from '../lib/money'
 import type { Product } from '../lib/types'
 import { CheckIcon, PlusIcon } from './Icons'
@@ -23,19 +24,33 @@ interface Props {
   product: Product
   quantityInCart: number
   onAdd: (product: Product) => void
+  hideSeller?: boolean // on the shop's own page, every card is from that shop
 }
 
-export function ProductCard({ product, quantityInCart, onAdd }: Props) {
+export function ProductCard({ product, quantityInCart, onAdd, hideSeller }: Props) {
   const soldOut = product.availableQty <= 0
   const atLimit = quantityInCart >= product.availableQty
 
   return (
     <article className="product-card">
-      <ProductPhoto product={product} />
+      {/* The photo and name open the product page; the seller's name opens their shop. */}
+      <Link to={`/product/${product.id}`} className="product-link" tabIndex={-1} aria-hidden="true">
+        <ProductPhoto product={product} />
+      </Link>
       <div className="product-body">
-        <h3 className="product-name">{product.name}</h3>
+        <h3 className="product-name">
+          <Link to={`/product/${product.id}`} className="product-link">
+            {product.name}
+          </Link>
+        </h3>
         <span className="product-meta">
-          {product.unitLabel} · {product.business.name}
+          {product.unitLabel}
+          {!hideSeller && (
+            <>
+              {' · '}
+              <Link to={`/shop/${product.business.id}`}>{product.business.name}</Link>
+            </>
+          )}
         </span>
         <div className="product-foot">
           {soldOut ? (

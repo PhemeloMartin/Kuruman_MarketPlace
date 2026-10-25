@@ -2,6 +2,8 @@
 -- Money is always stored as whole cents (INTEGER), never as decimals.
 -- WARNING: running this file drops and re-creates all tables (development only).
 
+-- Tables added later in migrations.sql are dropped here too, so a reset starts clean.
+DROP TABLE IF EXISTS photos CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS outbox_events CASCADE;
 DROP TABLE IF EXISTS refunds CASCADE;

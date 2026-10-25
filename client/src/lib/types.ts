@@ -30,6 +30,18 @@ export interface Product {
   category: string
   categoryName: string
   business: { id: number; name: string; area: string }
+  photos?: string[] // all photos, first = main; only on the single-product answer
+}
+
+// A shop's public page (GET /api/shops/:id).
+export interface Shop {
+  id: number
+  name: string
+  description: string | null
+  area: string
+  coverPhotoUrl: string | null
+  sellingSince: string
+  products: Product[]
 }
 
 export interface Kpis {
@@ -87,6 +99,7 @@ export interface SellerProduct {
   availableQty: number
   lowStockThreshold: number
   isActive: boolean
+  imageUrl: string | null
   category: string
   categoryName: string
 }

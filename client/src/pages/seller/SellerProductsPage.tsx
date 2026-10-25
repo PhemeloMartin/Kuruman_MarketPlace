@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { BackIcon } from '../../components/Icons'
+import { PhotoManager } from '../../components/PhotoManager'
+import { ProductPhoto } from '../../components/ProductCard'
 import { api, ApiError } from '../../lib/api'
 import { formatRand, parseRandToCents } from '../../lib/money'
 import type { Category, SellerProduct } from '../../lib/types'
@@ -49,11 +51,13 @@ export function SellerProductsPage() {
         const low = p.isActive && p.availableQty <= p.lowStockThreshold
         return (
           <Link key={p.id} to={`/seller/products/${p.id}`} className="card product-row">
-            <div style={{ minWidth: 0 }}>
+            <ProductPhoto product={p} className="product-thumb" />
+            <div style={{ minWidth: 0, flex: 1 }}>
               <div className="product-name">{p.name}</div>
               <div className="product-meta">
                 {p.unitLabel} · <span translate="no">{formatRand(p.priceCents)}</span>
                 {!p.isActive && ' · Hidden'}
+                {!p.imageUrl && ' · No photo yet'}
               </div>
             </div>
             <div style={{ textAlign: 'right', flex: 'none' }}>
@@ -80,6 +84,8 @@ export function SellerProductFormPage() {
   const { id } = useParams()
   const isNew = id === 'new'
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const justAdded = params.get('added') === '1'
   const [categories, setCategories] = useState<Category[]>([])
   const [loaded, setLoaded] = useState(isNew)
   const [reserved, setReserved] = useState(0)
@@ -170,9 +176,14 @@ export function SellerProductFormPage() {
       ...(isNew ? { category: form.category, aiSuggestionId: ai?.suggestionId } : { isActive: form.isActive }),
     }
     try {
-      if (isNew) await api('/seller/products', { method: 'POST', body })
-      else await api(`/seller/products/${id}`, { method: 'PATCH', body })
-      navigate('/seller/products')
+      if (isNew) {
+        // Saved: go straight on to adding photos for it.
+        const created = await api<{ id: number }>('/seller/products', { method: 'POST', body })
+        navigate(`/seller/products/${created.id}?added=1`, { replace: true })
+      } else {
+        await api(`/seller/products/${id}`, { method: 'PATCH', body })
+        navigate('/seller/products')
+      }
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message)
@@ -203,6 +214,12 @@ export function SellerProductFormPage() {
     <main className="page">
       <BackLink to="/seller/products" label="Your products" />
       <h1 className="page-title">{isNew ? 'Add a product' : 'Edit product'}</h1>
+      {justAdded && !isNew && (
+        <p className="notice success" role="status" style={{ marginBottom: 12 }}>
+          <strong>Saved and on sale.</strong> Now add a photo or two, so customers can see what they’re buying.
+        </p>
+      )}
+      {!isNew && <PhotoManager productId={Number(id)} />}
       <form className="form" onSubmit={onSubmit} noValidate>
         {error && (
           <p className="notice error" role="alert">

@@ -74,5 +74,51 @@ catalogueRouter.get("/products/:id", async (req, res) => {
     [id]
   );
   if (r.rowCount === 0) return res.status(404).json({ error: "Product not found." });
-  res.json(toProduct(r.rows[0]));
+  const photos = await pool.query("SELECT url FROM photos WHERE product_id = $1 ORDER BY sort_order, id", [id]);
+  res.json({ ...toProduct(r.rows[0]), photos: photos.rows.map((p) => p.url) });
+});
+
+// GET /api/shops/:id - a shop's public page: who they are and everything they have on sale.
+// Only public details: never the seller's phone number or pickup address (those are shared per order).
+catalogueRouter.get("/shops/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(404).json({ error: "Shop not found." });
+  const b = await pool.query(
+    "SELECT id, name, description, area, cover_photo_url, created_at FROM businesses WHERE id = $1 AND is_active",
+    [id]
+  );
+  if (b.rowCount === 0) return res.status(404).json({ error: "Shop not found." });
+  const products = await pool.query(
+    `SELECT ${PRODUCT_COLUMNS}
+       FROM products p
+       JOIN categories c ON c.id = p.category_id
+       JOIN businesses b ON b.id = p.business_id
+      WHERE p.business_id = $1 AND p.is_active
+      ORDER BY p.name`,
+    [id]
+  );
+  const shop = b.rows[0];
+  res.json({
+    id: Number(shop.id),
+    name: shop.name,
+    description: shop.description,
+    area: shop.area,
+    coverPhotoUrl: shop.cover_photo_url,
+    sellingSince: shop.created_at,
+    products: products.rows.map(toProduct),
+  });
+});
+
+// GET /api/photos/:id - a photo kept in our own database (when Cloudinary isn't configured).
+// A photo never changes once uploaded (a new one gets a new id), so browsers may keep it for a year.
+catalogueRouter.get("/photos/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const r = Number.isInteger(id) && id > 0
+    ? await pool.query("SELECT data, content_type FROM photos WHERE id = $1 AND storage = 'database'", [id])
+    : { rowCount: 0, rows: [] as any[] };
+  if (r.rowCount === 0) return res.status(404).end();
+  res.set("Cache-Control", "public, max-age=31536000, immutable");
+  res.set("Content-Type", r.rows[0].content_type);
+  res.set("X-Content-Type-Options", "nosniff");
+  res.send(r.rows[0].data);
 });

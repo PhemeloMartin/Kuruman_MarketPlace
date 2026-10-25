@@ -23,13 +23,15 @@ interface ApiOptions {
 export async function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
   let res: Response
   try {
+    // A photo (Blob) is sent as it is, with its own type; everything else as JSON.
+    const isFile = options.body instanceof Blob
     res = await fetch(`/api${path}`, {
       method: options.method ?? 'GET',
       headers: {
-        ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...(options.body !== undefined ? { 'Content-Type': isFile ? (options.body as Blob).type : 'application/json' } : {}),
         ...options.headers,
       },
-      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      body: options.body === undefined ? undefined : isFile ? (options.body as Blob) : JSON.stringify(options.body),
       credentials: 'same-origin',
     })
   } catch {

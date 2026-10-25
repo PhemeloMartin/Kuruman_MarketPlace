@@ -5,6 +5,9 @@ import { Layout } from './components/Layout'
 import { RegisterPage, SignInPage } from './pages/AuthPages'
 import { CartPage } from './pages/CartPage'
 import { HomePage } from './pages/HomePage'
+import { ProductPage } from './pages/ProductPage'
+import { ShopPage } from './pages/ShopPage'
+import { SellerShopPage } from './pages/seller/SellerShopPage'
 import { OrdersPage } from './pages/OrdersPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SellerDashboardPage } from './pages/seller/SellerDashboardPage'
@@ -25,6 +28,8 @@ export default function App() {
             <Routes>
               <Route element={<Layout />}>
                 <Route index element={<HomePage />} />
+                <Route path="product/:id" element={<ProductPage />} />
+                <Route path="shop/:id" element={<ShopPage />} />
                 <Route path="cart" element={<CartPage />} />
                 <Route path="orders" element={<OrdersPage />} />
                 <Route path="profile" element={<ProfilePage />} />
@@ -36,6 +41,7 @@ export default function App() {
                   <Route path="seller" element={<SellerDashboardPage />} />
                   <Route path="seller/products" element={<SellerProductsPage />} />
                   <Route path="seller/products/:id" element={<SellerProductFormPage />} />
+                  <Route path="seller/shop" element={<SellerShopPage />} />
                 </Route>
                 <Route element={<RequireRole role="courier" />}>
                   <Route path="courier" element={<CourierPage />} />

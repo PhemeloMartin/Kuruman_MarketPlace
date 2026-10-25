@@ -190,6 +190,14 @@ export function SellerDashboardPage() {
           Products &amp; stock
           <span className="action-count">{products.length}</span>
         </Link>
+        <Link to="/seller/shop" className="action-tile">
+          <span aria-hidden="true" className="tile-emoji">🖼</span>
+          Shop photo &amp; about
+        </Link>
+        <Link to={`/shop/${dashboard.business.id}`} className="action-tile">
+          <span aria-hidden="true" className="tile-emoji">👀</span>
+          See my shop
+        </Link>
       </div>
 
       <section aria-labelledby="numbers-heading" className="seller-section">

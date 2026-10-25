@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response, Router } from "express";
+import express, { NextFunction, Request, Response, Router } from "express";
 import { PoolClient } from "pg";
 import { pool } from "../db";
 import { requireRole } from "../auth/session";
@@ -9,6 +9,7 @@ import { POLICY } from "../lib/policy";
 import { openOrderCase } from "../lib/cases";
 import { consumeReservation, recordStatusChange, releaseReservation, returnToStock } from "../lib/stock";
 import { audit } from "../lib/audit";
+import { MAX_PHOTO_BYTES, deleteStoredImage, detectImageType, savePhoto } from "../lib/photoStore";
 
 // Everything here is for an approved entrepreneur, and only ever about THEIR business.
 // The business is looked up from the session user - never taken from the request (BR-13).
@@ -417,7 +418,7 @@ sellerRouter.post("/cash/:orderId/acknowledge", async (req, res) => {
 sellerRouter.get("/products", async (req, res) => {
   const r = await pool.query(
     `SELECT p.id, p.name, p.description, p.unit_label, p.price_cents, p.stock_qty, p.reserved_qty,
-            p.low_stock_threshold, p.is_active, c.slug AS category, c.name AS category_name
+            p.low_stock_threshold, p.is_active, p.image_url, c.slug AS category, c.name AS category_name
        FROM products p JOIN categories c ON c.id = p.category_id
       WHERE p.business_id = $1
       ORDER BY p.is_active DESC, p.name`,
@@ -435,6 +436,7 @@ sellerRouter.get("/products", async (req, res) => {
       availableQty: p.stock_qty - p.reserved_qty,
       lowStockThreshold: p.low_stock_threshold,
       isActive: p.is_active,
+      imageUrl: p.image_url,
       category: p.category,
       categoryName: p.category_name,
     }))
@@ -568,4 +570,151 @@ sellerRouter.patch("/products/:id", requireActiveShop, async (req, res) => {
     }
     throw err;
   }
+});
+
+// ---------------------------------------------------------------------------
+// Photos and the shop page
+// ---------------------------------------------------------------------------
+
+const MAX_PRODUCT_PHOTOS = 5;
+
+// The photo arrives as the raw image (not JSON), already shrunk by the phone.
+const rawImage = express.raw({ type: ["image/jpeg", "image/png", "image/webp"], limit: MAX_PHOTO_BYTES });
+
+// The first photo (lowest sort order) is the one shown on product cards.
+async function refreshCoverUrls(client: PoolClient, businessId: number, productId: number | null) {
+  if (productId) {
+    await client.query(
+      `UPDATE products SET image_url = (SELECT url FROM photos WHERE product_id = $1 ORDER BY sort_order, id LIMIT 1),
+              updated_at = now()
+        WHERE id = $1`,
+      [productId]
+    );
+  } else {
+    await client.query(
+      `UPDATE businesses SET cover_photo_url = (SELECT url FROM photos WHERE business_id = $1 AND product_id IS NULL ORDER BY id DESC LIMIT 1)
+        WHERE id = $1`,
+      [businessId]
+    );
+  }
+}
+
+sellerRouter.get("/products/:id/photos", async (req, res) => {
+  const r = await pool.query(
+    `SELECT ph.id, ph.url FROM photos ph JOIN products p ON p.id = ph.product_id
+      WHERE ph.product_id = $1 AND p.business_id = $2 ORDER BY ph.sort_order, ph.id`,
+    [Number(req.params.id), req.business!.id]
+  );
+  res.json(r.rows.map((p) => ({ id: Number(p.id), url: p.url })));
+});
+
+// POST /api/seller/photos?productId=12   - add a photo to a product (up to 5)
+// POST /api/seller/photos?cover=1        - set the shop's cover photo (replaces the old one)
+sellerRouter.post("/photos", requireActiveShop, rawImage, async (req, res) => {
+  const image = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+  const type = detectImageType(image);
+  if (!type) return res.status(422).json({ error: "That file isn't a photo we can use. Choose a JPEG, PNG or WebP picture." });
+
+  const businessId = req.business!.id;
+  const productId = req.query.cover ? null : Number(req.query.productId);
+  if (productId !== null && (!Number.isInteger(productId) || productId <= 0)) {
+    return res.status(422).json({ error: "Choose which product the photo is for." });
+  }
+
+  const client = await pool.connect();
+  let replaced: { storage: string; storage_key: string | null }[] = [];
+  try {
+    await client.query("BEGIN");
+    let sortOrder = 0;
+    if (productId) {
+      // Lock the product row so two uploads at once can't both squeeze in as photo number 5.
+      const p = await client.query("SELECT id FROM products WHERE id = $1 AND business_id = $2 FOR UPDATE", [productId, businessId]);
+      if (p.rowCount === 0) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ error: "Product not found." });
+      }
+      const n = await client.query("SELECT count(*)::int AS n, COALESCE(max(sort_order), -1) AS last FROM photos WHERE product_id = $1", [productId]);
+      if (n.rows[0].n >= MAX_PRODUCT_PHOTOS) {
+        await client.query("ROLLBACK");
+        return res.status(409).json({ error: `A product can have up to ${MAX_PRODUCT_PHOTOS} photos. Remove one first.` });
+      }
+      sortOrder = n.rows[0].last + 1;
+    } else {
+      const old = await client.query(
+        "DELETE FROM photos WHERE business_id = $1 AND product_id IS NULL RETURNING storage, storage_key",
+        [businessId]
+      );
+      replaced = old.rows;
+    }
+    const saved = await savePhoto(client, { businessId, productId }, image, type, sortOrder);
+    await refreshCoverUrls(client, businessId, productId);
+    await client.query("COMMIT");
+    for (const r of replaced) await deleteStoredImage(r.storage, r.storage_key);
+    res.status(201).json(saved);
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+});
+
+// Makes this photo the first one, i.e. the one on the product card.
+sellerRouter.post("/photos/:id/main", requireActiveShop, async (req, res) => {
+  const r = await pool.query(
+    `UPDATE photos SET sort_order = (SELECT min(sort_order) - 1 FROM photos p2 WHERE p2.product_id = photos.product_id)
+      WHERE id = $1 AND business_id = $2 AND product_id IS NOT NULL RETURNING product_id`,
+    [Number(req.params.id), req.business!.id]
+  );
+  if (r.rowCount === 0) return res.status(404).json({ error: "Photo not found." });
+  const client = await pool.connect();
+  try {
+    await refreshCoverUrls(client, req.business!.id, Number(r.rows[0].product_id));
+  } finally {
+    client.release();
+  }
+  res.status(204).end();
+});
+
+sellerRouter.delete("/photos/:id", requireActiveShop, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const r = await client.query(
+      "DELETE FROM photos WHERE id = $1 AND business_id = $2 RETURNING product_id, storage, storage_key",
+      [Number(req.params.id), req.business!.id]
+    );
+    if (r.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Photo not found." });
+    }
+    const gone = r.rows[0];
+    await refreshCoverUrls(client, req.business!.id, gone.product_id ? Number(gone.product_id) : null);
+    await client.query("COMMIT");
+    await deleteStoredImage(gone.storage, gone.storage_key);
+    res.status(204).end();
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+});
+
+// The seller's own shop details (the public page is GET /api/shops/:id).
+sellerRouter.get("/shop", async (req, res) => {
+  const r = await pool.query("SELECT id, name, description, area, cover_photo_url FROM businesses WHERE id = $1", [req.business!.id]);
+  const b = r.rows[0];
+  res.json({ id: Number(b.id), name: b.name, description: b.description, area: b.area, coverPhotoUrl: b.cover_photo_url });
+});
+
+// Sellers write their own "about us". The shop name and area were checked by support at approval,
+// so changing those goes through support.
+sellerRouter.patch("/shop", requireActiveShop, async (req, res) => {
+  const description = typeof req.body?.description === "string" ? req.body.description.trim() : "";
+  if (description.length > 600) {
+    return res.status(422).json({ error: "Keep it under 600 characters.", fields: { description: "Up to 600 characters." } });
+  }
+  await pool.query("UPDATE businesses SET description = $2 WHERE id = $1", [req.business!.id, description || null]);
+  res.json({ ok: true });
 });

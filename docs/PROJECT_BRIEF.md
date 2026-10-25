@@ -234,4 +234,10 @@ open the console: scan the QR code shown, then enter the 6-digit code.
 - [x] Seller dashboard redesign: greeting and shop status, "To do now" first (orders that need the seller, cash to
       confirm, low stock by name, or "All caught up"), large action tiles, numbers as plain sentences with what they
       mean, orders waiting on others and order history separately
+- [x] Photos: up to 5 per product (main photo, remove), shop cover photo and "about" text; shrunk on the phone
+      (1200 px WebP, ~100-200 KB, location data dropped); file type checked from its first bytes; Cloudinary when
+      CLOUDINARY_URL is set, otherwise kept in the database; public shop page (/shop/:id, no phone or address) and
+      product page (/product/:id) with gallery; `npm run test:photos` (9 checks)
+- [x] Automatic database updates: server/db/migrations.sql runs at every start (IF NOT EXISTS), so new features
+      reach the hosted database without a reset
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables
