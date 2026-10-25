@@ -7,7 +7,7 @@ import { ProductCard } from '../components/ProductCard'
 import { RatingLine, Stars } from '../components/Stars'
 import { api } from '../lib/api'
 import { chatLink, pageUrl, shareLink } from '../lib/whatsapp'
-import { stallDaysText } from '../lib/types'
+import { NEGATIVE_THEMES, THEME_LABEL, stallDaysText } from '../lib/types'
 import type { Shop } from '../lib/types'
 
 // A shop's own page: cover photo, who they are, and everything they sell.
@@ -130,6 +130,16 @@ export function ShopPage() {
         <p className="fine-print" style={{ marginTop: -6 }}>
           Only customers who bought and received an order here can review it.
         </p>
+        {shop.customerThemes.length > 0 && (
+          <p className="theme-chips">
+            <span className="ai-label">AI summary</span> Customers mention:{' '}
+            {shop.customerThemes.map((t) => (
+              <span key={t.theme} className={`theme-chip${NEGATIVE_THEMES.includes(t.theme) ? ' negative' : ''}`}>
+                {THEME_LABEL[t.theme] ?? t.theme} ({t.count})
+              </span>
+            ))}
+          </p>
+        )}
         {shop.reviews.length === 0 ? (
           <p className="notice">No reviews yet.</p>
         ) : (

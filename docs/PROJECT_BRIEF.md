@@ -269,4 +269,12 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       completed; only the business's own phone counts; every change in the order history; gateway webhook
       /api/sms/inbound with a secret token; order SMS kept 30 days; demo basic-phone page /demo/phone (demo mode
       only); `npm run test:stalls` (9 checks)
+- [x] Tier 2 AI (all our own models, ai/README.md): reviews-v1 (sentiment: macro-F1 0.505 vs keyword 0.381 and majority
+      0.202; themes micro-F1 0.599 vs keyword 0.559 - roughly equal, test set seen once, disclosed) shown as "Customers
+      mention" on shop pages and per review for sellers; screening-v1 (precision 0.765, recall 0.722 vs keyword baseline
+      recall 0.222; recall target 0.90 met in CV but not on test - Setswana weakest) feeds support's "Flagged" tab, where
+      a person decides with a reason (audit log), nothing hidden automatically; forecast-v1 (Poisson regression per
+      product, 24% lower MAE than the best baseline on a synthetic backtest) as "Next 7 days" on the seller dashboard;
+      multilingual search = hand-made glossary + pg_trgm (not ML). Background AI worker; site works if the AI is down;
+      `npm run test:ai` (9 checks, fake AI service)
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

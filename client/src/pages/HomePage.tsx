@@ -55,6 +55,7 @@ export function HomePage() {
   const [error, setError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<string | null>(null) // set when showing the offline copy
   const [savedIsStale, setSavedIsStale] = useState(false)
+  const [alsoSearched, setAlsoSearched] = useState<string[]>([]) // glossary words searched too (multilingual search)
   const online = useOnline()
 
   useEffect(() => {
@@ -68,7 +69,14 @@ export function HomePage() {
     const search = new URLSearchParams()
     if (category) search.set('category', category)
     if (query) search.set('q', query)
-    api<Product[]>(`/products?${search}`)
+    // With search words: /search also says which other words (other languages, spellings) it tried.
+    const request = query
+      ? api<{ products: Product[]; alsoSearched: string[] }>(`/search?${search}`).then((r) => {
+          if (!cancelled) setAlsoSearched(r.alsoSearched)
+          return r.products
+        })
+      : api<Product[]>(`/products?${search}`)
+    request
       .then((p) => {
         if (cancelled) return
         setLoaded({ key: `${category}|${query}`, products: p })
@@ -166,6 +174,11 @@ export function HomePage() {
               </h1>
               {products && !error && <span className="product-meta">{products.length} found</span>}
             </div>
+            {query && alsoSearched.length > 0 && (
+              <p className="fine-print" style={{ marginTop: -6 }}>
+                Also searched: {alsoSearched.join(', ')}
+              </p>
+            )}
             {productList}
           </section>
         </main>

@@ -21,7 +21,8 @@
     "test:photos": "tsx src/scripts/testPhotos.ts",
     "test:reviews": "tsx src/scripts/testReviews.ts",
     "test:sharing": "tsx src/scripts/testSharing.ts",
-    "test:stalls": "tsx src/scripts/testStalls.ts"
+    "test:stalls": "tsx src/scripts/testStalls.ts",
+    "test:ai": "tsx src/scripts/testAi.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

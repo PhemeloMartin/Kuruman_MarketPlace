@@ -10,8 +10,9 @@ import { openOrderCase } from "../lib/cases";
 import { consumeReservation, recordStatusChange, releaseReservation, returnToStock } from "../lib/stock";
 import { audit } from "../lib/audit";
 import { MAX_PHOTO_BYTES, deleteStoredImage, detectImageType, savePhoto } from "../lib/photoStore";
-import { cleanText, publicReviews, ratingOf } from "../lib/reviews";
+import { cleanText, publicReviews, ratingOf, themeCounts } from "../lib/reviews";
 import { normaliseSaPhone } from "../lib/phone";
+import { forecastSales } from "../lib/aiClient";
 
 // Everything here is for an approved entrepreneur, and only ever about THEIR business.
 // The business is looked up from the session user - never taken from the request (BR-13).
@@ -866,7 +867,11 @@ sellerRouter.patch("/shop", requireActiveShop, async (req, res) => {
 // ---------------------------------------------------------------------------
 
 sellerRouter.get("/reviews", async (req, res) => {
-  res.json({ rating: await ratingOf(req.business!.id), reviews: await publicReviews(req.business!.id, 100) });
+  res.json({
+    rating: await ratingOf(req.business!.id),
+    reviews: await publicReviews(req.business!.id, 100),
+    themes: await themeCounts(req.business!.id),
+  });
 });
 
 // One public reply per review: a chance to thank customers or put a complaint right.
@@ -880,4 +885,69 @@ sellerRouter.post("/reviews/:id/reply", requireActiveShop, async (req, res) => {
   );
   if (r.rowCount === 0) return res.status(409).json({ error: "This review already has your reply, or it isn't for your shop." });
   res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
+// Sales forecast (Tier 2 AI): the next 7 days for the shop's best sellers
+// ---------------------------------------------------------------------------
+
+const FORECAST_DAYS_BACK = 140; // up to 20 weeks of history
+const FORECAST_PRODUCTS = 3;
+
+// Units sold per day (by the day the order was completed) for one product, with 0 for days without
+// sales, from its first sale until yesterday (South African dates).
+async function dailySales(productId: number) {
+  const r = await pool.query(
+    `WITH sales AS (
+       SELECT (h.created_at AT TIME ZONE 'Africa/Johannesburg')::date AS day, sum(i.quantity)::int AS units
+         FROM order_items i
+         JOIN orders o ON o.id = i.order_id AND o.status = 'completed'
+         JOIN order_status_history h ON h.order_id = o.id AND h.to_status = 'completed'
+        WHERE i.product_id = $1 AND h.created_at > now() - make_interval(days => $2)
+        GROUP BY 1
+     ),
+     days AS (
+       SELECT generate_series((SELECT min(day) FROM sales),
+                              (now() AT TIME ZONE 'Africa/Johannesburg')::date - 1, interval '1 day')::date AS day
+     )
+     SELECT to_char(d.day, 'YYYY-MM-DD') AS date, COALESCE(s.units, 0) AS units
+       FROM days d LEFT JOIN sales s ON s.day = d.day ORDER BY d.day`,
+    [productId, FORECAST_DAYS_BACK]
+  );
+  return r.rows as { date: string; units: number }[];
+}
+
+// GET /api/seller/forecast - advice only: the seller decides how much stock to have (spec BR-14).
+sellerRouter.get("/forecast", async (req, res) => {
+  const top = await pool.query(
+    `SELECT p.id, p.name, p.unit_label, p.stock_qty - p.reserved_qty AS available, sum(i.quantity)::int AS sold
+       FROM products p
+       JOIN order_items i ON i.product_id = p.id
+       JOIN orders o ON o.id = i.order_id AND o.status = 'completed' AND o.updated_at > now() - interval '28 days'
+      WHERE p.business_id = $1 AND p.is_active
+      GROUP BY p.id ORDER BY sold DESC LIMIT $2`,
+    [req.business!.id, FORECAST_PRODUCTS]
+  );
+  const products = [];
+  let modelVersion: string | null = null;
+  for (const p of top.rows) {
+    const history = await dailySales(Number(p.id));
+    const f = await forecastSales(history);
+    if (!f) return res.json({ available: false, products: [] }); // AI service down: the card just doesn't show
+    modelVersion = f.modelVersion;
+    const days = f.forecast ?? [];
+    const busiest = days.reduce((a, b) => (b.units > a.units ? b : a), days[0] ?? { date: "", units: 0 });
+    products.push({
+      productId: Number(p.id),
+      name: p.name,
+      unitLabel: p.unit_label,
+      available: p.available,
+      enoughHistory: f.enough,
+      weeksOfHistory: Math.floor(history.length / 7),
+      nextWeekTotal: Math.round(days.reduce((sum, d) => sum + d.units, 0)),
+      busiestDay: f.enough ? busiest : null,
+      days,
+    });
+  }
+  res.json({ available: true, modelVersion, products });
 });

@@ -2405,3 +2405,49 @@ label.busy {
   min-width: 0;
   width: 100%;
 }
+
+/* ---------- AI summaries and the forecast ---------- */
+.theme-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 12px;
+  font-size: 0.9rem;
+}
+
+.theme-chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--primary-tint);
+  color: var(--primary-dark);
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.theme-chip.negative {
+  background: var(--accent-tint);
+  color: #7a2f1b;
+}
+
+.sentiment.positive {
+  color: var(--primary-dark);
+}
+
+.sentiment.negative {
+  color: #7a2f1b;
+}
+
+.forecast {
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.forecast-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}

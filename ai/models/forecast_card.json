@@ -1,0 +1,19 @@
+{
+  "model_version": "forecast-v1",
+  "artefact": null,
+  "purpose": "Predict a product's sales for the next 7 days from its own sales history, as advice for the seller.",
+  "method": "Poisson regression (alpha 0.1) on weekday, payday week (25th-3rd) and trend; fitted per product on request; needs at least 28 days of history.",
+  "evaluation_data": "SYNTHETIC: 40 made-up products x 20 weeks with known weekday, payday, trend and Poisson noise. Not real sales.",
+  "backtest": "Rolling origin over the last 6 weeks of each product; MAE in units per day.",
+  "test_results": {
+    "mae_units_per_day": {
+      "model": 2.5,
+      "same_day_last_week": 3.574,
+      "overall_average": 3.301
+    },
+    "improvement_over_best_baseline": 0.243
+  },
+  "human_in_the_loop": "Advice only: the seller decides stock and prices (spec BR-14 forbids automated stock or pricing decisions).",
+  "limits": "Synthetic evaluation shows the method can learn such patterns, not that real Kuruman sales follow them. Holidays, weather and events are not modelled. New products have no forecast for 4 weeks.",
+  "trained_at": "2026-10-25T23:07:00+00:00"
+}

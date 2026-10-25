@@ -288,3 +288,82 @@ supportOpsRouter.post("/cases/:id/notes", async (req, res) => {
   await audit(pool, { actorId: req.user!.id, action: "case.note", resourceType: "support_case", resourceId: id, outcome: "success", reason: note });
   res.status(201).json({ ok: true });
 });
+
+// ---------------------------------------------------------------------------
+// Flagged for review: texts the AI screening model thinks may move sales off the site or be a scam
+// ---------------------------------------------------------------------------
+
+const REASON_TEXT: Record<string, string> = {
+  phone_number: "contains a phone number",
+  model: "wording like off-site payment or a scam",
+};
+
+supportOpsRouter.get("/flags", async (_req, res) => {
+  const r = await pool.query(
+    `SELECT s.id, s.item_type, s.item_id, s.excerpt, s.score, s.reasons, s.model_version, s.created_at,
+            CASE s.item_type
+              WHEN 'product' THEN (SELECT b.name FROM products p JOIN businesses b ON b.id = p.business_id WHERE p.id = s.item_id)
+              WHEN 'shop'    THEN (SELECT name FROM businesses WHERE id = s.item_id)
+              WHEN 'review'  THEN (SELECT b.name FROM reviews rv JOIN businesses b ON b.id = rv.business_id WHERE rv.id = s.item_id)
+            END AS shop_name
+       FROM screenings s
+      WHERE s.flagged AND s.status = 'new'
+      ORDER BY s.score DESC NULLS LAST, s.id
+      LIMIT 100`
+  );
+  res.json(
+    r.rows.map((f) => ({
+      id: Number(f.id),
+      itemType: f.item_type,
+      itemId: Number(f.item_id),
+      excerpt: f.excerpt,
+      score: f.score,
+      reasons: f.reasons.map((x: string) => REASON_TEXT[x] ?? x),
+      modelVersion: f.model_version,
+      shopName: f.shop_name,
+      createdAt: f.created_at,
+    }))
+  );
+});
+
+// POST /api/support/ops/flags/:id { decision: "dismiss" | "hide", reason }
+// dismiss: the text is fine. hide: the product is taken off sale, the review hidden, or the shop's
+// "about" text removed. Both are recorded in the audit log, with the model version that raised it.
+supportOpsRouter.post("/flags/:id", async (req, res) => {
+  const decision = req.body?.decision;
+  if (decision !== "dismiss" && decision !== "hide") return res.status(422).json({ error: "Choose dismiss or hide." });
+  const reason = reasonFrom(req, res);
+  if (!reason) return;
+  await inTransaction(async (client) => {
+    const f = await client.query("SELECT * FROM screenings WHERE id = $1 AND flagged AND status = 'new' FOR UPDATE", [
+      Number(req.params.id),
+    ]);
+    const flag = f.rows[0];
+    if (!flag) return void res.status(409).json({ error: "This flag was already handled." });
+    if (decision === "hide") {
+      if (flag.item_type === "product") {
+        await client.query("UPDATE products SET is_active = FALSE, updated_at = now() WHERE id = $1", [flag.item_id]);
+      } else if (flag.item_type === "review") {
+        await client.query("UPDATE reviews SET hidden_at = now(), hidden_reason = $2 WHERE id = $1", [flag.item_id, reason]);
+      } else {
+        await client.query("UPDATE businesses SET description = NULL WHERE id = $1", [flag.item_id]);
+      }
+    }
+    await client.query("UPDATE screenings SET status = $2, decided_by = $3, decided_at = now(), decision_note = $4 WHERE id = $1", [
+      flag.id,
+      decision === "hide" ? "actioned" : "dismissed",
+      req.user!.id,
+      reason,
+    ]);
+    await audit(client, {
+      actorId: req.user!.id,
+      action: `screening.${decision}`,
+      resourceType: flag.item_type,
+      resourceId: flag.item_id,
+      outcome: "success",
+      reason,
+      changes: { screeningId: Number(flag.id), modelVersion: flag.model_version },
+    });
+    res.json({ ok: true });
+  });
+});

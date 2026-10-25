@@ -1,0 +1,43 @@
+{
+  "model_version": "screening-v1",
+  "artefact": "screening-v1.joblib",
+  "artefact_sha256": "2325f1a2b3221e05c349a882989ee5c26d45d3e27cd248b813c25b5e10bbc3a4",
+  "purpose": "Flag texts that try to move payment or sales off the site, or look like scams, for a support person to review.",
+  "method": "TF-IDF word + character n-grams; logistic regression (balanced); OR a South African phone-number rule.",
+  "data": "data/screening.psv - 60 student-authored concepts x 3 languages (30 suspicious, 30 normal incl. hard negatives).",
+  "split": {
+    "development_concepts": 48,
+    "test_concepts": 12,
+    "grouped_by": "concept_id"
+  },
+  "tuning": {
+    "C": 10,
+    "threshold": 0.5,
+    "rule": "recall >= 0.9 in 5-fold grouped CV"
+  },
+  "test_results": {
+    "model_plus_phone_rule": {
+      "precision": 0.765,
+      "recall": 0.722,
+      "f1": 0.743
+    },
+    "model_only": {
+      "precision": 0.765,
+      "recall": 0.722,
+      "f1": 0.743
+    },
+    "keyword_baseline": {
+      "precision": 1.0,
+      "recall": 0.222,
+      "f1": 0.364
+    },
+    "recall_per_language": {
+      "en": 0.833,
+      "tn": 0.5,
+      "af": 0.833
+    }
+  },
+  "human_in_the_loop": "Never blocks, hides or deletes. A flag only puts the item on support's review list; support decides, and the decision is in the audit log.",
+  "limits": "Very small synthetic dataset; scammers change wording. Unreviewed Setswana/Afrikaans. Expect false alarms on honest texts that mention payment.",
+  "trained_at": "2026-10-25T23:04:05+00:00"
+}

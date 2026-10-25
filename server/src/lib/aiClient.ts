@@ -31,3 +31,47 @@ export async function predictCategory(title: string, description: string, locale
     return null;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Tier 2 models (same private service, same rule: if it's down, the site carries on without it)
+// ---------------------------------------------------------------------------
+
+async function callAi<T>(path: string, body: unknown, timeoutMs: number): Promise<T | null> {
+  const url = process.env.AI_SERVICE_URL;
+  const token = process.env.AI_SERVICE_TOKEN;
+  if (!url || !token) return null;
+  try {
+    const res = await fetch(`${url}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-AI-Token": token },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (!res.ok) throw new Error(`status ${res.status}`);
+    return (await res.json()) as T;
+  } catch (err: any) {
+    console.warn(`AI service ${path} unavailable: ${err?.name ?? "error"} ${err?.message ?? ""}`.trim());
+    return null;
+  }
+}
+
+export interface ReviewAnalysis {
+  sentiment: "positive" | "neutral" | "negative";
+  themes: string[];
+}
+
+export async function analyseReviews(texts: string[]) {
+  return callAi<{ results: ReviewAnalysis[]; modelVersion: string }>("/reviews/analyse", { texts }, 5000);
+}
+
+export async function screenText(text: string) {
+  return callAi<{ flag: boolean; score: number; reasons: string[]; modelVersion: string }>("/screen", { text }, 3000);
+}
+
+export async function forecastSales(history: { date: string; units: number }[]) {
+  return callAi<{ enough: boolean; modelVersion: string; forecast?: { date: string; units: number }[] }>(
+    "/forecast",
+    { history },
+    5000
+  );
+}

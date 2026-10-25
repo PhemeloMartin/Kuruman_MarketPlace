@@ -3,6 +3,7 @@
 -- WARNING: running this file drops and re-creates all tables (development only).
 
 -- Tables added later in migrations.sql are dropped here too, so a reset starts clean.
+DROP TABLE IF EXISTS screenings CASCADE;
 DROP TABLE IF EXISTS sms_messages CASCADE;
 DROP TABLE IF EXISTS reviews CASCADE;
 DROP TABLE IF EXISTS photos CASCADE;

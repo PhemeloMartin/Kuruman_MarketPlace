@@ -59,6 +59,8 @@ async function main() {
       ["kabelo", "+27710000013", "Kabelo (demo customer)", "consumer"],
       // Tebogo helps his grandmother, Mma Kefilwe, run her stall. She has a basic phone: 071 000 0014.
       ["helper", "+27710000015", "Tebogo (demo helper for Mma Kefilwe's stall)", "entrepreneur"],
+      // Places the synthetic older sales history below (so real demo customers' order lists stay short).
+      ["history", "+27710000099", "Walk-in customers (synthetic demo history)", "consumer"],
     ];
     const userIds: Record<string, number> = {};
     for (const [key, phone, name, role] of users) {
@@ -234,6 +236,11 @@ async function main() {
       `UPDATE products SET collection_only = TRUE
         WHERE category_id IN (SELECT id FROM categories WHERE slug IN ('building', 'livestock')) OR name = 'Lucerne bale'`
     );
+    // One listing that tries to take sales off the site, so the AI screening has something real to flag
+    // for support in the demo (support then decides: "It's fine" or "Take off sale").
+    await client.query(
+      "UPDATE products SET description = 'For bulk orders WhatsApp me on 072 555 1234, cheaper than here.' WHERE name = 'Beaded key ring'"
+    );
     // Packaged goods have barcodes the seller can scan (made-up numbers in the 600 = South Africa range).
     await client.query("UPDATE products SET barcode = '6001234500017' WHERE name = 'Maize meal'");
     await client.query("UPDATE products SET barcode = '6009876500025' WHERE name = 'Cement'");
@@ -307,6 +314,53 @@ async function main() {
           [orderId, shop.id, userIds[past.buyer], past.rating, past.comment ?? null, past.reply ?? null]
         );
       }
+    }
+
+    // SYNTHETIC sales history for the sales-forecast demo: the last 11 weeks up to yesterday, one made-up
+    // pickup order a day at the food caravan, busier on Fridays/Saturdays and in payday week. Like all demo
+    // data it is made up; it also counts in the caravan's numbers and in Entrepreneur of the Month.
+    const caravan = (await client.query("SELECT id, owner_id FROM businesses WHERE name LIKE 'Mma Dineo%'")).rows[0];
+    const kota = (await client.query("SELECT id, name, unit_label, price_cents FROM products WHERE name = 'Kota (quarter loaf)'")).rows[0];
+    const vetkoek = (await client.query("SELECT id, name, unit_label, price_cents FROM products WHERE name = 'Vetkoek with mince'")).rows[0];
+    let seed = 7; // a tiny fixed random generator, so every reset gives the same history
+    const random = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+    for (let daysAgo = 77; daysAgo >= 1; daysAgo--) {
+      const when = new Date(Date.now() - daysAgo * 86_400_000);
+      const weekday = when.getDay(); // 0 = Sunday
+      const payday = when.getDate() >= 25 || when.getDate() <= 3;
+      const busy = (weekday === 5 || weekday === 6 ? 1.8 : weekday === 0 ? 0.6 : 1) * (payday ? 1.4 : 1);
+      const lines = [
+        { ...kota, qty: Math.max(1, Math.round((4 + random() * 3) * busy)) },
+        { ...vetkoek, qty: Math.max(1, Math.round((3 + random() * 3) * busy)) },
+      ];
+      const subtotal = lines.reduce((s, l) => s + l.price_cents * l.qty, 0);
+      const at = (m: number) => `now() - interval '${daysAgo} days' + interval '${m} minutes'`;
+      const o = await client.query(
+        `INSERT INTO orders (consumer_id, business_id, status, fulfilment, payment_method, subtotal_cents, total_cents,
+                             accept_by, idempotency_key, request_hash, created_at, updated_at)
+         VALUES ($1, $2, 'completed', 'pickup', 'cash', $3, $3, ${at(30)}, $4, $5, ${at(0)}, ${at(60)}) RETURNING id`,
+        [userIds.history, caravan.id, subtotal, `synthetic-history-${daysAgo}`, "0".repeat(64)]
+      );
+      const orderId = o.rows[0].id;
+      for (const l of lines) {
+        await client.query(
+          `INSERT INTO order_items (order_id, product_id, product_name, unit_label, unit_price_cents, quantity, line_total_cents)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [orderId, l.id, l.name, l.unit_label, l.price_cents, l.qty, l.price_cents * l.qty]
+        );
+      }
+      for (const [from, to, m] of [[null, "pending_acceptance", 0], ["pending_acceptance", "confirmed", 5], ["confirmed", "ready", 20], ["ready", "completed", 60]] as [string | null, string, number][]) {
+        await client.query(
+          `INSERT INTO order_status_history (order_id, from_status, to_status, changed_by, reason, created_at)
+           VALUES ($1, $2, $3, $4, 'Synthetic demo history', ${at(m)})`,
+          [orderId, from, to, to === "pending_acceptance" ? userIds.history : caravan.owner_id]
+        );
+      }
+      await client.query(
+        `INSERT INTO cash_receipts (order_id, collected_by, collected_cents, remitted_cents, collected_at, remitted_at, status, acknowledged_by)
+         VALUES ($1, $2, $3, $3, ${at(60)}, ${at(60)}, 'remitted', $2)`,
+        [orderId, caravan.owner_id, subtotal]
+      );
     }
 
     await client.query("COMMIT");

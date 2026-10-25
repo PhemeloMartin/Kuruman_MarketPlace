@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "../db";
-import { publicReviews, ratingOf } from "../lib/reviews";
+import { expandQuery, plain } from "../lib/glossary";
+import { publicReviews, ratingOf, themeCounts } from "../lib/reviews";
 import { currentSpotlight } from "../lib/spotlight";
 
 // Public catalogue: anyone can browse without signing in (spec FR-01, FR-04).
@@ -49,13 +50,13 @@ function toProduct(row: any) {
   };
 }
 
-// GET /api/products?category=bakery&q=bread
-catalogueRouter.get("/products", async (req, res) => {
-  const category = typeof req.query.category === "string" && req.query.category ? req.query.category : null;
-  const q = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 80) : "";
+// Search and browse. Words are widened with the multilingual glossary ("spinasie" also searches
+// "spinach" and "sepinatšhe"), and close spellings of product names count too ("spinich" -> Spinach),
+// using letter-trigram similarity in the database (pg_trgm). Exact word matches come first.
+async function findProducts(category: string | null, q: string) {
+  const { terms, matchedGroups } = q ? expandQuery(q) : { terms: [], matchedGroups: [] as string[][] };
   // Escape % and _ so a search for "50%" is taken literally.
-  const pattern = q ? `%${q.replace(/[\\%_]/g, "\\$&")}%` : null;
-
+  const patterns = terms.length ? terms.map((t) => `%${t.replace(/[\\%_]/g, "\\$&")}%`) : null;
   const r = await pool.query(
     `SELECT ${PRODUCT_COLUMNS}
        FROM products p
@@ -63,11 +64,33 @@ catalogueRouter.get("/products", async (req, res) => {
        JOIN businesses b ON b.id = p.business_id
       WHERE p.is_active AND b.is_active
         AND ($1::text IS NULL OR c.slug = $1)
-        AND ($2::text IS NULL OR p.name ILIKE $2 OR p.description ILIKE $2)
-      ORDER BY p.name`,
-    [category, pattern]
+        AND ($2::text[] IS NULL
+             OR lower(p.name) LIKE ANY($2) OR lower(coalesce(p.description, '')) LIKE ANY($2)
+             OR similarity(lower(p.name), $3) >= 0.3 OR word_similarity($3, lower(p.name)) >= 0.6)
+      ORDER BY ($2::text[] IS NOT NULL AND lower(p.name) LIKE ANY($2)) DESC,
+               similarity(lower(p.name), coalesce($3, '')) DESC, p.name`,
+    [category, patterns, q ? plain(q) : null]
   );
-  res.json(r.rows.map(toProduct));
+  const typed = plain(q);
+  return {
+    products: r.rows.map(toProduct),
+    // Other words searched too, to show "Also searched: spinach, sepinatšhe".
+    alsoSearched: [...new Set(matchedGroups.flat())].filter((w) => plain(w) !== typed).slice(0, 6),
+  };
+}
+
+// GET /api/products?category=bakery&q=bread - the product list (also saved for offline browsing).
+catalogueRouter.get("/products", async (req, res) => {
+  const category = typeof req.query.category === "string" && req.query.category ? req.query.category : null;
+  const q = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 80) : "";
+  res.json((await findProducts(category, q)).products);
+});
+
+// GET /api/search?q=spinasie&category=... - the same, plus which other words were searched.
+catalogueRouter.get("/search", async (req, res) => {
+  const category = typeof req.query.category === "string" && req.query.category ? req.query.category : null;
+  const q = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 80) : "";
+  res.json(await findProducts(category, q));
 });
 
 catalogueRouter.get("/products/:id", async (req, res) => {
@@ -139,6 +162,7 @@ catalogueRouter.get("/shops/:id", async (req, res) => {
     products: products.rows.map(toProduct),
     rating: await ratingOf(id),
     reviews: await publicReviews(id),
+    customerThemes: await themeCounts(id),
     isSpotlight: spotlight?.business.id === id,
   });
 });

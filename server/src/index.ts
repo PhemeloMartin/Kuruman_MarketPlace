@@ -4,6 +4,7 @@ import { startExpiryTimer } from "./lib/expiry";
 import { startRetentionTimer } from "./lib/retention";
 import { startNotificationWorker } from "./lib/notificationWorker";
 import { runMigrations } from "./lib/migrate";
+import { startAiWorker } from "./lib/aiWorker";
 import { describeError } from "./lib/describeError";
 
 const PORT = Number(process.env.PORT) || 4000;
@@ -16,6 +17,7 @@ runMigrations()
       startExpiryTimer();
       startRetentionTimer();
       startNotificationWorker();
+      startAiWorker();
     });
   })
   .catch((err) => {

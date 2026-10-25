@@ -1,0 +1,331 @@
+concept_id|sentiment|themes|language|text
+r001|positive|fresh|en|The spinach was so fresh, picked that morning
+r001|positive|fresh|tn|Sepinatšhe se ne se le sesha thata, se kgethilwe mo mosong
+r001|positive|fresh|af|Die spinasie was baie vars, vanoggend gepluk
+r002|positive|tasty|en|Best kota in Kuruman, full of chips and very tasty
+r002|positive|tasty|tn|Kota e e gaisang mo Kuruman, e tletse ditšhipisi e bile e monate thata
+r002|positive|tasty|af|Beste kota in Kuruman, vol tjips en baie lekker
+r003|positive|friendly|en|Friendly lady, she greeted me with a smile
+r003|positive|friendly|tn|Mme yo o nang le botsalano, o ntumedisitse ka monyenyo
+r003|positive|friendly|af|Vriendelike tannie, sy het my met 'n glimlag gegroet
+r004|positive|quick|en|Order accepted in two minutes and ready quickly
+r004|positive|quick|tn|Taelo e amogetswe mo metsotsong e mebedi mme ya siama ka bonako
+r004|positive|quick|af|Bestelling binne twee minute aanvaar en vinnig gereed
+r005|positive|good_price|en|Good price for such a big bag of maize meal
+r005|positive|good_price|tn|Tlhwatlhwa e siame bakeng sa kgetsi e kgolo jaana ya bupi
+r005|positive|good_price|af|Goeie prys vir so 'n groot sak mieliemeel
+r006|positive|fresh,tasty|en|Fresh vetkoek, still warm and delicious
+r006|positive|fresh,tasty|tn|Magwinya a masha, a sa ntse a le mogote e bile a monate
+r006|positive|fresh,tasty|af|Vars vetkoek, nog warm en heerlik
+r007|positive|friendly,quick|en|Very helpful seller and the collection was quick
+r007|positive|friendly,quick|tn|Morekisi o thusa thata mme go tsaya go ne go bonako
+r007|positive|friendly,quick|af|Baie behulpsame verkoper en die afhaal was vinnig
+r008|positive|good_price,fresh|en|Cheap and fresh tomatoes, will buy again
+r008|positive|good_price,fresh|tn|Ditamati tse di tlhwatlhwa e kwa tlase e bile di le ntšha, ke tla reka gape
+r008|positive|good_price,fresh|af|Goedkoop en vars tamaties, sal weer koop
+r009|positive|-|en|Beautiful beadwork, a perfect gift for my mother
+r009|positive|-|tn|Mabenyane a a ntle thata, mpho e e siameng ya mme
+r009|positive|-|af|Pragtige kralewerk, 'n perfekte geskenk vir my ma
+r010|positive|tasty|en|The pap and stew tasted like home cooking
+r010|positive|tasty|tn|Bogobe le seshebo di ne di le monate jaaka dijo tsa kwa gae
+r010|positive|tasty|af|Die pap en bredie het gesmaak soos tuisgemaakte kos
+r011|positive|quick|en|Courier delivered within thirty minutes, excellent
+r011|positive|quick|tn|Moromiwa o tlisitse mo metsotsong e masome a mararo, go tlotlega
+r011|positive|quick|af|Koerier het binne dertig minute afgelewer, uitstekend
+r012|positive|friendly|en|Kind and honest seller, gave me the right change
+r012|positive|friendly|tn|Morekisi yo o pelonolo le boammaaruri, o mphile tšhenši e e siameng
+r012|positive|friendly|af|Gawe en eerlike verkoper, het my die regte kleingeld gegee
+r013|positive|fresh|en|Morogo was green and clean, very fresh
+r013|positive|fresh|tn|Morogo o ne o le motala o phepa, o mosha thata
+r013|positive|fresh|af|Die morogo was groen en skoon, baie vars
+r014|positive|good_price|en|Bricks cost less than in town and good quality
+r014|positive|good_price|tn|Ditena di tura go le kwa tlase go feta kwa toropong e bile di na le boleng
+r014|positive|good_price|af|Stene kos minder as in die dorp en goeie gehalte
+r015|positive|-|en|Everything as described, thank you
+r015|positive|-|tn|Sengwe le sengwe se ne se ntse jaaka go tlhalositswe, ke a leboga
+r015|positive|-|af|Alles soos beskryf, dankie
+r016|positive|tasty,good_price|en|Tasty magwinya and the price is fair
+r016|positive|tasty,good_price|tn|Magwinya a monate e bile tlhwatlhwa e siame
+r016|positive|tasty,good_price|af|Lekker vetkoek en die prys is regverdig
+r017|positive|friendly|en|The seller explained everything patiently
+r017|positive|friendly|tn|Morekisi o tlhalositse sengwe le sengwe ka bopelotelele
+r017|positive|friendly|af|Die verkoper het alles geduldig verduidelik
+r018|positive|quick,fresh|en|Quick service and the bread was fresh from the oven
+r018|positive|quick,fresh|tn|Tirelo e bonako mme borotho bo ne bo tswa mo onong
+r018|positive|quick,fresh|af|Vinnige diens en die brood was vars uit die oond
+r019|positive|-|en|Great quality lucerne, my goats love it
+r019|positive|-|tn|Furu e e boleng jo bo kwa godimo, dipudi tsa me di e rata
+r019|positive|-|af|Uitstekende lusern, my bokke is mal daaroor
+r020|positive|tasty|en|Delicious chakalaka, I ordered twice this week
+r020|positive|tasty|tn|Chakalaka e e monate, ke odile gabedi beke e
+r020|positive|tasty|af|Heerlike chakalaka, ek het twee keer die week bestel
+r021|positive|friendly|en|Lovely people, they even helped carry the bags to my car
+r021|positive|friendly|tn|Batho ba ba molemo, ba bile ba nthusitse go rwala dikgetsi go ya kwa koloing
+r021|positive|friendly|af|Lieflike mense, hulle het selfs die sakke na my kar gedra
+r022|positive|quick|en|Fast reply and the order was ready when I arrived
+r022|positive|quick|tn|Karabo e bonako mme taelo e ne e siametse fa ke goroga
+r022|positive|quick|af|Vinnige antwoord en die bestelling was gereed toe ek aankom
+r023|positive|good_price|en|Affordable for a student, thank you
+r023|positive|good_price|tn|Go a rekega le ka moithuti, ke a leboga
+r023|positive|good_price|af|Bekostigbaar vir 'n student, dankie
+r024|positive|fresh|en|Eggs were fresh, none broken
+r024|positive|fresh|tn|Mae a ne a le masha, ga go na le lengwe le le thubegileng
+r024|positive|fresh|af|Eiers was vars, nie een gebreek nie
+r025|positive|tasty,friendly|en|Tasty food and a friendly smile every time
+r025|positive|tasty,friendly|tn|Dijo tse di monate le monyenyo wa botsalano nako nngwe le nngwe
+r025|positive|tasty,friendly|af|Lekker kos en elke keer 'n vriendelike glimlag
+r026|positive|-|en|Very happy with my order
+r026|positive|-|tn|Ke itumetse thata ka taelo ya me
+r026|positive|-|af|Baie tevrede met my bestelling
+r027|positive|quick|en|Delivered the sand the same day with their own truck
+r027|positive|quick|tn|Ba tlisitse motlhaba ka letsatsi le le lengwe ka lori ya bone
+r027|positive|quick|af|Hulle het die sand dieselfde dag met hul eie trok afgelewer
+r028|positive|fresh|en|The butternut was fresh and heavy, good size
+r028|positive|fresh|tn|Lephutshe le ne le le lesha le le bokete, bogolo jo bo siameng
+r028|positive|fresh|af|Die botterskorsie was vars en swaar, goeie grootte
+r029|positive|good_price,friendly|en|Fair price and a kind seller
+r029|positive|good_price,friendly|tn|Tlhwatlhwa e e siameng le morekisi yo o pelonolo
+r029|positive|good_price,friendly|af|Regverdige prys en 'n gawe verkoper
+r030|positive|tasty|en|The fat cakes are the best I have eaten
+r030|positive|tasty|tn|Magwinya ke a a gaisang a ke kileng ka a ja
+r030|positive|tasty|af|Die vetkoek is die beste wat ek nog geëet het
+r031|positive|-|en|Highly recommended, I will order again
+r031|positive|-|tn|Ke a e akantsa thata, ke tla odara gape
+r031|positive|-|af|Hoogs aanbeveel, ek sal weer bestel
+r032|positive|quick,friendly|en|She answered my order quickly by SMS, very friendly
+r032|positive|quick,friendly|tn|O arabile taelo ya me ka bonako ka SMS, o na le botsalano thata
+r032|positive|quick,friendly|af|Sy het my bestelling vinnig per SMS beantwoord, baie vriendelik
+r033|positive|fresh,good_price|en|Fresh green mealies at a good price
+r033|positive|fresh,good_price|tn|Mmidi o motala o mosha ka tlhwatlhwa e e siameng
+r033|positive|fresh,good_price|af|Vars groen mielies teen 'n goeie prys
+r034|positive|-|en|The shirt fits well and the material is good
+r034|positive|-|tn|Hempe e a ntekanela mme lesela le siame
+r034|positive|-|af|Die hemp pas goed en die materiaal is goed
+r035|positive|tasty|en|My children loved the biscuits
+r035|positive|tasty|tn|Bana ba me ba ratile dibisikiti thata
+r035|positive|tasty|af|My kinders was mal oor die koekies
+r036|positive|friendly|en|Polite courier, he phoned when he was outside
+r036|positive|friendly|tn|Moromiwa yo o maitseo, o leleditse fa a le kwa ntle
+r036|positive|friendly|af|Beleefde koerier, hy het gebel toe hy buite was
+r037|positive|good_price|en|Cheaper than the big shops and just as good
+r037|positive|good_price|tn|Go tlhwatlhwa e kwa tlase go feta mabenkele a magolo mme go siame fela jalo
+r037|positive|good_price|af|Goedkoper as die groot winkels en net so goed
+r038|positive|fresh|en|Milk was fresh and cold
+r038|positive|fresh|tn|Mašwi a ne a le masha a tsididi
+r038|positive|fresh|af|Die melk was vars en koud
+r039|positive|-|en|Excellent service from start to finish
+r039|positive|-|tn|Tirelo e e tlotlegang go simolola kwa tshimologong go fitlha kwa bofelong
+r039|positive|-|af|Uitstekende diens van begin tot einde
+r040|positive|quick,tasty|en|Hot food ready in ten minutes, tasty
+r040|positive|quick,tasty|tn|Dijo tse di mogote di siametse mo metsotsong e lesome, di monate
+r040|positive|quick,tasty|af|Warm kos binne tien minute gereed, lekker
+r041|positive|friendly|en|Thank you mma, you are always so kind
+r041|positive|friendly|tn|Ke a leboga mma, o nna o le pelonolo ka metlha
+r041|positive|friendly|af|Dankie tannie, jy is altyd so gaaf
+r042|positive|fresh,quick|en|Fresh vegetables delivered fast
+r042|positive|fresh,quick|tn|Merogo e mesha e tlisitswe ka bonako
+r042|positive|fresh,quick|af|Vars groente vinnig afgelewer
+r043|positive|-|en|Good quality cement, no lumps
+r043|positive|-|tn|Samente e e boleng jo bo siameng, ga e na makoto
+r043|positive|-|af|Goeie gehalte sement, geen klonte nie
+r044|positive|good_price|en|The price was lower than I expected
+r044|positive|good_price|tn|Tlhwatlhwa e ne e le kwa tlase go feta ka fa ke neng ke solofetse
+r044|positive|good_price|af|Die prys was laer as wat ek verwag het
+r045|positive|tasty|en|Lovely atchar, not too spicy
+r045|positive|tasty|tn|Atšhara e e monate, ga e babe thata
+r045|positive|tasty|af|Lekker atjar, nie te brand nie
+r046|neutral|-|en|It was okay
+r046|neutral|-|tn|Go ne go siame fela
+r046|neutral|-|af|Dit was oukei
+r047|neutral|-|en|Average, nothing special
+r047|neutral|-|tn|Go magareng, ga go na sepe se se kgethegileng
+r047|neutral|-|af|Gemiddeld, niks besonders nie
+r048|neutral|slow|en|Food was fine but I waited a while for the order to be accepted
+r048|neutral|slow|tn|Dijo di ne di siame mme ke emetse lobaka gore taelo e amogelwe
+r048|neutral|slow|af|Die kos was goed maar ek het 'n rukkie gewag vir die bestelling om aanvaar te word
+r049|neutral|expensive|en|Good bread but a bit expensive
+r049|neutral|expensive|tn|Borotho bo siame mme bo tura go le gonnye
+r049|neutral|expensive|af|Goeie brood maar 'n bietjie duur
+r050|neutral|-|en|Got what I ordered
+r050|neutral|-|tn|Ke amogetse se ke se odileng
+r050|neutral|-|af|Ek het gekry wat ek bestel het
+r051|neutral|cold|en|Tasty but a little cold when I collected it
+r051|neutral|cold|tn|Go monate mme go ne go tsididi go le gonnye fa ke go tsaya
+r051|neutral|cold|af|Lekker maar 'n bietjie koud toe ek dit afgehaal het
+r052|neutral|-|en|The stall was easy to find, the vegetables were fine
+r052|neutral|-|tn|Seteišene sa thekiso se ne se bonolo go se bona, merogo e ne e siame
+r052|neutral|-|af|Die stalletjie was maklik om te kry, die groente was in orde
+r053|neutral|slow|en|Okay but the courier took long
+r053|neutral|slow|tn|Go siame mme moromiwa o tsere lobaka lo lo leele
+r053|neutral|slow|af|Oukei maar die koerier het lank gevat
+r054|neutral|-|en|Not bad
+r054|neutral|-|tn|Ga go maswe
+r054|neutral|-|af|Nie sleg nie
+r055|neutral|expensive,fresh|en|Fresh tomatoes but pricier than the market
+r055|neutral|expensive,fresh|tn|Ditamati di ntšha mme di tura go feta kwa mmarakeng
+r055|neutral|expensive,fresh|af|Vars tamaties maar duurder as by die mark
+r056|neutral|-|en|Fine for the price
+r056|neutral|-|tn|Go siame go ya ka tlhwatlhwa
+r056|neutral|-|af|Goed genoeg vir die prys
+r057|neutral|-|en|First order, will see next time
+r057|neutral|-|tn|Taelo ya ntlha, ke tla bona ka nako e e tlang
+r057|neutral|-|af|Eerste bestelling, sal volgende keer sien
+r058|neutral|poor_quality|en|Most of the eggs were fine, two were cracked
+r058|neutral|poor_quality|tn|Bontsi jwa mae bo ne bo siame, a mabedi a ne a thubegile
+r058|neutral|poor_quality|af|Meeste van die eiers was goed, twee was gekraak
+r059|neutral|-|en|As expected
+r059|neutral|-|tn|Jaaka ke ne ke solofetse
+r059|neutral|-|af|Soos verwag
+r060|neutral|slow|en|The food is nice but service can be faster
+r060|neutral|slow|tn|Dijo di monate mme tirelo e ka nna bonako go feta
+r060|neutral|slow|af|Die kos is lekker maar die diens kan vinniger wees
+r061|neutral|-|en|The size was smaller than I thought but okay
+r061|neutral|-|tn|Bogolo bo ne bo le bonnye go feta ka fa ke neng ke akanya mme go siame
+r061|neutral|-|af|Die grootte was kleiner as wat ek gedink het maar oukei
+r062|neutral|expensive|en|Nice beadwork though the price is high
+r062|neutral|expensive|tn|Mabenyane a a ntle le fa tlhwatlhwa e le kwa godimo
+r062|neutral|expensive|af|Mooi kralewerk al is die prys hoog
+r063|neutral|-|en|Collected without problems
+r063|neutral|-|tn|Ke tsere ntle le mathata
+r063|neutral|-|af|Sonder probleme afgehaal
+r064|neutral|cold|en|The stew was nice, pap was cold
+r064|neutral|cold|tn|Seshebo se ne se le monate, bogobe bo ne bo tsididi
+r064|neutral|cold|af|Die bredie was lekker, die pap was koud
+r065|neutral|-|en|Three stars, it was alright
+r065|neutral|-|tn|Dinaledi tse tharo, go ne go siame
+r065|neutral|-|af|Drie sterre, dit was reg
+r066|neutral|slow|en|Good sand, delivery came the next day instead of today
+r066|neutral|slow|tn|Motlhaba o siame, go romelwa go tlile ka moso go na le gompieno
+r066|neutral|slow|af|Goeie sand, aflewering het die volgende dag gekom in plaas van vandag
+r067|neutral|-|en|The packaging could be better
+r067|neutral|-|tn|Go phuthela go ka nna botoka
+r067|neutral|-|af|Die verpakking kan beter wees
+r068|neutral|-|en|Ordinary bread, nothing wrong with it
+r068|neutral|-|tn|Borotho jo bo tlwaelegileng, ga bo na molato
+r068|neutral|-|af|Gewone brood, niks fout mee nie
+r069|neutral|-|en|Still deciding if I will order again
+r069|neutral|-|tn|Ke sa ntse ke akanya gore a ke tla odara gape
+r069|neutral|-|af|Nog besig om te besluit of ek weer sal bestel
+r070|neutral|tasty,slow|en|Tasty kota but a long queue
+r070|neutral|tasty,slow|tn|Kota e monate mme mola o ne o le moleele
+r070|neutral|tasty,slow|af|Lekker kota maar 'n lang tou
+r071|negative|slow|en|I waited almost an hour and nobody answered my order
+r071|negative|slow|tn|Ke emetse gaufi le ura mme ga go ope yo o arabileng taelo ya me
+r071|negative|slow|af|Ek het amper 'n uur gewag en niemand het my bestelling beantwoord nie
+r072|negative|cold|en|The food was cold and the chips were soggy
+r072|negative|cold|tn|Dijo di ne di tsididi mme ditšhipisi di ne di nologile
+r072|negative|cold|af|Die kos was koud en die tjips was pap
+r073|negative|rude|en|The seller was rude when I asked a question
+r073|negative|rude|tn|Morekisi o ne a sena maitseo fa ke botsa potso
+r073|negative|rude|af|Die verkoper was onbeskof toe ek 'n vraag gevra het
+r074|negative|poor_quality|en|The tomatoes were rotten inside
+r074|negative|poor_quality|tn|Ditamati di ne di bodile ka fa teng
+r074|negative|poor_quality|af|Die tamaties was vrot van binne
+r075|negative|expensive|en|Far too expensive for such a small portion
+r075|negative|expensive|tn|Go tura thata bakeng sa karolo e nnye jaana
+r075|negative|expensive|af|Veels te duur vir so 'n klein porsie
+r076|negative|poor_quality|en|Bricks broke easily, poor quality
+r076|negative|poor_quality|tn|Ditena di robegile bonolo, boleng jo bo kwa tlase
+r076|negative|poor_quality|af|Stene het maklik gebreek, swak gehalte
+r077|negative|-|en|Very disappointed, not as shown in the picture
+r077|negative|-|tn|Ke swabile thata, ga go jaaka go bontshitswe mo setshwantshong
+r077|negative|-|af|Baie teleurgesteld, nie soos op die foto nie
+r078|negative|slow|en|Order was declined after I waited thirty minutes
+r078|negative|slow|tn|Taelo e gannwe morago ga gore ke eme metsotso e masome a mararo
+r078|negative|slow|af|Bestelling is afgekeur nadat ek dertig minute gewag het
+r079|negative|rude|en|The courier shouted at me at my gate
+r079|negative|rude|tn|Moromiwa o ne a ntlhaeletsa kwa kgorong ya me
+r079|negative|rude|af|Die koerier het by my hek op my geskree
+r080|negative|poor_quality|en|The bread was stale and hard
+r080|negative|poor_quality|tn|Borotho bo ne bo le bogologolo e bile bo thata
+r080|negative|poor_quality|af|Die brood was oud en hard
+r081|negative|cold|en|Pap and stew arrived cold, not nice
+r081|negative|cold|tn|Bogobe le seshebo di gorogile di tsididi, ga go a monate
+r081|negative|cold|af|Pap en bredie het koud aangekom, nie lekker nie
+r082|negative|-|en|Wrong items in my bag
+r082|negative|-|tn|Dilo tse di phoso mo kgetsing ya me
+r082|negative|-|af|Verkeerde items in my sak
+r083|negative|expensive|en|Overpriced, I can get it cheaper at the market
+r083|negative|expensive|tn|Go tura go feta selekanyo, nka se bona ka tlhwatlhwa e kwa tlase kwa mmarakeng
+r083|negative|expensive|af|Te duur, ek kan dit goedkoper by die mark kry
+r084|negative|poor_quality|en|The shirt tore after one wash
+r084|negative|poor_quality|tn|Hempe e gagogile morago ga go tlhatswiwa gangwe
+r084|negative|poor_quality|af|Die hemp het na een was geskeur
+r085|negative|slow|en|Very slow, I will not order again
+r085|negative|slow|tn|Go bonya thata, ga nkitla ke odara gape
+r085|negative|slow|af|Baie stadig, ek sal nie weer bestel nie
+r086|negative|rude|en|Unfriendly service and no greeting
+r086|negative|rude|tn|Tirelo e e se nang botsalano mme ga go na tumediso
+r086|negative|rude|af|Onvriendelike diens en geen groet nie
+r087|negative|-|en|Terrible experience
+r087|negative|-|tn|Maitemogelo a a maswe thata
+r087|negative|-|af|Verskriklike ervaring
+r088|negative|poor_quality|en|Half the spinach was yellow
+r088|negative|poor_quality|tn|Halofo ya sepinatšhe e ne e le serolwana
+r088|negative|poor_quality|af|Die helfte van die spinasie was geel
+r089|negative|cold,slow|en|Late and the food was cold
+r089|negative|cold,slow|tn|Go diegile mme dijo di ne di tsididi
+r089|negative|cold,slow|af|Laat en die kos was koud
+r090|negative|expensive,poor_quality|en|Expensive and poor quality
+r090|negative|expensive,poor_quality|tn|Go tura e bile boleng bo kwa tlase
+r090|negative|expensive,poor_quality|af|Duur en swak gehalte
+r091|negative|-|en|The seller cancelled without telling me why
+r091|negative|-|tn|Morekisi o phimotse ntle le go mpolelela lebaka
+r091|negative|-|af|Die verkoper het gekanselleer sonder om my te sê hoekom
+r092|negative|rude|en|He was rude and refused to give change
+r092|negative|rude|tn|O ne a sena maitseo mme a gana go nnaya tšhenši
+r092|negative|rude|af|Hy was onbeskof en het geweier om kleingeld te gee
+r093|negative|poor_quality|en|The meat in the kota smelled bad
+r093|negative|poor_quality|tn|Nama e e mo koteng e ne e nkga
+r093|negative|poor_quality|af|Die vleis in die kota het sleg geruik
+r094|negative|slow|en|Waited at the stall for twenty minutes, nobody came
+r094|negative|slow|tn|Ke emetse kwa seteišeneng metsotso e masome a mabedi, ga go ope yo o tlileng
+r094|negative|slow|af|Twintig minute by die stalletjie gewag, niemand het gekom nie
+r095|negative|-|en|Not worth it
+r095|negative|-|tn|Ga go a tshwanela
+r095|negative|-|af|Nie die moeite werd nie
+r096|negative|cold|en|Cold vetkoek, clearly made yesterday
+r096|negative|cold|tn|Magwinya a a tsididi, go bonala a dirilwe maabane
+r096|negative|cold|af|Koue vetkoek, duidelik gister gemaak
+r097|negative|expensive|en|Delivery fee too high for a short distance
+r097|negative|expensive|tn|Tuelo ya go romela e kwa godimo thata bakeng sa sekgala se se khutshwane
+r097|negative|expensive|af|Afleweringsfooi te hoog vir 'n kort afstand
+r098|negative|poor_quality|en|The bag of sand was half empty
+r098|negative|poor_quality|tn|Kgetsi ya motlhaba e ne e tletse halofo fela
+r098|negative|poor_quality|af|Die sak sand was half leeg
+r099|negative|rude|en|Seller ignored my questions and was impatient
+r099|negative|rude|tn|Morekisi o tlhokomologile dipotso tsa me mme a se na bopelotelele
+r099|negative|rude|af|Verkoper het my vrae geïgnoreer en was ongeduldig
+r100|negative|-|en|I am not happy with this order
+r100|negative|-|tn|Ga ke a itumela ka taelo e
+r100|negative|-|af|Ek is nie tevrede met hierdie bestelling nie
+r101|positive|fresh|en|Picked fresh, you can taste the difference
+r101|positive|fresh|tn|Di kgethilwe di le ntšha, o kgona go utlwa pharologano
+r101|positive|fresh|af|Vars gepluk, jy kan die verskil proe
+r102|positive|friendly|en|The grandson who helps at the stall is very kind
+r102|positive|friendly|tn|Setlogolo se se thusang kwa seteišeneng se pelonolo thata
+r102|positive|friendly|af|Die kleinseun wat by die stalletjie help is baie gaaf
+r103|positive|quick|en|Order was ready before I even got there
+r103|positive|quick|tn|Taelo e ne e siame le pele ke goroga
+r103|positive|quick|af|Die bestelling was gereed nog voor ek daar was
+r104|positive|good_price|en|Best price on chicken feed in the area
+r104|positive|good_price|tn|Tlhwatlhwa e e gaisang ya dijo tsa dikoko mo kgaolong
+r104|positive|good_price|af|Beste prys vir hoenderkos in die omgewing
+r105|neutral|-|en|Decent, but I have had better
+r105|neutral|-|tn|Go siame, mme ke kile ka bona tse di botoka
+r105|neutral|-|af|Ordentlik, maar ek het al beter gehad
+r106|neutral|expensive|en|Quality is fine, price is a bit steep
+r106|neutral|expensive|tn|Boleng bo siame, tlhwatlhwa e kwa godimo go le gonnye
+r106|neutral|expensive|af|Gehalte is goed, prys is 'n bietjie hoog
+r107|neutral|slow|en|Accepted late but the food was good
+r107|neutral|slow|tn|E amogetswe e diegile mme dijo di ne di siame
+r107|neutral|slow|af|Laat aanvaar maar die kos was goed
+r108|negative|poor_quality|en|The goat was sick when we got it home
+r108|negative|poor_quality|tn|Podi e ne e lwala fa re fitlha nayo kwa gae
+r108|negative|poor_quality|af|Die bok was siek toe ons hom by die huis gekry het
+r109|negative|slow|en|The truck never came on the day they promised
+r109|negative|slow|tn|Lori ga e a ka ya tla ka letsatsi le ba neng ba le solofeditse
+r109|negative|slow|af|Die trok het nooit gekom op die dag wat hulle belowe het nie
+r110|negative|rude|en|Very rude on the phone
+r110|negative|rude|tn|O ne a sena maitseo gotlhelele mo mogaleng
+r110|negative|rude|af|Baie onbeskof oor die foon

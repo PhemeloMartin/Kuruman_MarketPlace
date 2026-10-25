@@ -23,7 +23,7 @@ export async function ratingOf(businessId: number): Promise<Rating> {
 // identify them (POPIA minimum disclosure). A closed account shows as "A customer".
 export async function publicReviews(businessId: number, limit = 20) {
   const r = await pool.query(
-    `SELECT rv.id, rv.rating, rv.comment, rv.seller_reply, rv.seller_replied_at, rv.created_at, rv.themes,
+    `SELECT rv.id, rv.rating, rv.comment, rv.seller_reply, rv.seller_replied_at, rv.created_at, rv.themes, rv.sentiment,
             CASE WHEN u.closed_at IS NULL THEN split_part(u.display_name, ' ', 1) ELSE 'A customer' END AS first_name
        FROM reviews rv JOIN users u ON u.id = rv.consumer_id
       WHERE rv.business_id = $1 AND rv.hidden_at IS NULL
@@ -40,7 +40,20 @@ export async function publicReviews(businessId: number, limit = 20) {
     sellerReply: x.seller_reply,
     sellerRepliedAt: x.seller_replied_at,
     themes: x.themes,
+    sentiment: x.sentiment, // from the review AI; null until it has read the review
   }));
+}
+
+// "Customers mention: fresh (5), friendly (3)" - how often each theme the review AI found appears.
+export async function themeCounts(businessId: number) {
+  const r = await pool.query(
+    `SELECT theme, count(*)::int AS n
+       FROM reviews, unnest(themes) AS theme
+      WHERE business_id = $1 AND hidden_at IS NULL
+      GROUP BY theme ORDER BY n DESC, theme LIMIT 6`,
+    [businessId]
+  );
+  return r.rows.map((x) => ({ theme: x.theme, count: x.n }));
 }
 
 export function cleanText(value: unknown, max: number): string {

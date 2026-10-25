@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { PlusIcon, ShopIcon } from '../../components/Icons'
 import { CodeScanButton } from '../../components/CodeScanButton'
+import { ForecastCard } from '../../components/ForecastCard'
 import { pageUrl, shareLink } from '../../lib/whatsapp'
 import { api, ApiError } from '../../lib/api'
 import { formatRand, parseRandToCents } from '../../lib/money'
@@ -226,6 +227,8 @@ export function SellerDashboardPage() {
           Share my shop on WhatsApp
         </a>
       </div>
+
+      <ForecastCard />
 
       <section aria-labelledby="numbers-heading" className="seller-section">
         <div className="section-head">

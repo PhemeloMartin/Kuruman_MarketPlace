@@ -1,0 +1,34 @@
+{
+  "model_version": "reviews-v1",
+  "artefact": "reviews-v1.joblib",
+  "artefact_sha256": "c9a9aa1f102efa04ba10626e4ea05b698a8efbbc39ea0dd543caaf0ba74014a8",
+  "purpose": "Sentiment and themes of customer reviews, shown as a summary. Advisory only.",
+  "method": "TF-IDF word (1-2) + character (3-5) n-grams; multinomial logistic regression (sentiment); one-vs-rest logistic regression (themes).",
+  "data": "data/reviews.psv - 110 student-authored review concepts x 3 languages (see data/PROVENANCE.md).",
+  "split": {
+    "development_concepts": 87,
+    "test_concepts": 23,
+    "grouped_by": "concept_id"
+  },
+  "tuning": {
+    "sentiment_C": 3,
+    "themes_C": 3,
+    "theme_threshold": 0.3,
+    "cv": "5-fold grouped"
+  },
+  "test_set_note": "The test reviews were scored once before class balancing was added (themes then lost to the keyword lexicon). Balancing was chosen by grouped cross-validation only, but the test set is no longer strictly unseen. The themes margin over the lexicon is small on 23 concepts: treat the two as roughly equal.",
+  "test_results": {
+    "sentiment_macro_f1": 0.505,
+    "sentiment_majority_baseline": 0.202,
+    "sentiment_keyword_baseline": 0.381,
+    "themes_micro_f1": 0.599,
+    "themes_keyword_baseline": 0.559,
+    "sentiment_macro_f1_per_language": {
+      "en": 0.589,
+      "tn": 0.465,
+      "af": 0.437
+    }
+  },
+  "limits": "Small synthetic dataset; Setswana and Afrikaans unreviewed. Sarcasm and mixed reviews are hard. Never used to hide, rank or remove reviews.",
+  "trained_at": "2026-10-25T23:03:16+00:00"
+}

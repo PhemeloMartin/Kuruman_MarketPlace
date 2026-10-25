@@ -59,7 +59,23 @@ export interface Review {
   sellerReply: string | null
   sellerRepliedAt: string | null
   themes: string[]
+  sentiment?: 'positive' | 'neutral' | 'negative' | null
 }
+
+// What the review AI's theme codes mean in everyday words.
+export const THEME_LABEL: Record<string, string> = {
+  fresh: 'fresh',
+  tasty: 'tasty',
+  friendly: 'friendly',
+  quick: 'quick',
+  slow: 'slow service',
+  good_price: 'good price',
+  expensive: 'expensive',
+  poor_quality: 'quality problems',
+  cold: 'food cold',
+  rude: 'unfriendly',
+}
+export const NEGATIVE_THEMES = ['slow', 'expensive', 'poor_quality', 'cold', 'rude']
 
 // Entrepreneur of the Month (GET /api/spotlight).
 export interface Spotlight {
@@ -90,6 +106,7 @@ export interface Shop {
   rating: Rating
   reviews: Review[]
   isSpotlight: boolean
+  customerThemes: { theme: string; count: number }[]
 }
 
 export interface Kpis {

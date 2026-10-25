@@ -60,6 +60,13 @@ Tip: press **F12 → device toolbar** (phone icon) and pick a phone size, so it 
 **Reset the hosted demo data 1–2 days before presenting** (HOSTING.md, section 1 commands), so the demo order
 history, reviews and Entrepreneur of the Month fall inside the last 30 days.
 
+**Our own AI (Tier 2):** sign in as Dineo → dashboard **Next 7 days**: "Kota: about 65 this week, busiest on Saturday…
+you may run short". Open her shop page → **What customers say** → "AI summary: Customers mention tasty (5)… food cold
+(1)". Search **spinasie** or **sepinatshe** → spinach and morogo ("Also searched: spinach…"). In the support console →
+**Flagged**: the beadwork listing "WhatsApp me on 072 555 1234, cheaper than here" → **Take off sale** with a reason.
+**Say:** "Four models, all trained by us, each with a model card, a baseline and an honest report — and the AI only
+advises: a person always decides." Open `ai/reports/` to show the numbers, including where targets weren't met.
+
 **Market stall by SMS (strong demo moment):** open **/demo/phone** in a separate window (it shows Mma Kefilwe's
 basic phone, 071 000 0014). As Thato, reserve morogo at "Mma Kefilwe's Vegetable Stall". Within 5 seconds the
 phone gets the order: tap **1**. Thato opens Orders → "Show collection code"; type that code on the phone → "code

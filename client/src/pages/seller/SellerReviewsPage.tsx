@@ -3,16 +3,17 @@ import { Link } from 'react-router-dom'
 import { BackIcon } from '../../components/Icons'
 import { RatingLine, Stars } from '../../components/Stars'
 import { api, ApiError } from '../../lib/api'
+import { NEGATIVE_THEMES, THEME_LABEL } from '../../lib/types'
 import type { Rating, Review } from '../../lib/types'
 
 // The seller's reviews, newest first. Each can get one public reply: a thank-you, or putting a
 // complaint right. Unanswered ones are marked so nothing is missed.
 export function SellerReviewsPage() {
-  const [data, setData] = useState<{ rating: Rating; reviews: Review[] } | null>(null)
+  const [data, setData] = useState<{ rating: Rating; reviews: Review[]; themes: { theme: string; count: number }[] } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
-    api<{ rating: Rating; reviews: Review[] }>('/seller/reviews')
+    api<{ rating: Rating; reviews: Review[]; themes: { theme: string; count: number }[] }>('/seller/reviews')
       .then(setData)
       .catch((err) => setError(err.message))
   }, [])
@@ -34,6 +35,16 @@ export function SellerReviewsPage() {
             Replies are public. Thank people, and when something went wrong, say how you’ll fix it: future customers
             read that too.
           </p>
+          {data.themes.length > 0 && (
+            <p className="theme-chips">
+              <span className="ai-label">AI summary</span> Customers mention:{' '}
+              {data.themes.map((t) => (
+                <span key={t.theme} className={`theme-chip${NEGATIVE_THEMES.includes(t.theme) ? ' negative' : ''}`}>
+                  {THEME_LABEL[t.theme] ?? t.theme} ({t.count})
+                </span>
+              ))}
+            </p>
+          )}
           {data.reviews.length === 0 && <p className="notice">No reviews yet. They appear after customers receive their orders.</p>}
           <ul className="review-list">
             {data.reviews.map((r) => (
@@ -45,6 +56,12 @@ export function SellerReviewsPage() {
                   </span>
                 </div>
                 {r.comment && <p className="review-text">{r.comment}</p>}
+                {r.sentiment && (
+                  <p className="fine-print" style={{ margin: '4px 0 0' }}>
+                    AI reads this as <strong className={`sentiment ${r.sentiment}`}>{r.sentiment}</strong>
+                    {r.themes.length > 0 && <> · {r.themes.map((t) => THEME_LABEL[t] ?? t).join(', ')}</>}
+                  </p>
+                )}
                 {r.sellerReply ? (
                   <p className="seller-reply">
                     <strong>Your reply:</strong> {r.sellerReply}

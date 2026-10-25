@@ -97,3 +97,29 @@ CREATE TABLE IF NOT EXISTS sms_messages (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_sms_messages_phone ON sms_messages(phone, created_at);
+
+-- 2026-10-26: AI screening (off-platform / scam detector). One row per version of a text that was
+-- checked, so an edited description is checked again. Only flagged rows keep a copy of the text
+-- (for support to read); flagged rows wait for a support decision. Nothing is hidden automatically.
+CREATE TABLE IF NOT EXISTS screenings (
+  id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  item_type     VARCHAR(10) NOT NULL CHECK (item_type IN ('product', 'shop', 'review')),
+  item_id       BIGINT      NOT NULL,
+  text_hash     CHAR(64)    NOT NULL,
+  flagged       BOOLEAN     NOT NULL,
+  excerpt       TEXT,                          -- only when flagged
+  score         REAL,
+  reasons       TEXT[]      NOT NULL DEFAULT '{}',
+  model_version VARCHAR(40) NOT NULL,
+  status        VARCHAR(10) NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'dismissed', 'actioned')),
+  decided_by    BIGINT      REFERENCES users(id),
+  decided_at    TIMESTAMPTZ,
+  decision_note TEXT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (item_type, item_id, text_hash)
+);
+CREATE INDEX IF NOT EXISTS idx_screenings_open ON screenings(flagged, status);
+
+-- Typo-tolerant search ("spinich" finds spinach): letter-trigram similarity on product names.
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX IF NOT EXISTS idx_products_name_trgm ON products USING gin (lower(name) gin_trgm_ops);
