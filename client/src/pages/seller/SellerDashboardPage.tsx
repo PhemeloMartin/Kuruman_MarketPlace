@@ -7,6 +7,7 @@ import { pageUrl, shareLink } from '../../lib/whatsapp'
 import { api, ApiError } from '../../lib/api'
 import { formatRand, parseRandToCents } from '../../lib/money'
 import type { CashToConfirm, Kpis, Rating, Review, SellerOrder, SellerProduct } from '../../lib/types'
+import { FULFILMENT_LABEL } from '../../lib/types'
 
 interface Dashboard {
   business: { id: number; name: string; active: boolean }
@@ -43,6 +44,8 @@ function greeting(): string {
 function needsSeller(o: SellerOrder): boolean {
   if (o.status === 'pending_acceptance' || o.status === 'confirmed') return true
   if (o.status === 'ready' && o.fulfilment === 'pickup') return true
+  // Seller delivers: send it out, then take the customer's code at the door.
+  if (o.fulfilment === 'seller_delivery' && (o.status === 'ready' || o.status === 'out_for_delivery')) return true
   if (o.status === 'ready' && o.delivery?.status === 'claimed' && !o.delivery.released) return true
   return Boolean(o.delivery?.awaitingReturn)
 }
@@ -359,7 +362,7 @@ function OrderCard({ order: o, onChanged }: { order: SellerOrder; onChanged: () 
         {o.items.map((i) => `${i.quantity} × ${i.name}`).join(', ')}
       </p>
       <p className="product-meta" style={{ margin: 0 }}>
-        {o.customerName} · {o.fulfilment === 'delivery' ? 'Delivery' : 'Pickup'} · {o.paymentMethod === 'cash' ? 'Cash' : 'Online'} ·{' '}
+        {o.customerName} · {FULFILMENT_LABEL[o.fulfilment]} · {o.paymentMethod === 'cash' ? 'Cash' : 'Online'} ·{' '}
         <span className="price" translate="no">
           {formatRand(o.totalCents)}
         </span>
@@ -467,6 +470,59 @@ function OrderCard({ order: o, onChanged }: { order: SellerOrder; onChanged: () 
             </div>
             <button type="submit" className="btn btn-primary" disabled={busy || code.length !== 6}>
               {busy ? 'Checking…' : 'Complete pickup'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {o.status === 'ready' && o.fulfilment === 'seller_delivery' && (
+        <>
+          <p className="fine-print">Load it on your vehicle and tap below when you leave. The customer then gets their code.</p>
+          <button type="button" className="btn btn-primary btn-block" style={{ marginTop: 8 }} disabled={busy} onClick={() => act('dispatch')}>
+            {busy ? 'Saving…' : '🚚 Out for delivery'}
+          </button>
+        </>
+      )}
+
+      {o.status === 'out_for_delivery' && o.fulfilment === 'seller_delivery' && (
+        <form
+          className="pickup-form"
+          onSubmit={(e) => {
+            e.preventDefault()
+            act('deliver', { code })
+          }}
+        >
+          <CodeScanButton
+            onCode={(scanned) => {
+              setCode(scanned)
+              act('deliver', { code: scanned })
+            }}
+          />
+          <label htmlFor={`dcode-${o.id}`}>Customer’s delivery code</label>
+          <p className="fine-print" style={{ marginTop: 0 }}>
+            At the door, ask to see the 6-digit code in their Orders screen.
+            {o.paymentMethod === 'cash' && (
+              <>
+                {' '}
+                Collect <strong translate="no">{formatRand(o.totalCents)}</strong> cash.
+              </>
+            )}
+          </p>
+          <div className="btn-row">
+            <div className="input-wrap">
+              <input
+                id={`dcode-${o.id}`}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                placeholder="000000"
+                className="code-input"
+              />
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={busy || code.length !== 6}>
+              {busy ? 'Checking…' : 'Complete delivery'}
             </button>
           </div>
         </form>

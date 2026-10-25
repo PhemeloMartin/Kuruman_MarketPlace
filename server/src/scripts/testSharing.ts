@@ -55,9 +55,9 @@ async function main() {
         businessId: Number(cement.business_id),
         items: [{ productId: Number(cement.id), quantity: 1 }],
         fulfilment,
-        deliveryAddress: fulfilment === "delivery" ? "12 Main Street, Kuruman" : undefined,
+        deliveryAddress: fulfilment !== "pickup" ? "12 Main Street, Kuruman" : undefined,
         paymentMethod: "cash",
-      }, { "Idempotency-Key": `share-${fulfilment}-${Date.now()}` });
+      }, { "Idempotency-Key": `share-${fulfilment.replace("_", "-")}-${Date.now()}` });
 
     await check("a collection-only item can't be ordered for delivery - the server refuses it", async () => {
       const r = await order("delivery");
@@ -67,6 +67,41 @@ async function main() {
 
     await check("the same item can be ordered for pickup", async () => {
       assert.equal((await order("pickup")).status, 201);
+    });
+
+    await check("'seller delivers' is refused for a shop without its own vehicle", async () => {
+      const spinach = (await pool.query("SELECT id, business_id FROM products WHERE name = 'Spinach bunch'")).rows[0];
+      const r = await call(thato, "POST", "/api/orders", {
+        businessId: Number(spinach.business_id), items: [{ productId: Number(spinach.id), quantity: 1 }],
+        fulfilment: "seller_delivery", deliveryAddress: "12 Main Street, Kuruman", paymentMethod: "cash",
+      }, { "Idempotency-Key": `sd-none-${Date.now()}` });
+      assert.equal(r.status, 422);
+    });
+
+    await check("a shop with its own truck delivers heavy items, at its own fee - and never via the courier board", async () => {
+      const r = await order("seller_delivery");
+      assert.equal(r.status, 201);
+      const o = (await pool.query("SELECT delivery_fee_cents, total_cents FROM orders WHERE id = $1", [r.data.id])).rows[0];
+      assert.equal(o.delivery_fee_cents, 35000);
+      assert.equal(o.total_cents, 11000 + 35000);
+
+      const id = r.data.id;
+      assert.equal((await call(tumelo, "POST", `/api/seller/orders/${id}/accept`, {})).status, 200);
+      assert.equal((await call(tumelo, "POST", `/api/seller/orders/${id}/ready`, {})).status, 200);
+      const jobs = await pool.query("SELECT 1 FROM deliveries WHERE order_id = $1", [id]);
+      assert.equal(jobs.rowCount, 0, "no courier job");
+
+      // No code before the truck leaves; then the customer's code completes it at the door.
+      assert.equal((await call(thato, "POST", `/api/orders/${id}/handover-code`)).status, 409);
+      assert.equal((await call(tumelo, "POST", `/api/seller/orders/${id}/dispatch`, {})).status, 200);
+      const code = (await call(thato, "POST", `/api/orders/${id}/handover-code`)).data.code;
+      assert.equal((await call(tumelo, "POST", `/api/seller/orders/${id}/deliver`, { code: code === "000000" ? "111111" : "000000" })).status, 422);
+      assert.equal((await call(tumelo, "POST", `/api/seller/orders/${id}/deliver`, { code })).status, 200);
+      const done = (await pool.query("SELECT status FROM orders WHERE id = $1", [id])).rows[0];
+      assert.equal(done.status, "completed");
+      const cash = (await pool.query("SELECT status, collected_cents FROM cash_receipts WHERE order_id = $1", [id])).rows[0];
+      assert.equal(cash.status, "remitted");
+      assert.equal(cash.collected_cents, 46000);
     });
 
     await check("the catalogue tells the app which items are collection only", async () => {

@@ -20,6 +20,8 @@ const TEMPLATES: Record<string, (a: Args) => string> = {
   'customer.cancelled_by_support': (a) => `Support cancelled order ${a.orderNumber}. See the order for details.`,
   'customer.ready_pickup': (a) => `Order ${a.orderNumber} is ready to collect. Show your code to the seller.`,
   'customer.ready_delivery': (a) => `Order ${a.orderNumber} is packed and waiting for a courier.`,
+  'customer.ready_seller_delivery': (a) => `Order ${a.orderNumber} is packed. The seller will bring it to you.`,
+  'customer.on_the_way_seller': (a) => `Order ${a.orderNumber} is on its way with the seller. Have your code ready.`,
   'customer.on_the_way': (a) => `Order ${a.orderNumber} is on its way. Have your code ready for the courier.`,
   'customer.delivery_retry': (a) => `We’re trying to deliver order ${a.orderNumber} again.`,
   'customer.delivery_failed': (a) => `Order ${a.orderNumber} couldn’t be delivered. Support will contact you.`,

@@ -228,6 +228,7 @@ sellerRouter.post("/orders/:id/ready", (req, res) =>
     if (order.status !== "confirmed") return conflict(res, order.status);
     await client.query("UPDATE orders SET status = 'ready', updated_at = now() WHERE id = $1", [order.id]);
     await recordStatusChange(client, order.id, "confirmed", "ready", req.user!.id);
+    // Only courier deliveries go on the job board; a seller delivery stays with the shop.
     if (order.fulfilment === "delivery") {
       await client.query(
         `INSERT INTO deliveries (order_id, fee_cents, cash_to_collect_cents) VALUES ($1, $2, $3)`,
@@ -272,6 +273,56 @@ sellerRouter.post("/orders/:id/pickup", (req, res) =>
       [order.id]
     );
     await recordStatusChange(client, order.id, "ready", "completed", req.user!.id, "Collected by customer");
+    res.json({ status: "completed" });
+  })
+);
+
+// Seller delivers, step 1: the goods leave on the shop's own vehicle. Stock is used up now, when it
+// leaves - just as a courier collection uses it up. The customer can now get their handover code.
+sellerRouter.post("/orders/:id/dispatch", (req, res) =>
+  withMyOrder(req, res, async (client, order) => {
+    if (order.fulfilment !== "seller_delivery") {
+      await client.query("ROLLBACK");
+      res.status(422).json({ error: "Only orders you deliver yourself are sent out from here." });
+      return;
+    }
+    if (order.status !== "ready") return conflict(res, order.status);
+    await consumeReservation(client, order.id);
+    await client.query("UPDATE orders SET status = 'out_for_delivery', updated_at = now() WHERE id = $1", [order.id]);
+    await recordStatusChange(client, order.id, "ready", "out_for_delivery", req.user!.id, "Out for delivery with the seller");
+    res.json({ status: "out_for_delivery" });
+  })
+);
+
+// Seller delivers, step 2: at the door, the customer's code proves they received it.
+sellerRouter.post("/orders/:id/deliver", (req, res) =>
+  withMyOrder(req, res, async (client, order) => {
+    if (order.fulfilment !== "seller_delivery") {
+      await client.query("ROLLBACK");
+      res.status(422).json({ error: "Only orders you deliver yourself are completed from here." });
+      return;
+    }
+    if (order.status !== "out_for_delivery") return conflict(res, order.status);
+    const check = await checkHandoverCode(client, order, req.body?.code);
+    if (!check.ok) {
+      await client.query(check.countedAttempt ? "COMMIT" : "ROLLBACK");
+      res.status(check.status).json(check.body);
+      return;
+    }
+    if (order.payment_method === "cash") {
+      // The seller received the cash at the door, so it is collected and remitted at once.
+      await client.query(
+        `INSERT INTO cash_receipts (order_id, collected_by, collected_cents, remitted_cents, remitted_at, status, acknowledged_by)
+         VALUES ($1, $2, $3, $3, now(), 'remitted', $2)`,
+        [order.id, req.user!.id, order.total_cents]
+      );
+    }
+    await client.query(
+      `UPDATE orders SET status = 'completed', handover_code_hash = NULL, handover_code_expires_at = NULL,
+              updated_at = now() WHERE id = $1`,
+      [order.id]
+    );
+    await recordStatusChange(client, order.id, "out_for_delivery", "completed", req.user!.id, "Delivered by the seller");
     res.json({ status: "completed" });
   })
 );
@@ -725,7 +776,8 @@ sellerRouter.delete("/photos/:id", requireActiveShop, async (req, res) => {
 // The seller's own shop details (the public page is GET /api/shops/:id).
 sellerRouter.get("/shop", async (req, res) => {
   const r = await pool.query(
-    "SELECT id, name, description, area, cover_photo_url, whatsapp_phone FROM businesses WHERE id = $1",
+    `SELECT id, name, description, area, cover_photo_url, whatsapp_phone, own_delivery_fee_cents, own_delivery_note
+       FROM businesses WHERE id = $1`,
     [req.business!.id]
   );
   const b = r.rows[0];
@@ -736,6 +788,8 @@ sellerRouter.get("/shop", async (req, res) => {
     area: b.area,
     coverPhotoUrl: b.cover_photo_url,
     whatsappPhone: b.whatsapp_phone,
+    ownDeliveryFeeCents: b.own_delivery_fee_cents,
+    ownDeliveryNote: b.own_delivery_note,
   });
 });
 
@@ -761,6 +815,18 @@ sellerRouter.patch("/shop", requireActiveShop, async (req, res) => {
     }
     values.push(phone);
     sets.push(`whatsapp_phone = $${values.length}`);
+  }
+  // Own delivery: a fee in cents switches it on (0 = free delivery), null switches it off.
+  if (req.body?.ownDeliveryFeeCents !== undefined) {
+    const fee = req.body.ownDeliveryFeeCents;
+    if (fee !== null && (!Number.isInteger(fee) || fee < 0 || fee > 500_000)) {
+      return res.status(422).json({ error: "Enter a delivery fee from R0 to R5 000.", fields: { ownDeliveryFeeCents: "R0 to R5 000." } });
+    }
+    values.push(fee);
+    sets.push(`own_delivery_fee_cents = $${values.length}`);
+    const note = cleanText(req.body?.ownDeliveryNote, 200);
+    values.push(fee === null ? null : note || null);
+    sets.push(`own_delivery_note = $${values.length}`);
   }
   if (!sets.length) return res.status(422).json({ error: "Nothing to change." });
   await pool.query(`UPDATE businesses SET ${sets.join(", ")} WHERE id = $1`, values);

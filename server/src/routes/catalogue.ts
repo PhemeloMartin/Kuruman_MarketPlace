@@ -25,7 +25,7 @@ const PRODUCT_COLUMNS = `
   p.id, p.name, p.description, p.unit_label, p.price_cents, p.image_url, p.collection_only,
   (p.stock_qty - p.reserved_qty) AS available_qty,
   c.slug AS category, c.name AS category_name,
-  b.id AS business_id, b.name AS business_name, b.area`;
+  b.id AS business_id, b.name AS business_name, b.area, b.own_delivery_fee_cents`;
 
 function toProduct(row: any) {
   return {
@@ -39,7 +39,12 @@ function toProduct(row: any) {
     availableQty: row.available_qty,
     category: row.category,
     categoryName: row.category_name,
-    business: { id: Number(row.business_id), name: row.business_name, area: row.area },
+    business: {
+      id: Number(row.business_id),
+      name: row.business_name,
+      area: row.area,
+      ownDeliveryFeeCents: row.own_delivery_fee_cents, // null = the shop doesn't deliver itself
+    },
   };
 }
 
@@ -94,7 +99,8 @@ catalogueRouter.get("/shops/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) return res.status(404).json({ error: "Shop not found." });
   const b = await pool.query(
-    "SELECT id, name, description, area, cover_photo_url, whatsapp_phone, created_at FROM businesses WHERE id = $1 AND is_active",
+    `SELECT id, name, description, area, cover_photo_url, whatsapp_phone, own_delivery_fee_cents, own_delivery_note, created_at
+       FROM businesses WHERE id = $1 AND is_active`,
     [id]
   );
   if (b.rowCount === 0) return res.status(404).json({ error: "Shop not found." });
@@ -117,6 +123,8 @@ catalogueRouter.get("/shops/:id", async (req, res) => {
     coverPhotoUrl: shop.cover_photo_url,
     sellingSince: shop.created_at,
     whatsapp: shop.whatsapp_phone, // only set if the seller chose to show it
+    ownDeliveryFeeCents: shop.own_delivery_fee_cents,
+    ownDeliveryNote: shop.own_delivery_note,
     products: products.rows.map(toProduct),
     rating: await ratingOf(id),
     reviews: await publicReviews(id),

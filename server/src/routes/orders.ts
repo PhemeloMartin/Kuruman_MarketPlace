@@ -17,7 +17,7 @@ const shopper = requireRole("consumer", "entrepreneur", "courier");
 interface OrderRequest {
   businessId: number;
   items: { productId: number; quantity: number }[];
-  fulfilment: "pickup" | "delivery";
+  fulfilment: "pickup" | "delivery" | "seller_delivery";
   paymentMethod: "cash" | "online";
   deliveryAddress: string | null;
   notes: string | null;
@@ -47,8 +47,9 @@ function parseOrder(body: any): { order?: OrderRequest; fields: Record<string, s
     seen.add(it.productId);
   }
 
+  // pickup: the customer collects; delivery: a KurumanMarketPlace courier; seller_delivery: the shop's own vehicle.
   const fulfilment = body?.fulfilment;
-  if (fulfilment !== "pickup" && fulfilment !== "delivery") fields.fulfilment = "Choose delivery or pickup.";
+  if (!["pickup", "delivery", "seller_delivery"].includes(fulfilment)) fields.fulfilment = "Choose delivery or pickup.";
 
   const paymentMethod = body?.paymentMethod;
   if (paymentMethod !== "cash" && paymentMethod !== "online") fields.paymentMethod = "Choose how you will pay.";
@@ -57,7 +58,7 @@ function parseOrder(body: any): { order?: OrderRequest; fields: Record<string, s
   }
 
   const address = typeof body?.deliveryAddress === "string" ? body.deliveryAddress.trim() : "";
-  if (fulfilment === "delivery" && (address.length < 5 || address.length > 300)) {
+  if (fulfilment !== "pickup" && (address.length < 5 || address.length > 300)) {
     fields.deliveryAddress = "Enter the delivery address, with a landmark if it helps (5 to 300 characters).";
   }
 
@@ -71,7 +72,7 @@ function parseOrder(body: any): { order?: OrderRequest; fields: Record<string, s
       items: [...items].sort((a, b) => a.productId - b.productId),
       fulfilment,
       paymentMethod,
-      deliveryAddress: fulfilment === "delivery" ? address : null,
+      deliveryAddress: fulfilment !== "pickup" ? address : null,
       notes: notes || null,
       expectedTotalCents: Number.isInteger(body?.expectedTotalCents) ? body.expectedTotalCents : null,
     },
@@ -119,7 +120,7 @@ ordersRouter.post("/", shopper, async (req, res) => {
     const ids = order.items.map((i) => i.productId);
     const products = await client.query(
       `SELECT p.id, p.business_id, p.name, p.unit_label, p.price_cents, p.stock_qty, p.reserved_qty,
-              p.is_active, p.collection_only, b.is_active AS business_active, b.owner_id
+              p.is_active, p.collection_only, b.is_active AS business_active, b.owner_id, b.own_delivery_fee_cents
          FROM products p JOIN businesses b ON b.id = p.business_id
         WHERE p.id = ANY($1::bigint[])
         ORDER BY p.id
@@ -170,12 +171,19 @@ ordersRouter.post("/", shopper, async (req, res) => {
     }
 
     const firstProduct = byId.get(order.items[0].productId);
+    // "Seller delivers" only from shops that switched on their own delivery; their fee, not ours.
+    const ownDeliveryFee = firstProduct.own_delivery_fee_cents;
+    if (order.fulfilment === "seller_delivery" && ownDeliveryFee === null) {
+      await client.query("ROLLBACK");
+      return res.status(422).json({ error: "This shop doesn't deliver itself. Please choose pickup or courier delivery." });
+    }
     if (Number(firstProduct.owner_id) === consumerId) {
       await client.query("ROLLBACK");
       return res.status(422).json({ error: "You can't order from your own business." });
     }
 
-    const deliveryFeeCents = order.fulfilment === "delivery" ? POLICY.deliveryFeeCents : 0;
+    const deliveryFeeCents =
+      order.fulfilment === "delivery" ? POLICY.deliveryFeeCents : order.fulfilment === "seller_delivery" ? ownDeliveryFee : 0;
     const totalCents = subtotalCents + deliveryFeeCents;
 
     if (totalCents > POLICY.maxOrderTotalCents) {
@@ -456,7 +464,7 @@ ordersRouter.post("/:id/handover-code", codeLimiter, shopper, async (req, res) =
             handover_failed_attempts = 0
       WHERE id = $1 AND consumer_id = $2
         AND ((status = 'ready' AND fulfilment = 'pickup')
-          OR (status = 'out_for_delivery' AND fulfilment = 'delivery'))
+          OR (status = 'out_for_delivery' AND fulfilment IN ('delivery', 'seller_delivery')))
       RETURNING handover_code_expires_at`,
     [orderId, req.user!.id, hashHandoverCode(orderId, code), HANDOVER_CODE_MINUTES]
   );

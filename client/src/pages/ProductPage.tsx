@@ -87,8 +87,18 @@ export function ProductPage() {
       </p>
       {product.collectionOnly && (
         <p className="notice" style={{ margin: '8px 0' }}>
-          🚚 <strong>Collect only.</strong> This is too big for courier delivery: you collect it from the seller in{' '}
-          {product.business.area}.
+          🚚 Too big for courier delivery.{' '}
+          {product.business.ownDeliveryFeeCents != null ? (
+            <>
+              <strong>The seller delivers it</strong> with their own vehicle
+              {product.business.ownDeliveryFeeCents ? ` (${formatRand(product.business.ownDeliveryFeeCents)})` : ' (free)'}, or you
+              collect it in {product.business.area}.
+            </>
+          ) : (
+            <>
+              <strong>Collect only:</strong> you collect it from the seller in {product.business.area}.
+            </>
+          )}
         </p>
       )}
       <p className={soldOut || product.availableQty <= 5 ? 'urgent' : 'product-meta'}>

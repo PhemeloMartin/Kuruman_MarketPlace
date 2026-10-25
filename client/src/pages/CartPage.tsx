@@ -7,7 +7,7 @@ import { MinusIcon, PlusIcon } from '../components/Icons'
 import { ProductPhoto } from '../components/ProductCard'
 import { api, ApiError } from '../lib/api'
 import { formatRand } from '../lib/money'
-import type { Product } from '../lib/types'
+import type { Product, Fulfilment, Shop } from '../lib/types'
 import { useOnline } from '../lib/useOnline'
 
 interface Policy {
@@ -28,7 +28,16 @@ export function CartPage() {
   const navigate = useNavigate()
   const [policy, setPolicy] = useState<Policy | null>(null)
   const online = useOnline()
-  const [fulfilment, setFulfilment] = useState<'delivery' | 'pickup'>('pickup')
+  const [fulfilment, setFulfilment] = useState<Fulfilment>('pickup')
+  // Does this shop deliver with its own vehicle (bricks, sand, feed...)? Asked from the server.
+  const [ownDelivery, setOwnDelivery] = useState<{ fee: number; note: string | null } | null>(null)
+  const shopId = cart.business?.id
+  useEffect(() => {
+    if (!shopId || !online) return
+    api<Shop>(`/shops/${shopId}`)
+      .then((s) => setOwnDelivery(s.ownDeliveryFeeCents === null ? null : { fee: s.ownDeliveryFeeCents, note: s.ownDeliveryNote }))
+      .catch(() => setOwnDelivery(null))
+  }, [shopId, online])
   // Items that must be collected (bricks, sand, livestock): the server refuses delivery for them too.
   const mustCollect = cart.lines.filter((l) => l.collectionOnly)
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online'>('cash')
@@ -94,7 +103,8 @@ export function CartPage() {
     )
   }
 
-  const deliveryFee = fulfilment === 'delivery' ? (policy?.deliveryFeeCents ?? 0) : 0
+  const deliveryFee =
+    fulfilment === 'delivery' ? (policy?.deliveryFeeCents ?? 0) : fulfilment === 'seller_delivery' ? (ownDelivery?.fee ?? 0) : 0
   const total = cart.subtotalCents + deliveryFee
 
   async function sendOrder() {
@@ -114,7 +124,7 @@ export function CartPage() {
           items: cart.lines.map((l) => ({ productId: l.productId, quantity: l.quantity })),
           fulfilment,
           paymentMethod,
-          deliveryAddress: fulfilment === 'delivery' ? address : null,
+          deliveryAddress: fulfilment !== 'pickup' ? address : null,
           expectedTotalCents: total,
         },
       })
@@ -195,8 +205,8 @@ export function CartPage() {
         <legend>How do you want it?</legend>
         {mustCollect.length > 0 && (
           <p className="fine-print" style={{ marginTop: 0 }}>
-            🚚 Delivery isn’t possible for {mustCollect.map((l) => l.name).join(', ')}: too big for a courier, so please
-            collect it from the seller.
+            🚚 {mustCollect.map((l) => l.name).join(', ')}: too big for a courier.{' '}
+            {ownDelivery ? 'The seller can deliver it with their own vehicle, or you collect it.' : 'Please collect it from the seller.'}
           </p>
         )}
         <div className="choices">
@@ -208,8 +218,22 @@ export function CartPage() {
               onChange={() => setFulfilment('delivery')}
               disabled={mustCollect.length > 0}
             />
-            Delivery
+            Courier delivery
           </label>
+          {ownDelivery && (
+            <label className="choice">
+              <input
+                type="radio"
+                name="fulfilment"
+                checked={fulfilment === 'seller_delivery'}
+                onChange={() => setFulfilment('seller_delivery')}
+              />
+              <span>
+                Seller delivers ({ownDelivery.fee ? formatRand(ownDelivery.fee) : 'free'})
+                {ownDelivery.note && <span className="choice-note">{ownDelivery.note}</span>}
+              </span>
+            </label>
+          )}
           <label className="choice">
             <input type="radio" name="fulfilment" checked={fulfilment === 'pickup'} onChange={() => setFulfilment('pickup')} />
             Pickup
@@ -217,7 +241,7 @@ export function CartPage() {
         </div>
       </fieldset>
 
-      {fulfilment === 'delivery' && (
+      {fulfilment !== 'pickup' && (
         <div className="field" data-invalid={Boolean(fields.deliveryAddress)} style={{ marginTop: 14 }}>
           <label htmlFor="address">Delivery address</label>
           <p className="hint" id="address-hint">
@@ -268,9 +292,9 @@ export function CartPage() {
           <span>Items ({cart.itemCount})</span>
           <span translate="no">{formatRand(cart.subtotalCents)}</span>
         </div>
-        {fulfilment === 'delivery' && (
+        {fulfilment !== 'pickup' && (
           <div className="totals-row">
-            <span>Delivery</span>
+            <span>{fulfilment === 'seller_delivery' ? 'Delivery by the seller' : 'Delivery'}</span>
             <span translate="no">{formatRand(deliveryFee)}</span>
           </div>
         )}

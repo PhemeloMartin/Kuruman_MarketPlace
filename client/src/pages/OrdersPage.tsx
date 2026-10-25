@@ -6,12 +6,14 @@ import { Stars, StarPicker } from '../components/Stars'
 import { QrCode } from '../components/QrCode'
 import { api, ApiError } from '../lib/api'
 import { formatRand } from '../lib/money'
+import { FULFILMENT_LABEL } from '../lib/types'
+import type { Fulfilment } from '../lib/types'
 
 interface OrderSummary {
   id: number
   orderNumber: string
   status: string
-  fulfilment: 'pickup' | 'delivery'
+  fulfilment: Fulfilment
   paymentMethod: 'cash' | 'online'
   totalCents: number
   acceptBy: string
@@ -203,7 +205,7 @@ export function OrdersPage() {
                 <span className={`status-pill ${s.tone}`}>{s.label}</span>
               </div>
               <div className="product-meta" style={{ margin: '4px 0 8px' }}>
-                {o.businessName} · {o.fulfilment === 'delivery' ? 'Delivery' : 'Pickup'} ·{' '}
+                {o.businessName} · {FULFILMENT_LABEL[o.fulfilment]} ·{' '}
                 {o.paymentMethod === 'cash' ? 'Cash' : 'Online'}
               </div>
               <div style={{ fontSize: '0.9rem' }}>

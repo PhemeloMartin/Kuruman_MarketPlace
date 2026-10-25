@@ -257,4 +257,7 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       can scan it with the camera (BarcodeDetector; typing still works)
 - [x] Barcodes: optional per product (unique per shop), scan to fill in, and "scan a barcode" in the product list
       to jump to that product; `npm run test:sharing` (8 checks)
+- [x] Seller delivers: shops with their own truck or bakkie switch on own delivery (their fee, vehicle and areas);
+      a third order type `seller_delivery`: never on the courier board, stock used when it leaves, completed at the
+      door with the customer's code or QR; heavy items can then be delivered by the seller instead of collect only
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

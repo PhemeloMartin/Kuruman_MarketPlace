@@ -2226,3 +2226,22 @@ label.busy {
   outline: 3px solid var(--sun);
   outline-offset: -20px;
 }
+
+.choice-note {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* No photo yet: centre the letter tile in the gallery. */
+.gallery-main.product-photo {
+  display: grid;
+  place-items: center;
+}
+
+/* An option that can't be chosen right now looks it, while its reason is shown above. */
+.choice:has(input:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

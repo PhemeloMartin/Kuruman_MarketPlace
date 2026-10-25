@@ -4,6 +4,7 @@ import { BackIcon } from '../../components/Icons'
 import { KurumanPanorama } from '../../components/Markets'
 import { api, ApiError } from '../../lib/api'
 import { shrinkPhoto } from '../../lib/photos'
+import { parseRandToCents } from '../../lib/money'
 
 interface MyShop {
   id: number
@@ -12,6 +13,8 @@ interface MyShop {
   area: string
   coverPhotoUrl: string | null
   whatsappPhone: string | null
+  ownDeliveryFeeCents: number | null
+  ownDeliveryNote: string | null
 }
 
 // What customers see at the top of the shop page: a cover photo and a few words about the shop.
@@ -19,6 +22,9 @@ export function SellerShopPage() {
   const [shop, setShop] = useState<MyShop | null>(null)
   const [description, setDescription] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
+  const [delivers, setDelivers] = useState(false)
+  const [fee, setFee] = useState('')
+  const [deliveryNote, setDeliveryNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
 
@@ -27,6 +33,9 @@ export function SellerShopPage() {
       setShop(s)
       setDescription(s.description ?? '')
       setWhatsapp(s.whatsappPhone ? '0' + s.whatsappPhone.slice(3) : '')
+      setDelivers(s.ownDeliveryFeeCents !== null)
+      setFee(s.ownDeliveryFeeCents !== null ? (s.ownDeliveryFeeCents / 100).toFixed(2) : '')
+      setDeliveryNote(s.ownDeliveryNote ?? '')
     })
   }
   useEffect(() => {
@@ -135,6 +144,52 @@ export function SellerShopPage() {
           onClick={() => run(() => api('/seller/shop', { method: 'PATCH', body: { whatsappPhone: whatsapp } }), whatsapp.trim() ? 'WhatsApp button is on.' : 'WhatsApp button is off.')}
         >
           Save WhatsApp number
+        </button>
+      </section>
+
+      <section className="card">
+        <strong>Do you deliver with your own vehicle?</strong>
+        <p className="fine-print" style={{ marginTop: 4 }}>
+          For things too big for our couriers (bricks, sand, feed, livestock), customers can then choose “Seller
+          delivers”. You set your own fee, and take the customer’s code at the door, like a pickup.
+        </p>
+        <label className="choice">
+          <input type="checkbox" checked={delivers} onChange={(e) => setDelivers(e.target.checked)} />
+          Yes, we deliver ourselves
+        </label>
+        {delivers && (
+          <>
+            <div className="field" style={{ marginTop: 10 }}>
+              <label htmlFor="fee">Your delivery fee (R)</label>
+              <div className="input-wrap">
+                <input id="fee" inputMode="decimal" placeholder="350.00" value={fee} onChange={(e) => setFee(e.target.value)} />
+              </div>
+            </div>
+            <div className="field">
+              <label htmlFor="dnote">Vehicle and areas (optional)</label>
+              <div className="input-wrap">
+                <input id="dnote" maxLength={200} placeholder="e.g. Bakkie. Kuruman and Batlharos." value={deliveryNote} onChange={(e) => setDeliveryNote(e.target.value)} />
+              </div>
+            </div>
+          </>
+        )}
+        <button
+          type="button"
+          className="btn btn-primary btn-block"
+          style={{ marginTop: 10 }}
+          disabled={busy || (delivers && parseRandToCents(fee || '0') === null)}
+          onClick={() =>
+            run(
+              () =>
+                api('/seller/shop', {
+                  method: 'PATCH',
+                  body: { ownDeliveryFeeCents: delivers ? parseRandToCents(fee || '0') : null, ownDeliveryNote: deliveryNote },
+                }),
+              delivers ? 'Own delivery is on.' : 'Own delivery is off.',
+            )
+          }
+        >
+          Save delivery setting
         </button>
       </section>
 

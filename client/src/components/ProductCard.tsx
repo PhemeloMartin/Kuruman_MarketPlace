@@ -38,7 +38,9 @@ export function ProductCard({ product, quantityInCart, onAdd, hideSeller }: Prop
         <ProductPhoto product={product} />
       </Link>
       <div className="product-body">
-        {product.collectionOnly && <span className="tag">Collect only</span>}
+        {product.collectionOnly && (
+          <span className="tag">{product.business.ownDeliveryFeeCents != null ? 'Seller delivers' : 'Collect only'}</span>
+        )}
         <h3 className="product-name">
           <Link to={`/product/${product.id}`} className="product-link">
             {product.name}

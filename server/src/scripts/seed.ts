@@ -196,7 +196,12 @@ async function main() {
       }
     }
 
-    // Too big (or alive) for a courier: customers collect these.
+    // Tumelo's shop delivers bricks, sand and feed with its own bakkie and truck.
+    await client.query(
+      `UPDATE businesses SET own_delivery_fee_cents = 35000, own_delivery_note = 'Bakkie and 4-ton truck. Kuruman, Batlharos and Mothibistad.'
+        WHERE name LIKE 'Tumelo%'`
+    );
+    // Too big (or alive) for a courier: customers collect these, or the shop delivers them itself.
     await client.query(
       `UPDATE products SET collection_only = TRUE
         WHERE category_id IN (SELECT id FROM categories WHERE slug IN ('building', 'livestock')) OR name = 'Lucerne bale'`

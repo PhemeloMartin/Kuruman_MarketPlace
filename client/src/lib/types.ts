@@ -1,3 +1,12 @@
+// pickup: the customer collects; delivery: a KurumanMarketPlace courier; seller_delivery: the shop's own vehicle.
+export type Fulfilment = 'pickup' | 'delivery' | 'seller_delivery'
+
+export const FULFILMENT_LABEL: Record<Fulfilment, string> = {
+  pickup: 'Pickup',
+  delivery: 'Courier delivery',
+  seller_delivery: 'Seller delivers',
+}
+
 export type Role = 'consumer' | 'entrepreneur' | 'courier' | 'support'
 
 export interface User {
@@ -30,7 +39,7 @@ export interface Product {
   availableQty: number
   category: string
   categoryName: string
-  business: { id: number; name: string; area: string }
+  business: { id: number; name: string; area: string; ownDeliveryFeeCents?: number | null }
   photos?: string[] // all photos, first = main; only on the single-product answer
   businessRating?: Rating // only on the single-product answer
   businessWhatsapp?: string | null // only if the seller chose to show it
@@ -73,6 +82,8 @@ export interface Shop {
   coverPhotoUrl: string | null
   sellingSince: string
   whatsapp: string | null // only if the seller chose to show it
+  ownDeliveryFeeCents: number | null // the shop delivers with its own vehicle at this fee (null = it doesn't)
+  ownDeliveryNote: string | null
   products: Product[]
   rating: Rating
   reviews: Review[]
@@ -93,7 +104,7 @@ export interface SellerOrder {
   id: number
   orderNumber: string
   status: string
-  fulfilment: 'pickup' | 'delivery'
+  fulfilment: Fulfilment
   paymentMethod: 'cash' | 'online'
   subtotalCents: number
   deliveryFeeCents: number

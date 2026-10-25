@@ -57,9 +57,20 @@ async function orderStatusNotes(client: PoolClient, orderId: number, p: Record<s
             { userId: seller, template: "seller.cancelled_by_support", args },
           ];
     case "ready":
-      return [{ userId: customer, template: o.fulfilment === "pickup" ? "customer.ready_pickup" : "customer.ready_delivery", args }];
+      return [{
+        userId: customer,
+        template: { pickup: "customer.ready_pickup", delivery: "customer.ready_delivery", seller_delivery: "customer.ready_seller_delivery" }[
+          o.fulfilment as "pickup" | "delivery" | "seller_delivery"
+        ],
+        args,
+      }];
     case "out_for_delivery":
-      return [{ userId: customer, template: p.from === "delivery_failed" ? "customer.delivery_retry" : "customer.on_the_way", args }];
+      return [{
+        userId: customer,
+        template:
+          p.from === "delivery_failed" ? "customer.delivery_retry" : o.fulfilment === "seller_delivery" ? "customer.on_the_way_seller" : "customer.on_the_way",
+        args,
+      }];
     case "delivery_failed":
       return [
         { userId: customer, template: "customer.delivery_failed", args },

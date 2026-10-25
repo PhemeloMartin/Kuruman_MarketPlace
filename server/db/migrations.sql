@@ -64,3 +64,12 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS collection_only BOOLEAN NOT NULL D
 -- The barcode on the packet, so the seller can scan it to find the product and update stock.
 ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode VARCHAR(32);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_products_barcode ON products(business_id, barcode) WHERE barcode IS NOT NULL;
+
+-- 2026-10-26: shops with their own truck or bakkie deliver heavy items themselves ("seller delivers").
+-- NULL fee = the shop doesn't deliver itself.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS own_delivery_fee_cents INTEGER CHECK (own_delivery_fee_cents >= 0);
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS own_delivery_note VARCHAR(200);
+-- A third way to get an order: 'seller_delivery' (the shop's own vehicle, the shop's own fee).
+ALTER TABLE orders ALTER COLUMN fulfilment TYPE VARCHAR(20);
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_fulfilment_check;
+ALTER TABLE orders ADD CONSTRAINT orders_fulfilment_check CHECK (fulfilment IN ('pickup', 'delivery', 'seller_delivery'));
