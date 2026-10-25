@@ -28,7 +28,7 @@ services:
       - key: DATABASE_SSL
         value: "true"
       - key: CLIENT_ORIGIN
-        sync: false # https://<your-service>.onrender.com
+        sync: false # the site's address(es), comma-separated: https://kurumanmarketplace.co.za,https://<your-service>.onrender.com
       - key: PUBLIC_APP_URL
         sync: false # the same address
       - key: TRUST_PROXY

@@ -29,10 +29,14 @@ export const app = express();
 // added and ignores anything further left, which a caller could have typed in themselves.
 // Unset or 0 = no proxy: use the connection's own address.
 app.set("trust proxy", Number(process.env.TRUST_PROXY) || false);
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+// The site's own address(es), comma-separated - e.g. the custom domain and the onrender.com address.
+const CLIENT_ORIGINS = (process.env.CLIENT_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
 
 // Only our own client (the React app) may call this API from a browser.
-app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
+app.use(cors({ origin: CLIENT_ORIGINS, credentials: true }));
 app.use(express.json({ limit: "100kb" }));
 app.use(cookieParser());
 
@@ -41,7 +45,7 @@ app.use(cookieParser());
 app.use((req, res, next) => {
   const changesData = !["GET", "HEAD", "OPTIONS"].includes(req.method);
   const origin = req.get("origin");
-  if (changesData && origin && origin !== CLIENT_ORIGIN) {
+  if (changesData && origin && !CLIENT_ORIGINS.includes(origin)) {
     return res.status(403).json({ error: "Request refused." });
   }
   next();

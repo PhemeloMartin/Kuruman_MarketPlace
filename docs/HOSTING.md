@@ -127,7 +127,31 @@ SELECT outcome, received_at FROM payment_events ORDER BY id DESC LIMIT 5;
 
 ---
 
-## 6. Things to know about the free plans
+## 6. Our own address: kurumanmarketplace.co.za
+
+The domain is registered at **domains.co.za** (bought 25/10/2026, renews every year on 25 October, R119).
+
+1. **Render**: the `kurumanmarketplace` service → **Settings** → **Custom Domains** → **Add Custom Domain** →
+   `kurumanmarketplace.co.za`. Render also adds `www.kurumanmarketplace.co.za` and sends it to the main address.
+   Render then shows the DNS records to create (an **A** record for the main address and a **CNAME** for `www`).
+2. **domains.co.za**: client area → **Domains** → the domain → **DNS Management**. Delete any existing A or
+   CNAME records for `@`/the bare domain and for `www` (the "parked page" records), then add exactly the records
+   Render shows. Save.
+3. Back in Render, click **Verify**. It can take from a few minutes to a few hours for the new records to spread.
+   When both addresses show *Verified* and *Certificate issued*, the padlock (HTTPS) works.
+4. Render → the `kurumanmarketplace` service → **Environment**:
+
+| Setting | New value |
+|---|---|
+| `CLIENT_ORIGIN` | `https://kurumanmarketplace.co.za,https://kurumanmarketplace.onrender.com` (both, comma between, no slash at the end) |
+| `PUBLIC_APP_URL` | `https://kurumanmarketplace.co.za` |
+
+   Save (it redeploys by itself). `PAYFAST_NOTIFY_URL` can stay on the `onrender.com` address; it keeps working.
+   You'll need to sign in again on the new address; logins don't carry over between addresses.
+
+---
+
+## 7. Things to know about the free plans
 
 - **Render free services sleep** after 15 minutes without visitors; the next visit takes about a minute to wake
   them. **Open the site 2 minutes before you present.** While asleep, the background jobs (order expiry,
@@ -137,7 +161,7 @@ SELECT outcome, received_at FROM payment_events ORDER BY id DESC LIMIT 5;
 - **Resetting hosted data**: repeat section 1's commands (new terminal, set the three `$env:` lines, `db:setup`,
   `db:seed`, close the terminal). This wipes the hosted data, including the support authenticator set-up.
 
-## 7. Which version is online?
+## 8. Which version is online?
 
 The bottom of the **Profile** page shows e.g. `version i:20/10/26,11:26`: the version number in Roman numerals,
 then the date and time (South African) that copy of the app was made. After a push, Render rebuilds and the time
@@ -146,7 +170,7 @@ changes. If a phone still shows an older time, refresh the page once.
 For a new release, raise the first number of `"version"` in `client/package.json` (`1.0.0` → `2.0.0` shows
 `version ii`), commit and push.
 
-## 8. Later: Google Play Store
+## 9. Later: Google Play Store
 
 Once the hosted site works, it can be wrapped as an Android app with **PWABuilder** (https://www.pwabuilder.com):
 enter the site's address and download the Android package. You'll need a Google Play developer account (one-off

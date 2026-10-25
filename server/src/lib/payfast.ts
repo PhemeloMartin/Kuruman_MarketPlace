@@ -31,7 +31,7 @@ export function payfastConfig(): PayfastConfig | null {
     passphrase: e.PAYFAST_PASSPHRASE ?? "",
     processUrl: `${host}/eng/process`,
     validateUrl: `${host}/eng/query/validate`,
-    publicAppUrl: e.PUBLIC_APP_URL ?? e.CLIENT_ORIGIN ?? "http://localhost:5173",
+    publicAppUrl: e.PUBLIC_APP_URL ?? e.CLIENT_ORIGIN?.split(",")[0].trim() ?? "http://localhost:5173",
     notifyUrl: e.PAYFAST_NOTIFY_URL ?? `http://localhost:${e.PORT ?? 4000}/api/payments/payfast/notify`,
     // Both checks are ON unless explicitly switched off for local contract tests.
     verifySourceIp: e.PAYFAST_VERIFY_SOURCE_IP !== "false",
