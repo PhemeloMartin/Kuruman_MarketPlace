@@ -7,7 +7,7 @@
 // `npm run db:seed` afterwards if you want a clean demo.
 
 // Demo mode, and trust one proxy so each check can come from its own made-up IP address
-// (X-Forwarded-For) - otherwise the "10 tries per 15 minutes" limit would stop the test itself.
+// (X-Forwarded-For) - otherwise the per-address limit on failed tries would stop the test itself.
 process.env.SMS_DEMO_SHOW_CODES = "true";
 process.env.TRUST_PROXY = "1";
 

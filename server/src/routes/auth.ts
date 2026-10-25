@@ -21,6 +21,19 @@ const authLimiter = rateLimit({
   message: { error: "Too many attempts. Please wait 15 minutes and try again." },
 });
 
+// SMS codes are already limited per phone number (lib/phoneCodes.ts: one a minute, five an hour,
+// five tries each), so the per-address limit can be loose. That matters here: mobile networks put
+// many customers behind one shared internet address, and they must not lock each other out.
+// Only failed attempts count.
+const codeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 60,
+  skipSuccessfulRequests: true,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Too many attempts from this network. Please wait 15 minutes and try again." },
+});
+
 // Used when the phone number isn't registered, so a login takes the same time either way
 // and an attacker can't tell which numbers have accounts.
 const DUMMY_HASH = bcrypt.hashSync("not-a-real-passphrase-placeholder", 10);
@@ -51,7 +64,7 @@ function publicUser(u: {
 //      same code again with their name: { phone, code, displayName } -> account created, signed in.
 // Both answers are the same whether or not the number has an account, so nobody can use this to
 // find out who is registered.
-authRouter.post("/code", authLimiter, async (req, res) => {
+authRouter.post("/code", codeLimiter, async (req, res) => {
   const phone = typeof req.body?.phone === "string" ? normaliseSaPhone(req.body.phone) : null;
   if (!phone) {
     return res.status(422).json({
@@ -78,7 +91,7 @@ authRouter.post("/code", authLimiter, async (req, res) => {
 
 // Everyone signs up as a consumer. Seller and courier access are approved later (spec FR-02),
 // so any "role" the browser sends is ignored.
-authRouter.post("/code/verify", authLimiter, async (req, res) => {
+authRouter.post("/code/verify", codeLimiter, async (req, res) => {
   const phone = typeof req.body?.phone === "string" ? normaliseSaPhone(req.body.phone) : null;
   if (!phone) return res.status(422).json({ error: "Enter a South African phone number, e.g. 071 234 5678." });
 
