@@ -231,4 +231,7 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       10 min, 5 tries, 1 a minute / 5 an hour per number; same answers whether or not a number is registered;
       support can't use SMS alone; privacy download/closure confirmed with a fresh code; demo mode shows the code;
       sessions 30 days for members, 30 min idle for staff; `npm run test:signin` (12 checks)
+- [x] Seller dashboard redesign: greeting and shop status, "To do now" first (orders that need the seller, cash to
+      confirm, low stock by name, or "All caught up"), large action tiles, numbers as plain sentences with what they
+      mean, orders waiting on others and order history separately
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

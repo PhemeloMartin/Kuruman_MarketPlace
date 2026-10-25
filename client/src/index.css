@@ -1618,3 +1618,135 @@ body {
   letter-spacing: 0.15em;
   color: var(--primary-dark);
 }
+
+/* ---------- Seller dashboard: "To do now" first, numbers in plain words ---------- */
+.seller-section {
+  margin-top: 22px;
+}
+
+.shop-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2f9e6e;
+}
+
+.count-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  vertical-align: middle;
+}
+
+.all-clear {
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--primary-tint);
+  color: var(--primary-dark);
+}
+
+.all-clear p {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+}
+
+.low-stock ul {
+  margin: 8px 0 12px;
+  padding-left: 20px;
+}
+
+.low-stock li {
+  margin: 4px 0;
+}
+
+.action-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.action-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 88px;
+  padding: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.action-tile svg {
+  color: var(--primary);
+}
+
+.action-tile.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.action-tile.primary svg {
+  color: #fff;
+}
+
+.action-count {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.plain-stats {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plain-stats li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.stat-value {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 1.35rem;
+}
+
+.stat-note {
+  flex-basis: 100%;
+  font-size: 0.78rem;
+  color: var(--muted);
+}

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../auth/AuthContext'
+import { PlusIcon, ShopIcon } from '../../components/Icons'
 import { api, ApiError } from '../../lib/api'
 import { formatRand, parseRandToCents } from '../../lib/money'
-import type { CashToConfirm, Kpis, SellerOrder } from '../../lib/types'
+import type { CashToConfirm, Kpis, SellerOrder, SellerProduct } from '../../lib/types'
 
 interface Dashboard {
   business: { id: number; name: string; active: boolean }
@@ -12,9 +14,9 @@ interface Dashboard {
 }
 
 const PERIODS = [
-  { key: 'today', label: 'Today' },
-  { key: 'week', label: 'This week' },
-  { key: 'month', label: 'This month' },
+  { key: 'today', label: 'Today', phrase: 'today' },
+  { key: 'week', label: 'This week', phrase: 'this week' },
+  { key: 'month', label: 'This month', phrase: 'this month' },
 ]
 
 const DECLINE_REASONS = ['Out of stock', 'Closed right now', "Can't prepare it in time"]
@@ -28,11 +30,29 @@ function timeOfDay(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Johannesburg' })
 }
 
+function greeting(): string {
+  const hour = Number(new Date().toLocaleString('en-ZA', { hour: 'numeric', hour12: false, timeZone: 'Africa/Johannesburg' }))
+  return hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+}
+
+// An order needs the seller when they must DO something now: accept it, get it ready, take the
+// pickup code, hand it to the courier, or check returned goods. Orders waiting on someone else
+// (the customer paying, a courier on the way) are shown separately.
+function needsSeller(o: SellerOrder): boolean {
+  if (o.status === 'pending_acceptance' || o.status === 'confirmed') return true
+  if (o.status === 'ready' && o.fulfilment === 'pickup') return true
+  if (o.status === 'ready' && o.delivery?.status === 'claimed' && !o.delivery.released) return true
+  return Boolean(o.delivery?.awaitingReturn)
+}
+
+// The seller's home: what to do now comes first, then how the shop is doing, in plain words.
 export function SellerDashboardPage() {
+  const { user } = useAuth()
   const [period, setPeriod] = useState('week')
   const [dashboard, setDashboard] = useState<Dashboard | null>(null)
   const [orders, setOrders] = useState<SellerOrder[] | null>(null)
   const [cash, setCash] = useState<CashToConfirm[]>([])
+  const [products, setProducts] = useState<SellerProduct[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
@@ -40,11 +60,13 @@ export function SellerDashboardPage() {
       api<Dashboard>(`/seller/dashboard?period=${period}`),
       api<SellerOrder[]>('/seller/orders'),
       api<CashToConfirm[]>('/seller/cash'),
+      api<SellerProduct[]>('/seller/products'),
     ])
-      .then(([d, o, c]) => {
+      .then(([d, o, c, p]) => {
         setDashboard(d)
         setOrders(o)
         setCash(c)
+        setProducts(p)
         setError(null)
       })
       .catch((err) => setError(err.message))
@@ -74,51 +96,43 @@ export function SellerDashboardPage() {
   }
 
   const k = dashboard.kpis
-  const waiting = orders.filter((o) => o.status === 'pending_acceptance')
-  const active = orders.filter(
-    (o) => ['awaiting_payment', 'confirmed', 'ready', 'out_for_delivery', 'delivery_failed'].includes(o.status) || o.delivery?.awaitingReturn,
+  const toDo = orders.filter(needsSeller)
+  const toDoCash = cash.filter((c) => c.status === 'collected')
+  const disputedCash = cash.filter((c) => c.status === 'disputed')
+  const waitingOnOthers = orders.filter(
+    (o) => !needsSeller(o) && ['awaiting_payment', 'ready', 'out_for_delivery', 'delivery_failed'].includes(o.status),
   )
-  const recent = orders.filter((o) => ['completed', 'declined', 'cancelled', 'expired'].includes(o.status) && !o.delivery?.awaitingReturn)
+  const history = orders.filter(
+    (o) => ['completed', 'declined', 'cancelled', 'expired'].includes(o.status) && !o.delivery?.awaitingReturn,
+  )
+  const onSale = products.filter((p) => p.isActive)
+  // Same rule as the server's low-stock number: what's left to sell is at or below the seller's own warning level.
+  const lowStock = onSale.filter((p) => p.availableQty <= p.lowStockThreshold)
+  const firstName = (user?.displayName ?? '').split(' ')[0]
+  const phrase = PERIODS.find((p) => p.key === period)?.phrase ?? ''
+  const toDoCount = toDo.length + toDoCash.length
+  const nothingToDo = toDoCount === 0 && lowStock.length === 0
 
   return (
     <main className="page seller">
-      <p className="eyebrow">Your business</p>
-      <h1 className="page-title" style={{ marginTop: 0 }}>
+      <p className="eyebrow">
+        {greeting()}
+        {firstName && `, ${firstName}`}
+      </p>
+      <h1 className="page-title" style={{ marginTop: 0, marginBottom: 6 }}>
         {dashboard.business.name}
       </h1>
-      {!dashboard.business.active && (
+      {dashboard.business.active ? (
+        <p className="shop-status">
+          <span className="status-dot" aria-hidden="true" /> Open · {onSale.length}{' '}
+          {onSale.length === 1 ? 'product' : 'products'} on sale
+        </p>
+      ) : (
         <p className="notice error" role="status" style={{ marginBottom: 12 }}>
           <strong>Your shop is suspended by support.</strong> Customers can’t see it and you can’t change your listings.
           You can still finish the orders below. Contact support to resolve this.
         </p>
       )}
-
-      <div className="chips" role="group" aria-label="Report period" style={{ marginBottom: 12 }}>
-        {PERIODS.map((p) => (
-          <button key={p.key} type="button" className="chip" aria-pressed={period === p.key} onClick={() => setPeriod(p.key)}>
-            {p.label}
-          </button>
-        ))}
-      </div>
-
-      <section className="kpi-grid" aria-label="Your numbers">
-        <Kpi label="New orders" value={String(k.pendingOrders)} accent={k.pendingOrders > 0} />
-        <Kpi label="Delivered value" value={formatRand(k.grossDeliveredCents)} hint={`${k.completedOrders} completed`} />
-        <Kpi
-          label="Cash still to reach you"
-          value={formatRand(k.unreconciledCashCents)}
-          accent={k.unreconciledCashCents > 0}
-        />
-        <Kpi label="Low stock items" value={String(k.lowStockProducts)} accent={k.lowStockProducts > 0} link="/seller/products" />
-      </section>
-      <p className="fine-print">
-        Accepted: {k.acceptanceRate === null ? 'N/A' : `${Math.round(k.acceptanceRate * 100)}%`} · Average order:{' '}
-        {k.averageCompletedCents === null ? 'N/A' : formatRand(Math.round(k.averageCompletedCents))} · Delivered value
-        is products only (no delivery fees), not profit. As of {timeOfDay(dashboard.asOf)}.
-      </p>
-      <Link to="/seller/products" className="btn btn-outline btn-block" style={{ marginTop: 12 }}>
-        Your products and stock
-      </Link>
 
       {error && (
         <p className="notice error" role="alert" style={{ marginTop: 12 }}>
@@ -126,76 +140,141 @@ export function SellerDashboardPage() {
         </p>
       )}
 
-      <section aria-labelledby="waiting-heading" style={{ marginTop: 20 }}>
+      <section aria-labelledby="todo-heading" className="seller-section">
         <div className="section-head">
-          <h2 id="waiting-heading">Waiting for you</h2>
-          <span className="urgent">Reply within 30 min</span>
+          <h2 id="todo-heading">
+            To do now {toDoCount > 0 && <span className="count-badge">{toDoCount}</span>}
+          </h2>
+          {toDo.some((o) => o.status === 'pending_acceptance') && <span className="urgent">Reply within 30 min</span>}
         </div>
-        {waiting.length === 0 ? (
-          <p className="notice">No new orders right now. New orders appear here automatically.</p>
-        ) : (
-          waiting.map((o) => <OrderCard key={o.id} order={o} onChanged={load} />)
+
+        {nothingToDo && (
+          <div className="all-clear">
+            <strong>All caught up ✓</strong>
+            <p>No orders need you right now. New orders appear here by themselves, and you also get a notification.</p>
+          </div>
+        )}
+
+        {toDo.map((o) => (
+          <OrderCard key={o.id} order={o} onChanged={load} />
+        ))}
+        {toDoCash.map((c) => (
+          <CashCard key={c.orderId} cash={c} onChanged={load} />
+        ))}
+
+        {lowStock.length > 0 && (
+          <article className="card low-stock">
+            <strong>Running low</strong>
+            <ul>
+              {lowStock.slice(0, 5).map((p) => (
+                <li key={p.id}>
+                  <Link to={`/seller/products/${p.id}`}>{p.name}</Link>:{' '}
+                  {p.availableQty <= 0 ? <span className="urgent">sold out</span> : `${p.availableQty} left`}
+                </li>
+              ))}
+            </ul>
+            <Link to="/seller/products" className="btn btn-outline btn-block">
+              Update stock
+            </Link>
+          </article>
         )}
       </section>
 
-      {cash.length > 0 && (
-        <section aria-labelledby="cash-heading" style={{ marginTop: 20 }}>
+      <div className="action-tiles">
+        <Link to="/seller/products/new" className="action-tile primary">
+          <PlusIcon />
+          Add a product
+        </Link>
+        <Link to="/seller/products" className="action-tile">
+          <ShopIcon />
+          Products &amp; stock
+          <span className="action-count">{products.length}</span>
+        </Link>
+      </div>
+
+      <section aria-labelledby="numbers-heading" className="seller-section">
+        <div className="section-head">
+          <h2 id="numbers-heading">How your shop is doing</h2>
+        </div>
+        <div className="chips" role="group" aria-label="Period" style={{ marginBottom: 12 }}>
+          {PERIODS.map((p) => (
+            <button key={p.key} type="button" className="chip" aria-pressed={period === p.key} onClick={() => setPeriod(p.key)}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+        {k.completedOrders === 0 && k.acceptanceRate === null ? (
+          <p className="notice">
+            Nothing accepted or completed {phrase} yet. Your numbers appear here once you’ve answered your first order.
+          </p>
+        ) : (
+          <ul className="plain-stats">
+            <li>
+              <span className="stat-value" translate="no">
+                {formatRand(k.grossDeliveredCents)}
+              </span>
+              <span>
+                from {k.completedOrders} completed {k.completedOrders === 1 ? 'order' : 'orders'} {phrase}
+              </span>
+              <span className="stat-note">
+                What customers paid for your products. Delivery fees go to couriers, and your own costs aren’t taken
+                off.
+              </span>
+            </li>
+            {k.acceptanceRate !== null && (
+              <li>
+                <span className="stat-value">{Math.round(k.acceptanceRate * 100)}%</span>
+                <span>of orders accepted {phrase}</span>
+                <span className="stat-note">Accepting quickly keeps customers coming back.</span>
+              </li>
+            )}
+            {k.averageCompletedCents !== null && (
+              <li>
+                <span className="stat-value" translate="no">
+                  {formatRand(Math.round(k.averageCompletedCents))}
+                </span>
+                <span>average completed order</span>
+              </li>
+            )}
+          </ul>
+        )}
+        {k.unreconciledCashCents > 0 && (
+          <p className="notice" style={{ marginTop: 10 }}>
+            <strong translate="no">{formatRand(k.unreconciledCashCents)}</strong> in cash from couriers hasn’t reached
+            you yet.
+          </p>
+        )}
+        <p className="fine-print">Updated at {timeOfDay(dashboard.asOf)}.</p>
+      </section>
+
+      {(waitingOnOthers.length > 0 || disputedCash.length > 0) && (
+        <section aria-labelledby="others-heading" className="seller-section">
           <div className="section-head">
-            <h2 id="cash-heading">Cash from couriers</h2>
+            <h2 id="others-heading">Waiting on someone else</h2>
           </div>
-          {cash.map((c) => (
+          <p className="fine-print" style={{ marginTop: -6 }}>
+            Nothing for you to do here yet: the customer is paying, a courier is on the way, or support is checking.
+          </p>
+          {waitingOnOthers.map((o) => (
+            <OrderCard key={o.id} order={o} onChanged={load} />
+          ))}
+          {disputedCash.map((c) => (
             <CashCard key={c.orderId} cash={c} onChanged={load} />
           ))}
         </section>
       )}
 
-      {active.length > 0 && (
-        <section aria-labelledby="active-heading" style={{ marginTop: 20 }}>
+      {history.length > 0 && (
+        <section aria-labelledby="history-heading" className="seller-section">
           <div className="section-head">
-            <h2 id="active-heading">In progress</h2>
+            <h2 id="history-heading">Order history</h2>
           </div>
-          {active.map((o) => (
+          {history.map((o) => (
             <OrderCard key={o.id} order={o} onChanged={load} />
           ))}
         </section>
       )}
-
-      {recent.length > 0 && (
-        <section aria-labelledby="recent-heading" style={{ marginTop: 20 }}>
-          <div className="section-head">
-            <h2 id="recent-heading">Recent</h2>
-          </div>
-          {recent.map((o) => (
-            <OrderCard key={o.id} order={o} onChanged={load} />
-          ))}
-        </section>
-      )}
-
-      <div className="sticky-action">
-        <Link to="/seller/products/new" className="btn btn-dark btn-block">
-          + Add a product
-        </Link>
-      </div>
     </main>
-  )
-}
-
-function Kpi({ label, value, hint, accent, link }: { label: string; value: string; hint?: string; accent?: boolean; link?: string }) {
-  const body = (
-    <>
-      <span className="kpi-label">{label}</span>
-      <span className={`kpi-value${accent ? ' accent' : ''}`} translate="no">
-        {value}
-      </span>
-      {hint && <span className="kpi-hint">{hint}</span>}
-    </>
-  )
-  return link ? (
-    <Link to={link} className="kpi">
-      {body}
-    </Link>
-  ) : (
-    <div className="kpi">{body}</div>
   )
 }
 
