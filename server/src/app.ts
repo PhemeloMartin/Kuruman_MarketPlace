@@ -9,6 +9,7 @@ import { pool } from "./db";
 import { loadSession } from "./auth/session";
 import { authRouter } from "./routes/auth";
 import { catalogueRouter } from "./routes/catalogue";
+import { smsRouter } from "./routes/sms";
 import { ordersRouter } from "./routes/orders";
 import { sellerRouter } from "./routes/seller";
 import { courierRouter } from "./routes/courier";
@@ -88,6 +89,7 @@ app.use("/api/privacy", privacyRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/support", supportRouter);
 app.use("/api", paymentsRouter);
+app.use("/api", smsRouter);
 app.use("/api", catalogueRouter);
 
 // Hosted (production): this same server also serves the built website from client/dist, so the

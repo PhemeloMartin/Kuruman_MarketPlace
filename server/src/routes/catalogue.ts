@@ -25,7 +25,7 @@ const PRODUCT_COLUMNS = `
   p.id, p.name, p.description, p.unit_label, p.price_cents, p.image_url, p.collection_only,
   (p.stock_qty - p.reserved_qty) AS available_qty,
   c.slug AS category, c.name AS category_name,
-  b.id AS business_id, b.name AS business_name, b.area, b.own_delivery_fee_cents`;
+  b.id AS business_id, b.name AS business_name, b.area, b.own_delivery_fee_cents, b.kind`;
 
 function toProduct(row: any) {
   return {
@@ -44,6 +44,7 @@ function toProduct(row: any) {
       name: row.business_name,
       area: row.area,
       ownDeliveryFeeCents: row.own_delivery_fee_cents, // null = the shop doesn't deliver itself
+      kind: row.kind, // 'shop' or 'market_stall'
     },
   };
 }
@@ -99,7 +100,12 @@ catalogueRouter.get("/shops/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) return res.status(404).json({ error: "Shop not found." });
   const b = await pool.query(
-    `SELECT id, name, description, area, cover_photo_url, whatsapp_phone, own_delivery_fee_cents, own_delivery_note, created_at
+    `SELECT id, name, description, area, cover_photo_url, whatsapp_phone, own_delivery_fee_cents, own_delivery_note, created_at,
+            kind, stall_location, stall_days, to_char(stall_opens, 'HH24:MI') AS opens, to_char(stall_closes, 'HH24:MI') AS closes,
+            -- "Here today": today (South African time) is a stall day and it's within opening hours.
+            (kind = 'market_stall'
+             AND EXTRACT(ISODOW FROM now() AT TIME ZONE 'Africa/Johannesburg')::int = ANY(stall_days)
+             AND (now() AT TIME ZONE 'Africa/Johannesburg')::time BETWEEN stall_opens AND stall_closes) AS here_now
        FROM businesses WHERE id = $1 AND is_active`,
     [id]
   );
@@ -125,6 +131,11 @@ catalogueRouter.get("/shops/:id", async (req, res) => {
     whatsapp: shop.whatsapp_phone, // only set if the seller chose to show it
     ownDeliveryFeeCents: shop.own_delivery_fee_cents,
     ownDeliveryNote: shop.own_delivery_note,
+    kind: shop.kind,
+    stall:
+      shop.kind === "market_stall"
+        ? { location: shop.stall_location, days: shop.stall_days ?? [], opens: shop.opens, closes: shop.closes, hereNow: Boolean(shop.here_now) }
+        : null,
     products: products.rows.map(toProduct),
     rating: await ratingOf(id),
     reviews: await publicReviews(id),

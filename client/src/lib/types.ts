@@ -39,7 +39,7 @@ export interface Product {
   availableQty: number
   category: string
   categoryName: string
-  business: { id: number; name: string; area: string; ownDeliveryFeeCents?: number | null }
+  business: { id: number; name: string; area: string; ownDeliveryFeeCents?: number | null; kind?: 'shop' | 'market_stall' }
   photos?: string[] // all photos, first = main; only on the single-product answer
   businessRating?: Rating // only on the single-product answer
   businessWhatsapp?: string | null // only if the seller chose to show it
@@ -84,6 +84,8 @@ export interface Shop {
   whatsapp: string | null // only if the seller chose to show it
   ownDeliveryFeeCents: number | null // the shop delivers with its own vehicle at this fee (null = it doesn't)
   ownDeliveryNote: string | null
+  kind: 'shop' | 'market_stall'
+  stall: { location: string | null; days: number[]; opens: string | null; closes: string | null; hereNow: boolean } | null
   products: Product[]
   rating: Rating
   reviews: Review[]
@@ -150,4 +152,13 @@ export interface SellerProduct {
   barcode: string | null
   category: string
   categoryName: string
+}
+
+// Market stall days are ISO weekdays (1 = Monday). "Mon-Sat" reads better than a list of six days.
+const DAY = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+export function stallDaysText(days: number[]): string {
+  const sorted = [...days].sort((a, b) => a - b)
+  if (!sorted.length) return ''
+  const consecutive = sorted.every((d, i) => i === 0 || d === sorted[i - 1] + 1)
+  return consecutive && sorted.length > 2 ? `${DAY[sorted[0]]}–${DAY[sorted[sorted.length - 1]]}` : sorted.map((d) => DAY[d]).join(', ')
 }

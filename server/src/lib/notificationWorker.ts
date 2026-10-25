@@ -1,5 +1,6 @@
 import { PoolClient } from "pg";
 import { pool } from "../db";
+import { alertNewOrder } from "./smsOrders";
 
 // The notification worker (spec FR-17, TC-17). It runs separately from the requests that
 // change orders: every few seconds it takes pending outbox events and creates the in-app
@@ -34,6 +35,8 @@ async function orderStatusNotes(client: PoolClient, orderId: number, p: Record<s
 
   switch (p.to) {
     case "pending_acceptance":
+      // Sellers with a basic phone (e.g. market stalls) also get the order by SMS.
+      await alertNewOrder(client, orderId);
       return [{ userId: seller, template: "seller.new_order", args }];
     case "awaiting_payment":
       return [{ userId: customer, template: "customer.accepted_pay_now", args }];

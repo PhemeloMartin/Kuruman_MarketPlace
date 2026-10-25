@@ -73,3 +73,27 @@ ALTER TABLE businesses ADD COLUMN IF NOT EXISTS own_delivery_note VARCHAR(200);
 ALTER TABLE orders ALTER COLUMN fulfilment TYPE VARCHAR(20);
 ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_fulfilment_check;
 ALTER TABLE orders ADD CONSTRAINT orders_fulfilment_check CHECK (fulfilment IN ('pickup', 'delivery', 'seller_delivery'));
+
+-- 2026-10-26: market stalls and SMS order alerts.
+-- A market stall is run by someone who may only have a basic phone. A helper (family member, market
+-- coordinator) manages the listing with their own account; the stall's phone (businesses.phone) gets
+-- each order by SMS and can answer by SMS: 1 = accept, 2 = sold out, the customer's code = handed over.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS kind VARCHAR(12) NOT NULL DEFAULT 'shop';
+ALTER TABLE businesses DROP CONSTRAINT IF EXISTS businesses_kind_check;
+ALTER TABLE businesses ADD CONSTRAINT businesses_kind_check CHECK (kind IN ('shop', 'market_stall'));
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS stall_location VARCHAR(200);  -- e.g. "Main Street, by the taxi rank"
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS stall_days SMALLINT[];        -- ISO weekdays: 1 = Monday ... 7 = Sunday
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS stall_opens TIME;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS stall_closes TIME;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS sms_alerts BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Order SMS sent to and received from businesses' phones (never sign-in codes). Kept 30 days.
+CREATE TABLE IF NOT EXISTS sms_messages (
+  id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  phone      VARCHAR(15) NOT NULL,
+  direction  VARCHAR(3)  NOT NULL CHECK (direction IN ('out', 'in')),
+  body       TEXT        NOT NULL,
+  order_id   BIGINT      REFERENCES orders(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_sms_messages_phone ON sms_messages(phone, created_at);

@@ -57,6 +57,8 @@ async function main() {
       ["lesego", "+27710000011", "Lesego (demo customer)", "consumer"],
       ["anna", "+27710000012", "Anna (demo customer)", "consumer"],
       ["kabelo", "+27710000013", "Kabelo (demo customer)", "consumer"],
+      // Tebogo helps his grandmother, Mma Kefilwe, run her stall. She has a basic phone: 071 000 0014.
+      ["helper", "+27710000015", "Tebogo (demo helper for Mma Kefilwe's stall)", "entrepreneur"],
     ];
     const userIds: Record<string, number> = {};
     for (const [key, phone, name, role] of users) {
@@ -194,6 +196,32 @@ async function main() {
           [b.rows[0].id, categoryIds[cat], productName, unit, price, stock]
         );
       }
+    }
+
+    // A market stall: listed by a helper, orders go to the stall holder's basic phone by SMS.
+    const stall = await client.query(
+      `INSERT INTO businesses (owner_id, name, description, area, pickup_address, phone, kind, sms_alerts,
+                               stall_location, stall_days, stall_opens, stall_closes)
+       VALUES ($1, $2, $3, 'Kuruman town', $4, '+27710000014', 'market_stall', TRUE, $5, '{1,2,3,4,5,6}', '07:00', '16:00')
+       RETURNING id`,
+      [
+        userIds.helper,
+        "Mma Kefilwe's Vegetable Stall (demo)",
+        "Fresh morogo, spinach and green mealies from Mma Kefilwe's garden. At the same corner for 12 years.",
+        "Main Street, next to the taxi rank",
+        "Main Street, next to the taxi rank",
+      ]
+    );
+    for (const [cat, name, unit, price, stock] of [
+      ["fresh-produce", "Morogo (wild spinach)", "1 bunch", 1500, 25],
+      ["fresh-produce", "Green mealies", "Pack of 3", 2000, 30],
+      ["fresh-produce", "Butternut", "1 butternut", 1800, 15],
+      ["fresh-produce", "Spinach bunch (stall)", "1 bunch", 1200, 20],
+    ] as [string, string, string, number, number][]) {
+      await client.query(
+        `INSERT INTO products (business_id, category_id, name, unit_label, price_cents, stock_qty) VALUES ($1, $2, $3, $4, $5, $6)`,
+        [stall.rows[0].id, categoryIds[cat], name, unit, price, stock]
+      );
     }
 
     // Tumelo's shop delivers bricks, sand and feed with its own bakkie and truck.

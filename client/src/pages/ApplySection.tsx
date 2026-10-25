@@ -90,7 +90,8 @@ export function ApplySection() {
 }
 
 function ApplyForm({ type, policy, onCancel, onDone }: { type: 'seller' | 'courier'; policy: Policy; onCancel: () => void; onDone: () => void }) {
-  const [form, setForm] = useState<Form>({ area: '', vehicleType: '', businessName: '', pickupAddress: '', phone: '', description: '' })
+  const [form, setForm] = useState<Form>({ area: '', vehicleType: '', businessName: '', pickupAddress: '', phone: '', description: '', kind: 'shop' })
+  const stall = form.kind === 'market_stall'
   const [fields, setFields] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -127,8 +128,27 @@ function ApplyForm({ type, policy, onCancel, onDone }: { type: 'seller' | 'couri
         )}
         {type === 'seller' && (
           <>
+            <fieldset className="choice-group">
+              <legend>What are you registering?</legend>
+              <div className="choices">
+                <label className="choice">
+                  <input type="radio" name="kind" checked={!stall} onChange={() => setForm((f) => ({ ...f, kind: 'shop' }))} />
+                  My own shop or business
+                </label>
+                <label className="choice">
+                  <input type="radio" name="kind" checked={stall} onChange={() => setForm((f) => ({ ...f, kind: 'market_stall' }))} />
+                  A market stall (I’m helping someone)
+                </label>
+              </div>
+              {stall && (
+                <p className="fine-print">
+                  You manage the listing for them. The stall holder gets each order by SMS on their own phone, even a basic
+                  one, and answers by SMS.
+                </p>
+              )}
+            </fieldset>
             <div className="field" data-invalid={Boolean(fields.businessName)}>
-              <label htmlFor="businessName">Business name</label>
+              <label htmlFor="businessName">{stall ? 'Stall name (e.g. “Mma Kefilwe’s Vegetables”)' : 'Business name'}</label>
               <div className="input-wrap">
                 <input id="businessName" value={form.businessName} onChange={set('businessName')} maxLength={100} />
               </div>
@@ -160,14 +180,14 @@ function ApplyForm({ type, policy, onCancel, onDone }: { type: 'seller' | 'couri
         {type === 'seller' ? (
           <>
             <div className="field" data-invalid={Boolean(fields.pickupAddress)}>
-              <label htmlFor="pickupAddress">Where customers collect orders</label>
+              <label htmlFor="pickupAddress">{stall ? 'Where the stall is (e.g. “Main Street, by the taxi rank”)' : 'Where customers collect orders'}</label>
               <div className="input-wrap">
                 <input id="pickupAddress" value={form.pickupAddress} onChange={set('pickupAddress')} maxLength={200} />
               </div>
               {err('pickupAddress')}
             </div>
             <div className="field" data-invalid={Boolean(fields.phone)}>
-              <label htmlFor="bizPhone">Business phone number</label>
+              <label htmlFor="bizPhone">{stall ? 'The stall holder’s phone (gets the orders by SMS)' : 'Business phone number'}</label>
               <div className="input-wrap">
                 <input id="bizPhone" type="tel" inputMode="tel" value={form.phone} onChange={set('phone')} placeholder="071 234 5678" />
               </div>

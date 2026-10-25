@@ -24,6 +24,8 @@ export async function runRetention() {
         AND (s.expires_at < now() - interval '1 day'
              OR s.last_seen_at < now() - CASE WHEN u.role = 'support' THEN interval '1 day' ELSE interval '15 days' END)`
   );
+  // Order SMS (names and items): 30 days, like notifications.
+  await pool.query(`DELETE FROM sms_messages WHERE created_at < now() - interval '30 days'`);
   // SMS codes live 10 minutes; after a day there is no reason to keep even their hashes.
   await pool.query(`DELETE FROM phone_codes WHERE created_at < now() - interval '1 day'`);
   // AI suggestion outcomes: 30 days (spec 8.2).

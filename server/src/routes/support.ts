@@ -183,9 +183,12 @@ supportRouter.post("/applications/:id/approve", requireStaff("approvals"), async
     let changes: Record<string, unknown>;
     if (app.case_type === "seller_application") {
       const b = await client.query(
-        `INSERT INTO businesses (owner_id, name, description, area, pickup_address, phone, approved_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-        [applicant.id, d.businessName, d.description || null, d.area, d.pickupAddress, d.phone, req.user!.id]
+        `INSERT INTO businesses (owner_id, name, description, area, pickup_address, phone, approved_by, kind, sms_alerts,
+                                 stall_location)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+        [applicant.id, d.businessName, d.description || null, d.area, d.pickupAddress, d.phone, req.user!.id,
+         d.kind === "market_stall" ? "market_stall" : "shop", d.kind === "market_stall",
+         d.kind === "market_stall" ? d.pickupAddress : null]
       );
       await client.query("UPDATE users SET role = 'entrepreneur', updated_at = now() WHERE id = $1", [applicant.id]);
       changes = { role: ["consumer", "entrepreneur"], businessId: Number(b.rows[0].id) };

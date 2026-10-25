@@ -2245,3 +2245,163 @@ label.busy {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ---------- Market stalls ---------- */
+.stall-card {
+  margin: 10px 0;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: #fdf6e6;
+  border: 1px solid #f2dfb6;
+}
+
+.stall-card p {
+  margin: 0 0 8px;
+}
+
+.stall-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.status-dot.off {
+  background: #b9b0a3;
+}
+
+.stall-tag {
+  background: #e4f2ea;
+  color: var(--primary-dark);
+}
+
+.day-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.day {
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  min-height: 44px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.day.on {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.day:focus-within {
+  outline: 3px solid var(--primary);
+}
+
+/* ---------- Demo: a basic phone ---------- */
+.basic-phone {
+  max-width: 300px;
+  margin: 16px auto;
+  padding: 18px 14px 20px;
+  border-radius: 34px;
+  background: #2b2b2e;
+  box-shadow: inset 0 0 0 3px #3d3d42, 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+.basic-phone-screen {
+  height: 340px;
+  overflow-y: auto;
+  padding: 10px;
+  border-radius: 8px;
+  background: #c9d8b6; /* the green-grey of an old phone screen */
+  font-family: 'Courier New', monospace;
+  font-size: 0.82rem;
+  color: #1d2a12;
+}
+
+.basic-phone-note {
+  text-align: center;
+  opacity: 0.7;
+}
+
+.sms {
+  margin: 0 0 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  max-width: 92%;
+  white-space: pre-wrap;
+}
+
+.sms.received {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.sms.sent {
+  margin-left: auto;
+  background: #1d2a12;
+  color: #e6f0d8;
+}
+
+.sms-time {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.68rem;
+  opacity: 0.7;
+}
+
+.basic-phone-keys {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.phone-key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  border: 0;
+  border-radius: 14px;
+  background: #4a4a50;
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.phone-key small {
+  font-size: 0.65rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.phone-key.send {
+  font-size: 1rem;
+  background: #2f7d4f;
+}
+
+.phone-input {
+  min-height: 52px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  letter-spacing: 0.15em;
+  text-align: center;
+}
+
+.basic-phone-keys {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.phone-input {
+  min-width: 0;
+  width: 100%;
+}

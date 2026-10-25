@@ -60,6 +60,12 @@ Tip: press **F12 → device toolbar** (phone icon) and pick a phone size, so it 
 **Reset the hosted demo data 1–2 days before presenting** (HOSTING.md, section 1 commands), so the demo order
 history, reviews and Entrepreneur of the Month fall inside the last 30 days.
 
+**Market stall by SMS (strong demo moment):** open **/demo/phone** in a separate window (it shows Mma Kefilwe's
+basic phone, 071 000 0014). As Thato, reserve morogo at "Mma Kefilwe's Vegetable Stall". Within 5 seconds the
+phone gets the order: tap **1**. Thato opens Orders → "Show collection code"; type that code on the phone → "code
+correct, hand over…". **Say:** "Not everyone in Kuruman has a smartphone. A stall holder runs orders with any phone,
+by SMS, and the same rules apply: stock, codes and history."
+
 **Presenting the hosted site?** The day before, make sure everything is pushed to GitHub. Two minutes before,
 open the site on the device you'll present from (this also wakes the free server), **refresh once**, and check the
 label at the bottom of **Profile** - e.g. `version i:20/10/26,11:26` - shows the version and time you expect.

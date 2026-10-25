@@ -7,6 +7,7 @@ import { ProductCard } from '../components/ProductCard'
 import { RatingLine, Stars } from '../components/Stars'
 import { api } from '../lib/api'
 import { chatLink, pageUrl, shareLink } from '../lib/whatsapp'
+import { stallDaysText } from '../lib/types'
 import type { Shop } from '../lib/types'
 
 // A shop's own page: cover photo, who they are, and everything they sell.
@@ -58,6 +59,30 @@ export function ShopPage() {
       <a href="#reviews" className="rating-link">
         <RatingLine rating={shop.rating} />
       </a>
+      {shop.stall && (
+        <div className="stall-card">
+          <p className="stall-status">
+            <span className={`status-dot${shop.stall.hereNow ? '' : ' off'}`} aria-hidden="true" />
+            {shop.stall.hereNow ? 'At the stall now' : 'Not at the stall right now'}
+          </p>
+          <p>
+            📍 <strong>{shop.stall.location}</strong>
+            <br />
+            🗓 {stallDaysText(shop.stall.days)}, {shop.stall.opens}–{shop.stall.closes}
+          </p>
+          <p className="fine-print">
+            Reserve online, then collect and pay at the stall. The stall holder gets your order by SMS.
+          </p>
+          <a
+            className="link-btn"
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${shop.stall.location}, Kuruman`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Show on a map
+          </a>
+        </div>
+      )}
       {shop.description && <p style={{ whiteSpace: 'pre-line' }}>{shop.description}</p>}
       <div className="share-row">
         <a

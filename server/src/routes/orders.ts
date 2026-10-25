@@ -120,7 +120,7 @@ ordersRouter.post("/", shopper, async (req, res) => {
     const ids = order.items.map((i) => i.productId);
     const products = await client.query(
       `SELECT p.id, p.business_id, p.name, p.unit_label, p.price_cents, p.stock_qty, p.reserved_qty,
-              p.is_active, p.collection_only, b.is_active AS business_active, b.owner_id, b.own_delivery_fee_cents
+              p.is_active, p.collection_only, b.is_active AS business_active, b.owner_id, b.own_delivery_fee_cents, b.kind
          FROM products p JOIN businesses b ON b.id = p.business_id
         WHERE p.id = ANY($1::bigint[])
         ORDER BY p.id
@@ -171,6 +171,11 @@ ordersRouter.post("/", shopper, async (req, res) => {
     }
 
     const firstProduct = byId.get(order.items[0].productId);
+    // A market stall is "reserve and collect": the customer picks it up at the stall.
+    if (firstProduct.kind === "market_stall" && order.fulfilment !== "pickup") {
+      await client.query("ROLLBACK");
+      return res.status(422).json({ error: "Market stalls are reserve-and-collect: please choose pickup at the stall." });
+    }
     // "Seller delivers" only from shops that switched on their own delivery; their fee, not ours.
     const ownDeliveryFee = firstProduct.own_delivery_fee_cents;
     if (order.fulfilment === "seller_delivery" && ownDeliveryFee === null) {

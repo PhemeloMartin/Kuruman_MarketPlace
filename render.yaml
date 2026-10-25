@@ -48,6 +48,9 @@ services:
       # Without it, photos are kept in the database instead.
       - key: CLOUDINARY_URL
         sync: false
+      # The SMS gateway calls /api/sms/inbound?token=... with replies; this is that secret token.
+      - key: SMS_INBOUND_TOKEN
+        generateValue: true
       - key: SMS_DEMO_SHOW_CODES
         value: "true"
       - key: PAYFAST_SANDBOX

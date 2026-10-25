@@ -142,6 +142,8 @@ KPI check against the spec's worked example: `npm run test:kpi` in `server` (cha
 | 071 000 0009 | Tumelo | entrepreneur (building materials, animal feed, livestock) |
 | 071 000 0010 | Dineo | entrepreneur (street food caravan) |
 | 071 000 0011–13 | Lesego, Anna, Kabelo | consumers with past orders and reviews (demo history) |
+| 071 000 0014 | Mma Kefilwe's stall phone | basic phone: gets orders by SMS (open /demo/phone) — not a login |
+| 071 000 0015 | Tebogo | entrepreneur: helper who manages Mma Kefilwe's market stall |
 
 Everyone except support signs in with an SMS code (shown on screen in demo mode). Support accounts use **Support staff sign-in** with the passphrase, and also need an authenticator app (Google/Microsoft Authenticator) the first time they
 open the console: scan the QR code shown, then enter the 6-digit code.
@@ -260,4 +262,11 @@ open the console: scan the QR code shown, then enter the 6-digit code.
 - [x] Seller delivers: shops with their own truck or bakkie switch on own delivery (their fee, vehicle and areas);
       a third order type `seller_delivery`: never on the courier board, stock used when it leaves, completed at the
       door with the customer's code or QR; heavy items can then be delivered by the seller instead of collect only
+- [x] Market stalls: apply "on behalf of a market stall" (a helper manages the listing); stall location, days and
+      hours with "At the stall now"; reserve-and-collect only (server enforced)
+- [x] Orders by SMS (any business can switch it on; stalls by default): new order SMS to the business phone; reply
+      1 = accept (a stall's cash pickup is ready at once), 2 = sold out, the customer's 6-digit code = handed over and
+      completed; only the business's own phone counts; every change in the order history; gateway webhook
+      /api/sms/inbound with a secret token; order SMS kept 30 days; demo basic-phone page /demo/phone (demo mode
+      only); `npm run test:stalls` (9 checks)
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

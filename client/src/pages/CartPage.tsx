@@ -31,11 +31,15 @@ export function CartPage() {
   const [fulfilment, setFulfilment] = useState<Fulfilment>('pickup')
   // Does this shop deliver with its own vehicle (bricks, sand, feed...)? Asked from the server.
   const [ownDelivery, setOwnDelivery] = useState<{ fee: number; note: string | null } | null>(null)
+  const [isStall, setIsStall] = useState(false)
   const shopId = cart.business?.id
   useEffect(() => {
     if (!shopId || !online) return
     api<Shop>(`/shops/${shopId}`)
-      .then((s) => setOwnDelivery(s.ownDeliveryFeeCents === null ? null : { fee: s.ownDeliveryFeeCents, note: s.ownDeliveryNote }))
+      .then((s) => {
+        setOwnDelivery(s.ownDeliveryFeeCents === null ? null : { fee: s.ownDeliveryFeeCents, note: s.ownDeliveryNote })
+        setIsStall(s.kind === 'market_stall')
+      })
       .catch(() => setOwnDelivery(null))
   }, [shopId, online])
   // Items that must be collected (bricks, sand, livestock): the server refuses delivery for them too.
@@ -203,6 +207,11 @@ export function CartPage() {
 
       <fieldset className="choice-group">
         <legend>How do you want it?</legend>
+        {isStall && (
+          <p className="fine-print" style={{ marginTop: 0 }}>
+            🧺 A market stall: reserve now, then collect and pay at the stall.
+          </p>
+        )}
         {mustCollect.length > 0 && (
           <p className="fine-print" style={{ marginTop: 0 }}>
             🚚 {mustCollect.map((l) => l.name).join(', ')}: too big for a courier.{' '}
@@ -216,7 +225,7 @@ export function CartPage() {
               name="fulfilment"
               checked={fulfilment === 'delivery'}
               onChange={() => setFulfilment('delivery')}
-              disabled={mustCollect.length > 0}
+              disabled={mustCollect.length > 0 || isStall}
             />
             Courier delivery
           </label>

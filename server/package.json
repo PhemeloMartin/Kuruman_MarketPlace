@@ -20,7 +20,8 @@
     "test:signin": "tsx src/scripts/testSignIn.ts",
     "test:photos": "tsx src/scripts/testPhotos.ts",
     "test:reviews": "tsx src/scripts/testReviews.ts",
-    "test:sharing": "tsx src/scripts/testSharing.ts"
+    "test:sharing": "tsx src/scripts/testSharing.ts",
+    "test:stalls": "tsx src/scripts/testStalls.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

@@ -15,7 +15,18 @@ interface MyShop {
   whatsappPhone: string | null
   ownDeliveryFeeCents: number | null
   ownDeliveryNote: string | null
+  phone: string
+  kind: 'shop' | 'market_stall'
+  stallLocation: string | null
+  stallDays: number[]
+  stallOpens: string | null
+  stallCloses: string | null
+  smsAlerts: boolean
 }
+
+const WEEKDAYS = [
+  [1, 'Mon'], [2, 'Tue'], [3, 'Wed'], [4, 'Thu'], [5, 'Fri'], [6, 'Sat'], [7, 'Sun'],
+] as const
 
 // What customers see at the top of the shop page: a cover photo and a few words about the shop.
 export function SellerShopPage() {
@@ -25,6 +36,10 @@ export function SellerShopPage() {
   const [delivers, setDelivers] = useState(false)
   const [fee, setFee] = useState('')
   const [deliveryNote, setDeliveryNote] = useState('')
+  const [stallLocation, setStallLocation] = useState('')
+  const [stallDays, setStallDays] = useState<number[]>([])
+  const [opens, setOpens] = useState('07:00')
+  const [closes, setCloses] = useState('16:00')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
 
@@ -36,6 +51,10 @@ export function SellerShopPage() {
       setDelivers(s.ownDeliveryFeeCents !== null)
       setFee(s.ownDeliveryFeeCents !== null ? (s.ownDeliveryFeeCents / 100).toFixed(2) : '')
       setDeliveryNote(s.ownDeliveryNote ?? '')
+      setStallLocation(s.stallLocation ?? '')
+      setStallDays(s.stallDays)
+      if (s.stallOpens) setOpens(s.stallOpens)
+      if (s.stallCloses) setCloses(s.stallCloses)
     })
   }
   useEffect(() => {
@@ -144,6 +163,85 @@ export function SellerShopPage() {
           onClick={() => run(() => api('/seller/shop', { method: 'PATCH', body: { whatsappPhone: whatsapp } }), whatsapp.trim() ? 'WhatsApp button is on.' : 'WhatsApp button is off.')}
         >
           Save WhatsApp number
+        </button>
+      </section>
+
+      <section className="card">
+        <strong>Orders by SMS</strong>
+        <p className="fine-print" style={{ marginTop: 4 }}>
+          Each new order is also sent by SMS to the business phone{' '}
+          <strong translate="no">{'0' + shop.phone.slice(3)}</strong>, which can answer: <strong>1</strong> to accept,{' '}
+          <strong>2</strong> if sold out, or the customer’s 6-digit code when they collect. Works on any phone.
+        </p>
+        <label className="choice">
+          <input
+            type="checkbox"
+            checked={shop.smsAlerts}
+            disabled={busy}
+            onChange={(e) => run(() => api('/seller/shop', { method: 'PATCH', body: { smsAlerts: e.target.checked } }), e.target.checked ? 'SMS orders are on.' : 'SMS orders are off.')}
+          />
+          Send new orders to this phone by SMS
+        </label>
+        <Link to="/demo/phone" className="link-btn">
+          Try it on the demo phone
+        </Link>
+      </section>
+
+      <section className="card">
+        <strong>Market stall: where and when</strong>
+        <p className="fine-print" style={{ marginTop: 4 }}>
+          {shop.kind === 'market_stall'
+            ? 'Customers see this on your page, with “At the stall now” when you’re there.'
+            : 'Selling from a market stall? Fill this in and your page shows where to find you and when.'}
+        </p>
+        <div className="field">
+          <label htmlFor="stallLocation">Where</label>
+          <div className="input-wrap">
+            <input id="stallLocation" maxLength={200} placeholder="Main Street, by the taxi rank" value={stallLocation} onChange={(e) => setStallLocation(e.target.value)} />
+          </div>
+        </div>
+        <fieldset className="choice-group">
+          <legend>Which days</legend>
+          <div className="day-picker">
+            {WEEKDAYS.map(([d, label]) => (
+              <label key={d} className={`day${stallDays.includes(d) ? ' on' : ''}`}>
+                <input
+                  type="checkbox"
+                  className="visually-hidden"
+                  checked={stallDays.includes(d)}
+                  onChange={(e) => setStallDays((days) => (e.target.checked ? [...days, d] : days.filter((x) => x !== d)))}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <div className="two-col">
+          <div className="field">
+            <label htmlFor="opens">From</label>
+            <div className="input-wrap">
+              <input id="opens" type="time" value={opens} onChange={(e) => setOpens(e.target.value)} />
+            </div>
+          </div>
+          <div className="field">
+            <label htmlFor="closes">Until</label>
+            <div className="input-wrap">
+              <input id="closes" type="time" value={closes} onChange={(e) => setCloses(e.target.value)} />
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          className="btn btn-primary btn-block"
+          disabled={busy}
+          onClick={() =>
+            run(
+              () => api('/seller/shop', { method: 'PATCH', body: { stall: { location: stallLocation, days: stallDays, opens, closes } } }),
+              'Stall details saved.',
+            )
+          }
+        >
+          Save stall details
         </button>
       </section>
 

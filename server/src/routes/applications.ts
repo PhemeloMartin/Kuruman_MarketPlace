@@ -54,6 +54,8 @@ applicationsRouter.post("/", requireRole("consumer"), async (req, res) => {
       area: text(body.area),
       pickupAddress: text(body.pickupAddress),
       phone: phone ?? "",
+      // A helper can apply for a market stall; the stall's phone then gets the orders by SMS.
+      kind: body.kind === "market_stall" ? "market_stall" : "shop",
     };
     if (details.businessName.length < 2 || details.businessName.length > 100) fields.businessName = "Enter the business name (2 to 100 characters).";
     if (details.description.length > 500) fields.description = "Keep the description under 500 characters.";

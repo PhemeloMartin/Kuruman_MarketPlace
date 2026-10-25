@@ -776,7 +776,9 @@ sellerRouter.delete("/photos/:id", requireActiveShop, async (req, res) => {
 // The seller's own shop details (the public page is GET /api/shops/:id).
 sellerRouter.get("/shop", async (req, res) => {
   const r = await pool.query(
-    `SELECT id, name, description, area, cover_photo_url, whatsapp_phone, own_delivery_fee_cents, own_delivery_note
+    `SELECT id, name, description, area, cover_photo_url, whatsapp_phone, own_delivery_fee_cents, own_delivery_note,
+            phone, kind, stall_location, stall_days, to_char(stall_opens, 'HH24:MI') AS opens,
+            to_char(stall_closes, 'HH24:MI') AS closes, sms_alerts
        FROM businesses WHERE id = $1`,
     [req.business!.id]
   );
@@ -790,6 +792,13 @@ sellerRouter.get("/shop", async (req, res) => {
     whatsappPhone: b.whatsapp_phone,
     ownDeliveryFeeCents: b.own_delivery_fee_cents,
     ownDeliveryNote: b.own_delivery_note,
+    phone: b.phone, // the business phone: SMS alerts go here
+    kind: b.kind,
+    stallLocation: b.stall_location,
+    stallDays: b.stall_days ?? [],
+    stallOpens: b.opens,
+    stallCloses: b.closes,
+    smsAlerts: b.sms_alerts,
   });
 });
 
@@ -827,6 +836,25 @@ sellerRouter.patch("/shop", requireActiveShop, async (req, res) => {
     const note = cleanText(req.body?.ownDeliveryNote, 200);
     values.push(fee === null ? null : note || null);
     sets.push(`own_delivery_note = $${values.length}`);
+  }
+  if (req.body?.smsAlerts !== undefined) {
+    values.push(Boolean(req.body.smsAlerts));
+    sets.push(`sms_alerts = $${values.length}`);
+  }
+  // Market stall details: where, which days, which hours.
+  if (req.body?.stall !== undefined) {
+    const s = req.body.stall ?? {};
+    const location = cleanText(s.location, 200);
+    const days = Array.isArray(s.days) ? [...new Set(s.days.filter((d: unknown) => Number.isInteger(d) && (d as number) >= 1 && (d as number) <= 7))] : [];
+    const time = (t: unknown) => (typeof t === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(t) ? t : null);
+    if (location.length < 5 || days.length === 0 || !time(s.opens) || !time(s.closes) || time(s.opens)! >= time(s.closes)!) {
+      return res.status(422).json({ error: "Say where the stall is, which days it's there, and from when to when." });
+    }
+    for (const v of [location, days, time(s.opens), time(s.closes)]) {
+      values.push(v);
+    }
+    const n = values.length;
+    sets.push(`kind = 'market_stall', stall_location = $${n - 3}, stall_days = $${n - 2}::smallint[], stall_opens = $${n - 1}::time, stall_closes = $${n}::time`);
   }
   if (!sets.length) return res.status(422).json({ error: "Nothing to change." });
   await pool.query(`UPDATE businesses SET ${sets.join(", ")} WHERE id = $1`, values);

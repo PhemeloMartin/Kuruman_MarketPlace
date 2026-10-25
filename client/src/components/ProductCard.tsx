@@ -38,6 +38,7 @@ export function ProductCard({ product, quantityInCart, onAdd, hideSeller }: Prop
         <ProductPhoto product={product} />
       </Link>
       <div className="product-body">
+        {product.business.kind === 'market_stall' && <span className="tag stall-tag">Market stall</span>}
         {product.collectionOnly && (
           <span className="tag">{product.business.ownDeliveryFeeCents != null ? 'Seller delivers' : 'Collect only'}</span>
         )}
