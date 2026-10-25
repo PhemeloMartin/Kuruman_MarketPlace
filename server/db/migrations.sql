@@ -32,3 +32,25 @@ CREATE TABLE IF NOT EXISTS photos (
 );
 CREATE INDEX IF NOT EXISTS idx_photos_product ON photos(product_id, sort_order);
 CREATE INDEX IF NOT EXISTS idx_photos_business ON photos(business_id);
+
+-- 2026-10-26: reviews. Only a customer whose order was COMPLETED can review it, once per order,
+-- so every review comes from a real purchase on the site. The seller may reply once.
+CREATE TABLE IF NOT EXISTS reviews (
+  id                BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  order_id          BIGINT      NOT NULL UNIQUE REFERENCES orders(id),
+  business_id       BIGINT      NOT NULL REFERENCES businesses(id),
+  consumer_id       BIGINT      NOT NULL REFERENCES users(id),
+  rating            SMALLINT    NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment           TEXT        CHECK (char_length(comment) <= 500),
+  seller_reply      TEXT        CHECK (char_length(seller_reply) <= 500),
+  seller_replied_at TIMESTAMPTZ,
+  -- Support can hide a review that breaks the rules (insults, someone's phone number...); kept, not deleted.
+  hidden_at         TIMESTAMPTZ,
+  hidden_reason     TEXT,
+  -- Filled in by the review AI (sentiment and themes), never by people.
+  sentiment         VARCHAR(10) CHECK (sentiment IN ('positive', 'neutral', 'negative')),
+  themes            TEXT[]      NOT NULL DEFAULT '{}',
+  ai_model_version  VARCHAR(40),
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_reviews_business ON reviews(business_id, created_at DESC);

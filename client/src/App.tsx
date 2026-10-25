@@ -8,6 +8,7 @@ import { HomePage } from './pages/HomePage'
 import { ProductPage } from './pages/ProductPage'
 import { ShopPage } from './pages/ShopPage'
 import { SellerShopPage } from './pages/seller/SellerShopPage'
+import { SellerReviewsPage } from './pages/seller/SellerReviewsPage'
 import { OrdersPage } from './pages/OrdersPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SellerDashboardPage } from './pages/seller/SellerDashboardPage'
@@ -42,6 +43,7 @@ export default function App() {
                   <Route path="seller/products" element={<SellerProductsPage />} />
                   <Route path="seller/products/:id" element={<SellerProductFormPage />} />
                   <Route path="seller/shop" element={<SellerShopPage />} />
+                  <Route path="seller/reviews" element={<SellerReviewsPage />} />
                 </Route>
                 <Route element={<RequireRole role="courier" />}>
                   <Route path="courier" element={<CourierPage />} />

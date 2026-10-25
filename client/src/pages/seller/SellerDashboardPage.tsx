@@ -4,7 +4,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { PlusIcon, ShopIcon } from '../../components/Icons'
 import { api, ApiError } from '../../lib/api'
 import { formatRand, parseRandToCents } from '../../lib/money'
-import type { CashToConfirm, Kpis, SellerOrder, SellerProduct } from '../../lib/types'
+import type { CashToConfirm, Kpis, Rating, Review, SellerOrder, SellerProduct } from '../../lib/types'
 
 interface Dashboard {
   business: { id: number; name: string; active: boolean }
@@ -53,6 +53,7 @@ export function SellerDashboardPage() {
   const [orders, setOrders] = useState<SellerOrder[] | null>(null)
   const [cash, setCash] = useState<CashToConfirm[]>([])
   const [products, setProducts] = useState<SellerProduct[]>([])
+  const [reviews, setReviews] = useState<{ rating: Rating; reviews: Review[] } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
@@ -61,8 +62,10 @@ export function SellerDashboardPage() {
       api<SellerOrder[]>('/seller/orders'),
       api<CashToConfirm[]>('/seller/cash'),
       api<SellerProduct[]>('/seller/products'),
+      api<{ rating: Rating; reviews: Review[] }>('/seller/reviews'),
     ])
-      .then(([d, o, c, p]) => {
+      .then(([d, o, c, p, r]) => {
+        setReviews(r)
         setDashboard(d)
         setOrders(o)
         setCash(c)
@@ -189,6 +192,16 @@ export function SellerDashboardPage() {
           <ShopIcon />
           Products &amp; stock
           <span className="action-count">{products.length}</span>
+        </Link>
+        <Link to="/seller/reviews" className="action-tile">
+          <span aria-hidden="true" className="tile-emoji">★</span>
+          Reviews
+          <span className="action-count">
+            {reviews?.rating.average ? `${reviews.rating.average.toFixed(1)} (${reviews.rating.count})` : '–'}
+          </span>
+          {reviews && reviews.reviews.some((r) => !r.sellerReply) && (
+            <span className="tile-note">{reviews.reviews.filter((r) => !r.sellerReply).length} to reply to</span>
+          )}
         </Link>
         <Link to="/seller/shop" className="action-tile">
           <span aria-hidden="true" className="tile-emoji">🖼</span>

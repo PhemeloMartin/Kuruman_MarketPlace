@@ -141,6 +141,7 @@ KPI check against the spec's worked example: `npm run test:kpi` in `server` (cha
 | 071 000 0008 | Boitumelo | consumer with a seller application waiting for support |
 | 071 000 0009 | Tumelo | entrepreneur (building materials, animal feed, livestock) |
 | 071 000 0010 | Dineo | entrepreneur (street food caravan) |
+| 071 000 0011–13 | Lesego, Anna, Kabelo | consumers with past orders and reviews (demo history) |
 
 Everyone except support signs in with an SMS code (shown on screen in demo mode). Support accounts use **Support staff sign-in** with the passphrase, and also need an authenticator app (Google/Microsoft Authenticator) the first time they
 open the console: scan the QR code shown, then enter the 6-digit code.
@@ -240,4 +241,11 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       product page (/product/:id) with gallery; `npm run test:photos` (9 checks)
 - [x] Automatic database updates: server/db/migrations.sql runs at every start (IF NOT EXISTS), so new features
       reach the hosted database without a reset
+- [x] Reviews: 1-5 stars and an optional comment, only for your own COMPLETED order, once, within 30 days;
+      first name only in public; seller replies once; support-hidden reviews don't count; shop rating on shop and
+      product pages; in "download my data"
+- [x] Entrepreneur of the Month: published formula over 30 days (50% completed orders vs the best shop, 30% rating,
+      20% acceptance; at least 3 orders and 3 reviews; on-site orders only), card on Home with "How is this
+      chosen?", badge on the shop page; demo order history with reviews in English, Setswana and Afrikaans;
+      `npm run test:reviews` (10 checks)
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

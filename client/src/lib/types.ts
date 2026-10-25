@@ -31,6 +31,35 @@ export interface Product {
   categoryName: string
   business: { id: number; name: string; area: string }
   photos?: string[] // all photos, first = main; only on the single-product answer
+  businessRating?: Rating // only on the single-product answer
+}
+
+export interface Rating {
+  average: number | null
+  count: number
+}
+
+export interface Review {
+  id: number
+  rating: number
+  comment: string | null
+  firstName: string
+  createdAt: string
+  sellerReply: string | null
+  sellerRepliedAt: string | null
+  themes: string[]
+}
+
+// Entrepreneur of the Month (GET /api/spotlight).
+export interface Spotlight {
+  business: { id: number; name: string; area: string; description: string | null; coverPhotoUrl: string | null }
+  completedOrders: number
+  averageRating: number
+  reviewCount: number
+  acceptanceRate: number | null
+  score: number
+  periodDays: number
+  rule: string
 }
 
 // A shop's public page (GET /api/shops/:id).
@@ -42,6 +71,9 @@ export interface Shop {
   coverPhotoUrl: string | null
   sellingSince: string
   products: Product[]
+  rating: Rating
+  reviews: Review[]
+  isSpotlight: boolean
 }
 
 export interface Kpis {

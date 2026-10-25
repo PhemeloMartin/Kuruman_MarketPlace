@@ -9,7 +9,8 @@ import { ProductCard } from '../components/ProductCard'
 import { SiteHeader } from '../components/Layout'
 import { api, ApiError } from '../lib/api'
 import { STALE_AFTER_MS, filterSaved, loadCatalogue, saveCatalogue } from '../lib/catalogueCache'
-import type { Category, Product } from '../lib/types'
+import type { Category, Product, Spotlight } from '../lib/types'
+import { Stars } from '../components/Stars'
 import { useOnline } from '../lib/useOnline'
 
 // How many products the landing page shows before "See everything".
@@ -201,6 +202,8 @@ export function HomePage() {
             </div>
           </section>
 
+          <SpotlightCard />
+
           {offlineNote}
 
           <section aria-labelledby="products-heading" className="home-section">
@@ -358,6 +361,53 @@ function MarketTile({ category, onOpen }: { category: Category; onOpen: () => vo
         )}
       </span>
     </button>
+  )
+}
+
+// Entrepreneur of the Month: one local shop in the spotlight, with the numbers that earned it and
+// the rule used, so everyone can see it's fair. Hidden until some shop qualifies.
+function SpotlightCard() {
+  const [spotlight, setSpotlight] = useState<Spotlight | null>(null)
+  const [showRule, setShowRule] = useState(false)
+  useEffect(() => {
+    api<{ spotlight: Spotlight | null }>('/spotlight')
+      .then((r) => setSpotlight(r.spotlight))
+      .catch(() => {})
+  }, [])
+  if (!spotlight) return null
+  const s = spotlight
+  return (
+    <section className="spotlight home-section" aria-labelledby="spotlight-heading">
+      <div className="spotlight-art">{s.business.coverPhotoUrl ? <img src={s.business.coverPhotoUrl} alt="" /> : <KurumanPanorama />}</div>
+      <div className="spotlight-body">
+        <p className="spotlight-badge">🏆 Entrepreneur of the Month</p>
+        <h2 id="spotlight-heading">{s.business.name}</h2>
+        <p className="product-meta">{s.business.area}, Kuruman</p>
+        {s.business.description && <p>{s.business.description}</p>}
+        <ul className="spotlight-facts">
+          <li>
+            <strong>{s.completedOrders}</strong> orders completed
+          </li>
+          <li>
+            <Stars value={s.averageRating} /> <strong>{s.averageRating.toFixed(1)}</strong> from {s.reviewCount} reviews
+          </li>
+          {s.acceptanceRate !== null && (
+            <li>
+              <strong>{Math.round(s.acceptanceRate * 100)}%</strong> of orders accepted
+            </li>
+          )}
+        </ul>
+        <div className="spotlight-actions">
+          <Link to={`/shop/${s.business.id}`} className="btn btn-primary">
+            Visit the shop
+          </Link>
+          <button type="button" className="link-btn" onClick={() => setShowRule((v) => !v)} aria-expanded={showRule}>
+            How is this chosen?
+          </button>
+        </div>
+        {showRule && <p className="fine-print">{s.rule}</p>}
+      </div>
+    </section>
   )
 }
 

@@ -57,6 +57,9 @@ Support accounts use **Support staff sign-in** with the passphrase `Kuruman Oasi
 
 Tip: press **F12 → device toolbar** (phone icon) and pick a phone size, so it looks like the real thing.
 
+**Reset the hosted demo data 1–2 days before presenting** (HOSTING.md, section 1 commands), so the demo order
+history, reviews and Entrepreneur of the Month fall inside the last 30 days.
+
 **Presenting the hosted site?** The day before, make sure everything is pushed to GitHub. Two minutes before,
 open the site on the device you'll present from (this also wakes the free server), **refresh once**, and check the
 label at the bottom of **Profile** - e.g. `version i:20/10/26,11:26` - shows the version and time you expect.

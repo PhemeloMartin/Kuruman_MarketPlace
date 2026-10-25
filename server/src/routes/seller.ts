@@ -10,6 +10,7 @@ import { openOrderCase } from "../lib/cases";
 import { consumeReservation, recordStatusChange, releaseReservation, returnToStock } from "../lib/stock";
 import { audit } from "../lib/audit";
 import { MAX_PHOTO_BYTES, deleteStoredImage, detectImageType, savePhoto } from "../lib/photoStore";
+import { cleanText, publicReviews, ratingOf } from "../lib/reviews";
 
 // Everything here is for an approved entrepreneur, and only ever about THEIR business.
 // The business is looked up from the session user - never taken from the request (BR-13).
@@ -716,5 +717,26 @@ sellerRouter.patch("/shop", requireActiveShop, async (req, res) => {
     return res.status(422).json({ error: "Keep it under 600 characters.", fields: { description: "Up to 600 characters." } });
   }
   await pool.query("UPDATE businesses SET description = $2 WHERE id = $1", [req.business!.id, description || null]);
+  res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
+// Reviews
+// ---------------------------------------------------------------------------
+
+sellerRouter.get("/reviews", async (req, res) => {
+  res.json({ rating: await ratingOf(req.business!.id), reviews: await publicReviews(req.business!.id, 100) });
+});
+
+// One public reply per review: a chance to thank customers or put a complaint right.
+sellerRouter.post("/reviews/:id/reply", requireActiveShop, async (req, res) => {
+  const reply = cleanText(req.body?.reply, 500);
+  if (reply.length < 2) return res.status(422).json({ error: "Write your reply first.", fields: { reply: "Write your reply first." } });
+  const r = await pool.query(
+    `UPDATE reviews SET seller_reply = $3, seller_replied_at = now()
+      WHERE id = $1 AND business_id = $2 AND seller_reply IS NULL RETURNING id`,
+    [Number(req.params.id), req.business!.id, reply]
+  );
+  if (r.rowCount === 0) return res.status(409).json({ error: "This review already has your reply, or it isn't for your shop." });
   res.json({ ok: true });
 });

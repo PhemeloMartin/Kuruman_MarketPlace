@@ -153,6 +153,13 @@ export async function exportFor(db: Db, userId: number) {
     "SELECT template_key, arguments, created_at, read_at FROM notifications WHERE user_id = $1 ORDER BY id",
     [userId]
   );
+  const reviews = await db.query(
+    `SELECT o.order_number, b.name AS shop, rv.rating, rv.comment, rv.seller_reply, rv.created_at,
+            rv.hidden_at IS NOT NULL AS hidden_by_support
+       FROM reviews rv JOIN orders o ON o.id = rv.order_id JOIN businesses b ON b.id = rv.business_id
+      WHERE rv.consumer_id = $1 ORDER BY rv.id`,
+    [userId]
+  );
   const sessions = await db.query(
     "SELECT created_at, last_seen_at, expires_at FROM sessions WHERE user_id = $1 ORDER BY id",
     [userId]
@@ -173,6 +180,7 @@ export async function exportFor(db: Db, userId: number) {
     },
     signedInSessions: sessions.rows,
     ordersYouPlaced: orders.rows,
+    reviewsYouWrote: reviews.rows,
     yourShop: business.rows[0] ?? null,
     courierProfile: courier.rows[0] ?? null,
     deliveriesYouMade: deliveries.rows,

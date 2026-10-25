@@ -54,6 +54,9 @@ async function main() {
       ["applicant", "+27710000008", "Boitumelo (demo customer who applied to sell)", "consumer"],
       ["seller3", "+27710000009", "Tumelo (demo seller)", "entrepreneur"],
       ["seller4", "+27710000010", "Dineo (demo seller)", "entrepreneur"],
+      ["lesego", "+27710000011", "Lesego (demo customer)", "consumer"],
+      ["anna", "+27710000012", "Anna (demo customer)", "consumer"],
+      ["kabelo", "+27710000013", "Kabelo (demo customer)", "consumer"],
     ];
     const userIds: Record<string, number> = {};
     for (const [key, phone, name, role] of users) {
@@ -189,6 +192,77 @@ async function main() {
           `INSERT INTO products (business_id, category_id, name, unit_label, price_cents, stock_qty)
            VALUES ($1, $2, $3, $4, $5, $6)`,
           [b.rows[0].id, categoryIds[cat], productName, unit, price, stock]
+        );
+      }
+    }
+
+    // Order history from the last few weeks: completed pickup orders paid in cash, most with a review.
+    // It makes the ratings, the seller numbers and "Entrepreneur of the Month" meaningful in a demo.
+    // Reviews are in English, Setswana and Afrikaans, like real Kuruman customers would write.
+    // Reset the demo data shortly before presenting, so these dates are recent.
+    type Past = { shop: string; buyer: string; items: [string, number][]; daysAgo: number; rating?: number; comment?: string; reply?: string };
+    const history: Past[] = [
+      { shop: "Mma Dineo's Food Caravan (demo)", buyer: "customer", items: [["Kota (quarter loaf)", 2]], daysAgo: 24, rating: 5, comment: "Best kota in Kuruman! Hot and full of chips." },
+      { shop: "Mma Dineo's Food Caravan (demo)", buyer: "lesego", items: [["Vetkoek with mince", 3]], daysAgo: 20, rating: 5, comment: "Vetkoek e monate thata, e ne e sa le mogote." },
+      { shop: "Mma Dineo's Food Caravan (demo)", buyer: "anna", items: [["Pap and beef stew", 1]], daysAgo: 15, rating: 4, comment: "Lekker kos en vriendelike diens. Moes bietjie wag." },
+      { shop: "Mma Dineo's Food Caravan (demo)", buyer: "kabelo", items: [["Magwinya (fat cakes)", 2]], daysAgo: 11, rating: 5, comment: "Fresh magwinya every time. Friendly lady!" },
+      { shop: "Mma Dineo's Food Caravan (demo)", buyer: "customer", items: [["Kota (quarter loaf)", 1], ["Magwinya (fat cakes)", 1]], daysAgo: 6, rating: 3, comment: "Food was tasty but a bit cold when I collected it.", reply: "Sorry about that! Come at 12:00 when the oil is hottest - your next magwinya is on us." },
+      { shop: "Mma Dineo's Food Caravan (demo)", buyer: "lesego", items: [["Pap and beef stew", 2]], daysAgo: 3, rating: 5, comment: "Dijo tse di monate le tlhwatlhwa e siame." },
+      { shop: "Kgomotso's Fresh Corner (demo)", buyer: "anna", items: [["Spinach bunch", 2], ["Tomatoes", 1]], daysAgo: 22, rating: 5, comment: "Spinach was so fresh, picked that morning!", reply: "Thank you Anna! We pick every morning before 7." },
+      { shop: "Kgomotso's Fresh Corner (demo)", buyer: "kabelo", items: [["Brown bread", 2]], daysAgo: 17, rating: 4, comment: "Good bread. I waited a while for my order to be accepted." },
+      { shop: "Kgomotso's Fresh Corner (demo)", buyer: "customer", items: [["Onions", 1], ["Maize meal", 1]], daysAgo: 9, rating: 5, comment: "Merogo e ne e le mesha. Ke a leboga!" },
+      { shop: "Kgomotso's Fresh Corner (demo)", buyer: "lesego", items: [["Vetkoek", 1]], daysAgo: 4 },
+      { shop: "Tumelo's Build & Farm Supplies (demo)", buyer: "kabelo", items: [["Cement", 4], ["Building sand", 6]], daysAgo: 12, rating: 4, comment: "Good price on cement. Collection was quick." },
+      { shop: "Tumelo's Build & Farm Supplies (demo)", buyer: "anna", items: [["Lucerne bale", 2]], daysAgo: 5, rating: 5, comment: "Goeie lusern, my bokke is gelukkig." },
+      { shop: "Naledi's Beadwork (demo)", buyer: "customer", items: [["Beaded bracelet", 1]], daysAgo: 8, rating: 5, comment: "Beautiful beadwork, a perfect gift." },
+    ];
+    for (const past of history) {
+      const shop = (await client.query("SELECT id, owner_id FROM businesses WHERE name = $1", [past.shop])).rows[0];
+      const lines = [];
+      for (const [name, qty] of past.items) {
+        const p = (await client.query("SELECT id, name, unit_label, price_cents FROM products WHERE business_id = $1 AND name = $2", [shop.id, name])).rows[0];
+        lines.push({ ...p, qty });
+      }
+      const subtotal = lines.reduce((sum, l) => sum + l.price_cents * l.qty, 0);
+      const at = (minutes: number) => `now() - interval '${past.daysAgo} days' + interval '${minutes} minutes'`;
+      const o = await client.query(
+        `INSERT INTO orders (consumer_id, business_id, status, fulfilment, payment_method, subtotal_cents, total_cents,
+                             accept_by, idempotency_key, request_hash, created_at, updated_at)
+         VALUES ($1, $2, 'completed', 'pickup', 'cash', $3, $3, ${at(30)}, $4, $5, ${at(0)}, ${at(95)})
+         RETURNING id, consumer_id`,
+        [userIds[past.buyer], shop.id, subtotal, `demo-history-${past.daysAgo}-${past.buyer}`, "0".repeat(64)]
+      );
+      const orderId = o.rows[0].id;
+      for (const l of lines) {
+        await client.query(
+          `INSERT INTO order_items (order_id, product_id, product_name, unit_label, unit_price_cents, quantity, line_total_cents)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [orderId, l.id, l.name, l.unit_label, l.price_cents, l.qty, l.price_cents * l.qty]
+        );
+      }
+      // The same steps a real order goes through, each recorded (business rule 8).
+      const steps: [string | null, string, number, number | null][] = [
+        [null, "pending_acceptance", 0, past.buyer === "customer" ? userIds.customer : userIds[past.buyer]],
+        ["pending_acceptance", "confirmed", 6, shop.owner_id],
+        ["confirmed", "ready", 40, shop.owner_id],
+        ["ready", "completed", 95, shop.owner_id],
+      ];
+      for (const [from, to, minutes, by] of steps) {
+        await client.query(
+          `INSERT INTO order_status_history (order_id, from_status, to_status, changed_by, created_at) VALUES ($1, $2, $3, $4, ${at(minutes)})`,
+          [orderId, from, to, by]
+        );
+      }
+      await client.query(
+        `INSERT INTO cash_receipts (order_id, collected_by, collected_cents, remitted_cents, collected_at, remitted_at, status, acknowledged_by)
+         VALUES ($1, $2, $3, $3, ${at(95)}, ${at(95)}, 'remitted', $2)`,
+        [orderId, shop.owner_id, subtotal]
+      );
+      if (past.rating) {
+        await client.query(
+          `INSERT INTO reviews (order_id, business_id, consumer_id, rating, comment, seller_reply, seller_replied_at, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, CASE WHEN $6::text IS NULL THEN NULL ELSE ${at(60 * 30)} END, ${at(60 * 5)})`,
+          [orderId, shop.id, userIds[past.buyer], past.rating, past.comment ?? null, past.reply ?? null]
         );
       }
     }

@@ -7,6 +7,7 @@ import { requireRole } from "../auth/session";
 import { POLICY } from "../lib/policy";
 import { recordStatusChange, releaseReservation } from "../lib/stock";
 import { HANDOVER_CODE_MINUTES, hashHandoverCode, newHandoverCode } from "../lib/handover";
+import { REVIEW_DAYS, cleanText } from "../lib/reviews";
 
 export const ordersRouter = Router();
 
@@ -262,6 +263,9 @@ ordersRouter.get("/mine", shopper, async (req, res) => {
                      AND c.status = 'open') AS problem_reported,
             -- A problem can be reported for 7 days after completion (spec FR-16: later requests use a case).
             (o.status = 'completed' AND o.updated_at > now() - interval '7 days') AS can_report_problem,
+            (o.status = 'completed' AND o.updated_at > now() - make_interval(days => $2)) AS can_review,
+            (SELECT json_build_object('rating', rv.rating, 'comment', rv.comment, 'sellerReply', rv.seller_reply)
+               FROM reviews rv WHERE rv.order_id = o.id) AS review,
             b.name AS business_name, b.area AS business_area,
             (SELECT cu.display_name FROM deliveries d JOIN users cu ON cu.id = d.courier_id
               WHERE d.order_id = o.id) AS courier_name,
@@ -278,7 +282,7 @@ ordersRouter.get("/mine", shopper, async (req, res) => {
       GROUP BY o.id, b.name, b.area
       ORDER BY o.created_at DESC
       LIMIT 50`,
-    [req.user!.id]
+    [req.user!.id, REVIEW_DAYS]
   );
   res.json(
     r.rows.map((o) => ({
@@ -298,6 +302,8 @@ ordersRouter.get("/mine", shopper, async (req, res) => {
       refundPendingCents: o.refund_pending_cents,
       problemReported: o.problem_reported,
       canReportProblem: o.can_report_problem && !o.problem_reported,
+      review: o.review,
+      canReview: o.can_review && !o.review,
       businessName: o.business_name,
       businessArea: o.business_area,
       courierName: o.courier_name,
@@ -347,6 +353,35 @@ ordersRouter.post("/:id/problem", shopper, async (req, res) => {
   } finally {
     client.release();
   }
+});
+
+// POST /api/orders/:id/review { rating: 1-5, comment? } - only for your own COMPLETED order, once,
+// within 30 days. The shop comes from the order itself, never from the request.
+ordersRouter.post("/:id/review", shopper, async (req, res) => {
+  const orderId = Number(req.params.id);
+  const rating = req.body?.rating;
+  const comment = cleanText(req.body?.comment, 500);
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return res.status(422).json({ error: "Choose from 1 to 5 stars.", fields: { rating: "Choose from 1 to 5 stars." } });
+  }
+  const o = await pool.query(
+    `SELECT id, business_id, status, updated_at > now() - make_interval(days => $3) AS recent
+       FROM orders WHERE id = $1 AND consumer_id = $2`,
+    [orderId, req.user!.id, REVIEW_DAYS]
+  );
+  const order = o.rows[0];
+  if (!order) return res.status(404).json({ error: "Order not found." });
+  if (order.status !== "completed") return res.status(409).json({ error: "You can review an order once you've received it." });
+  if (!order.recent) return res.status(409).json({ error: `Reviews can be written up to ${REVIEW_DAYS} days after an order.` });
+
+  const r = await pool.query(
+    `INSERT INTO reviews (order_id, business_id, consumer_id, rating, comment)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (order_id) DO NOTHING RETURNING id`,
+    [orderId, order.business_id, req.user!.id, rating, comment || null]
+  );
+  if (r.rowCount === 0) return res.status(409).json({ error: "You've already reviewed this order." });
+  res.status(201).json({ id: Number(r.rows[0].id) });
 });
 
 // POST /api/orders/:id/cancel - a shopper may cancel while the seller hasn't decided yet (BR-12).

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { MokalaSmall } from '../components/Art'
+import { Stars, StarPicker } from '../components/Stars'
 import { api, ApiError } from '../lib/api'
 import { formatRand } from '../lib/money'
 
@@ -23,6 +24,8 @@ interface OrderSummary {
   refundPendingCents: number
   problemReported: boolean
   canReportProblem: boolean
+  review: { rating: number; comment: string | null; sellerReply: string | null } | null
+  canReview: boolean
   statusReason: string | null
   items: { name: string; unitLabel: string; quantity: number }[]
 }
@@ -231,6 +234,18 @@ export function OrdersPage() {
                 <p className="fine-print">{o.statusReason}</p>
               )}
               {o.problemReported && <p className="fine-print">Problem reported. Our support team will contact you.</p>}
+              {o.review && (
+                <div className="my-review">
+                  <Stars value={o.review.rating} /> <span className="product-meta">Your review</span>
+                  {o.review.comment && <p>“{o.review.comment}”</p>}
+                  {o.review.sellerReply && (
+                    <p className="seller-reply">
+                      <strong>{o.businessName} replied:</strong> {o.review.sellerReply}
+                    </p>
+                  )}
+                </div>
+              )}
+              {o.canReview && <ReviewForm orderId={o.id} shopName={o.businessName} onDone={load} />}
               {o.canReportProblem && <ReportProblem orderId={o.id} onDone={load} />}
               {o.status === 'awaiting_payment' && (
                 <div className="collection-code">
@@ -362,6 +377,55 @@ function ReportProblem({ orderId, onDone }: { orderId: number; onDone: () => voi
           Cancel
         </button>
       </div>
+    </div>
+  )
+}
+
+// "How was your order?" - right on the completed order, so it takes one tap and a few words.
+function ReviewForm({ orderId, shopName, onDone }: { orderId: number; shopName: string; onDone: () => void }) {
+  const [rating, setRating] = useState(0)
+  const [comment, setComment] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  async function send() {
+    setBusy(true)
+    setError(null)
+    try {
+      await api(`/orders/${orderId}/review`, { method: 'POST', body: { rating, comment } })
+      onDone()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.')
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="review-form">
+      <strong>How was your order from {shopName}?</strong>
+      <StarPicker value={rating} onChange={setRating} />
+      {rating > 0 && (
+        <>
+          <div className="input-wrap" style={{ marginTop: 8 }}>
+            <label className="visually-hidden" htmlFor={`review-${orderId}`}>
+              Your review (optional)
+            </label>
+            <textarea
+              id={`review-${orderId}`}
+              rows={2}
+              maxLength={500}
+              placeholder="A few words for other customers (optional)"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+            />
+          </div>
+          <p className="fine-print">Shown on the shop page with your first name only.</p>
+          {error && <p className="field-error">{error}</p>}
+          <button type="button" className="btn btn-primary btn-block" disabled={busy} onClick={send}>
+            {busy ? 'Sending…' : 'Post review'}
+          </button>
+        </>
+      )}
     </div>
   )
 }

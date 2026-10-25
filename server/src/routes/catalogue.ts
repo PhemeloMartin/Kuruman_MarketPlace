@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { pool } from "../db";
+import { publicReviews, ratingOf } from "../lib/reviews";
+import { currentSpotlight } from "../lib/spotlight";
 
 // Public catalogue: anyone can browse without signing in (spec FR-01, FR-04).
 // Only public fields are returned - never seller phone numbers or stock internals.
@@ -75,7 +77,8 @@ catalogueRouter.get("/products/:id", async (req, res) => {
   );
   if (r.rowCount === 0) return res.status(404).json({ error: "Product not found." });
   const photos = await pool.query("SELECT url FROM photos WHERE product_id = $1 ORDER BY sort_order, id", [id]);
-  res.json({ ...toProduct(r.rows[0]), photos: photos.rows.map((p) => p.url) });
+  const product = toProduct(r.rows[0]);
+  res.json({ ...product, photos: photos.rows.map((p) => p.url), businessRating: await ratingOf(product.business.id) });
 });
 
 // GET /api/shops/:id - a shop's public page: who they are and everything they have on sale.
@@ -98,6 +101,7 @@ catalogueRouter.get("/shops/:id", async (req, res) => {
     [id]
   );
   const shop = b.rows[0];
+  const spotlight = await currentSpotlight();
   res.json({
     id: Number(shop.id),
     name: shop.name,
@@ -106,7 +110,15 @@ catalogueRouter.get("/shops/:id", async (req, res) => {
     coverPhotoUrl: shop.cover_photo_url,
     sellingSince: shop.created_at,
     products: products.rows.map(toProduct),
+    rating: await ratingOf(id),
+    reviews: await publicReviews(id),
+    isSpotlight: spotlight?.business.id === id,
   });
+});
+
+// GET /api/spotlight - this month's Entrepreneur of the Month (null if no shop qualifies yet).
+catalogueRouter.get("/spotlight", async (_req, res) => {
+  res.json({ spotlight: await currentSpotlight() });
 });
 
 // GET /api/photos/:id - a photo kept in our own database (when Cloudinary isn't configured).

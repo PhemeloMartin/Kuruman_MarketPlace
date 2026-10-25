@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAddToCart } from '../cart/useAddToCart'
 import { BackIcon, CheckIcon, PlusIcon } from '../components/Icons'
 import { ProductPhoto } from '../components/ProductCard'
+import { RatingLine } from '../components/Stars'
 import { api } from '../lib/api'
 import { formatRand } from '../lib/money'
 import type { Product } from '../lib/types'
@@ -107,6 +108,7 @@ export function ProductPage() {
       <Link to={`/shop/${product.business.id}`} className="card seller-link">
         <span className="product-meta">Sold by</span>
         <strong>{product.business.name}</strong>
+        {product.businessRating && <RatingLine rating={product.businessRating} />}
         <span className="product-meta">{product.business.area}, Kuruman · See everything they sell</span>
       </Link>
       {dialog}

@@ -18,7 +18,8 @@
     "test:privacy": "tsx src/scripts/testPrivacy.ts",
     "test:notifications": "tsx src/scripts/testNotifications.ts",
     "test:signin": "tsx src/scripts/testSignIn.ts",
-    "test:photos": "tsx src/scripts/testPhotos.ts"
+    "test:photos": "tsx src/scripts/testPhotos.ts",
+    "test:reviews": "tsx src/scripts/testReviews.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
