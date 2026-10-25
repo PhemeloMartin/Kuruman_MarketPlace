@@ -16,6 +16,7 @@ export interface Category {
   id: number
   slug: string
   name: string
+  productCount?: number // products on sale in it (missing in an older saved offline copy)
 }
 
 export interface Product {

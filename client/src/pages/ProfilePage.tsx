@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useCart } from '../cart/CartContext'
 import { MokalaScene } from '../components/Art'
@@ -25,6 +25,12 @@ export function ProfilePage() {
   useEffect(() => {
     refresh().catch(() => {})
   }, [refresh])
+
+  // "Start selling" links come here as /profile#sell: scroll down to the application section.
+  const { hash } = useLocation()
+  useEffect(() => {
+    if (hash === '#sell' && user) document.getElementById('sell')?.scrollIntoView({ behavior: 'smooth' })
+  }, [hash, user])
 
   if (loading) return null
 
@@ -75,7 +81,11 @@ export function ProfilePage() {
           Notifications
         </Link>
       )}
-      {user.role === 'consumer' && <ApplySection />}
+      {user.role === 'consumer' && (
+        <div id="sell">
+          <ApplySection />
+        </div>
+      )}
       {user.role !== 'support' && <PrivacySection />}
       {user.role === 'support' && (
         <Link to="/support" className="btn btn-primary btn-block" style={{ marginBottom: 10 }}>

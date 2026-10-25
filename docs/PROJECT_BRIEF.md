@@ -137,6 +137,8 @@ KPI check against the spec's worked example: `npm run test:kpi` in `server` (cha
 | 071 000 0006 | Lerato | courier (second courier) |
 | 071 000 0007 | Sipho | support, **approvals only** (shows scope refusal) |
 | 071 000 0008 | Boitumelo | consumer with a seller application waiting for support |
+| 071 000 0009 | Tumelo | entrepreneur (building materials, animal feed, livestock) |
+| 071 000 0010 | Dineo | entrepreneur (street food caravan) |
 
 Support accounts also need an authenticator app (Google/Microsoft Authenticator) the first time they
 open the console: scan the QR code shown, then enter the 6-digit code.
@@ -219,4 +221,8 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       a year, app shell/service worker re-checked, HTTPS-only cookie), render.yaml blueprint (website+API service
       and AI service with a generated token), pinned AI library versions, private SEED_PASSPHRASE for hosted demo
       data, constant-time AI token check, step-by-step docs/HOSTING.md
+- [x] Landing page redesign: welcome banner with "I want to buy / I want to sell" tabs, market dropdown + search,
+      "Shop by market" tiles (10 markets, incl. street food, building materials, livestock, animal feed) with item
+      counts, results view in the address bar (?market=…&q=…, shareable), wide layout on laptops; one account for
+      everyone, sign-in takes each role to its own area
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

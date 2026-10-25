@@ -15,8 +15,10 @@ async function main() {
   try {
     await client.query("BEGIN");
 
-    // Categories
-    // The six categories from spec Table 34 - the same labels the AI model predicts.
+    // Categories ("markets" on the Home screen).
+    // The first six are spec Table 34 - the labels the AI model predicts. The last four are the
+    // wider Kuruman economy (building, livestock, farm, street food); the AI can't suggest them
+    // yet, so sellers choose them by hand until the model is retrained with examples.
     const categories = [
       ["fresh-produce", "Fresh produce"],
       ["pantry", "Pantry & groceries"],
@@ -24,6 +26,10 @@ async function main() {
       ["household", "Household"],
       ["crafts", "Crafts & gifts"],
       ["personal-care", "Personal care"],
+      ["street-food", "Street food & caravans"],
+      ["building", "Building materials"],
+      ["livestock", "Livestock"],
+      ["farm-feed", "Animal feed & farm supplies"],
     ];
     const categoryIds: Record<string, number> = {};
     for (const [slug, name] of categories) {
@@ -46,6 +52,8 @@ async function main() {
       ["courier2", "+27710000006", "Lerato (demo courier)", "courier"],
       ["support2", "+27710000007", "Sipho (demo support, approvals only)", "support"],
       ["applicant", "+27710000008", "Boitumelo (demo customer who applied to sell)", "consumer"],
+      ["seller3", "+27710000009", "Tumelo (demo seller)", "entrepreneur"],
+      ["seller4", "+27710000010", "Dineo (demo seller)", "entrepreneur"],
     ];
     const userIds: Record<string, number> = {};
     for (const [key, phone, name, role] of users) {
@@ -138,6 +146,51 @@ async function main() {
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [businessId2, categoryIds[cat], name, unit, price, stock]
       );
+    }
+
+    // Two more demo businesses so every kind of market on the Home screen has something in it.
+    const moreBusinesses: [string, string, string, string, [string, string, string, number, number][]][] = [
+      [
+        "seller3",
+        "Tumelo's Build & Farm Supplies (demo)",
+        "Bricks, sand and cement for building, plus feed and live chickens for the farm.",
+        "Batlharos",
+        [
+          ["building", "Cement stock bricks", "Pack of 100", 25000, 40],
+          ["building", "Building sand", "1 x 50 kg bag", 4500, 30],
+          ["building", "Cement", "1 x 50 kg bag", 11000, 25],
+          ["farm-feed", "Lucerne bale", "1 bale", 18000, 15],
+          ["farm-feed", "Layer mash (chicken feed)", "1 x 50 kg bag", 42000, 10],
+          ["livestock", "Point-of-lay hen", "1 hen", 12000, 20],
+          ["livestock", "Boer goat kid", "1 goat", 150000, 3],
+        ],
+      ],
+      [
+        "seller4",
+        "Mma Dineo's Food Caravan (demo)",
+        "Hot food from the caravan by the taxi rank: kotas, vetkoek and pap with stew.",
+        "Kuruman town",
+        [
+          ["street-food", "Kota (quarter loaf)", "1 kota", 3500, 30],
+          ["street-food", "Vetkoek with mince", "1 vetkoek", 2500, 40],
+          ["street-food", "Pap and beef stew", "1 plate", 5500, 20],
+          ["street-food", "Magwinya (fat cakes)", "Pack of 4", 2000, 25],
+        ],
+      ],
+    ];
+    for (const [owner, name, description, area, items] of moreBusinesses) {
+      const b = await client.query(
+        `INSERT INTO businesses (owner_id, name, description, area, pickup_address, phone)
+         VALUES ($1, $2, $3, $4, $5, (SELECT phone FROM users WHERE id = $1)) RETURNING id`,
+        [userIds[owner], name, description, area, `[Demo pickup address], ${area}, Kuruman`]
+      );
+      for (const [cat, productName, unit, price, stock] of items) {
+        await client.query(
+          `INSERT INTO products (business_id, category_id, name, unit_label, price_cents, stock_qty)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [b.rows[0].id, categoryIds[cat], productName, unit, price, stock]
+        );
+      }
     }
 
     await client.query("COMMIT");

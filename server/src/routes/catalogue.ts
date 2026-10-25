@@ -5,9 +5,18 @@ import { pool } from "../db";
 // Only public fields are returned - never seller phone numbers or stock internals.
 export const catalogueRouter = Router();
 
+// Each category comes with how many products are on sale in it, so the Home screen's
+// "Shop by market" tiles can say "12 items" or "Coming soon". Same visibility rule as /products.
 catalogueRouter.get("/categories", async (_req, res) => {
-  const r = await pool.query("SELECT id, slug, name FROM categories ORDER BY name");
-  res.json(r.rows.map((c) => ({ ...c, id: Number(c.id) })));
+  const r = await pool.query(
+    `SELECT c.id, c.slug, c.name, COUNT(p.id) AS product_count
+       FROM categories c
+       LEFT JOIN products p ON p.category_id = c.id AND p.is_active
+            AND EXISTS (SELECT 1 FROM businesses b WHERE b.id = p.business_id AND b.is_active)
+      GROUP BY c.id
+      ORDER BY c.name`
+  );
+  res.json(r.rows.map((c) => ({ id: Number(c.id), slug: c.slug, name: c.name, productCount: Number(c.product_count) })));
 });
 
 const PRODUCT_COLUMNS = `

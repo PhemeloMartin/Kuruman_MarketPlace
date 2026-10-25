@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useCart } from '../cart/CartContext'
 import { LANGUAGES, currentLanguage, setLanguage } from '../lib/translate'
@@ -10,8 +10,10 @@ import { BellIcon, CartIcon, HomeIcon, OrdersIcon, ProfileIcon, ShieldIcon, Shop
 
 export function Layout() {
   const online = useOnline()
+  // Home may spread out on a laptop screen; every other page stays phone-width.
+  const wide = useLocation().pathname === '/'
   return (
-    <div className="app">
+    <div className={wide ? 'app app-wide' : 'app'}>
       <DuneRibbon />
       {!online && (
         <p className="offline-banner" role="status">

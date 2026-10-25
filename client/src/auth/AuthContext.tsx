@@ -6,7 +6,7 @@ import type { User } from '../lib/types'
 interface AuthState {
   user: User | null
   loading: boolean
-  login: (phone: string, passphrase: string) => Promise<void>
+  login: (phone: string, passphrase: string) => Promise<User>
   register: (input: { phone: string; displayName: string; passphrase: string }) => Promise<void>
   logout: () => Promise<void>
   refresh: () => Promise<void>
@@ -30,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (phone: string, passphrase: string) => {
     const r = await api<{ user: User }>('/auth/login', { method: 'POST', body: { phone, passphrase } })
     setUser(r.user)
+    return r.user
   }, [])
 
   const register = useCallback(async (input: { phone: string; displayName: string; passphrase: string }) => {

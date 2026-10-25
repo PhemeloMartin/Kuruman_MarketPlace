@@ -4,12 +4,23 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { MokalaScene } from '../components/Art'
 import { ApiError } from '../lib/api'
+import type { Role } from '../lib/types'
 
 // After signing in, go back to where the user was heading (e.g. the cart), otherwise Home.
 function useReturnTo(): string {
   const location = useLocation()
   const from = (location.state as { from?: string } | null)?.from
   return from && from.startsWith('/') ? from : '/'
+}
+
+// Everyone signs in the same way; the server says what the account may do (its role), and we take
+// the person to their own work area. A seller doesn't pick "seller" anywhere - that would be a
+// choice the browser could fake, and an easy one to get wrong.
+const HOME_FOR_ROLE: Record<Role, string> = {
+  consumer: '/',
+  entrepreneur: '/seller',
+  courier: '/courier',
+  support: '/support',
 }
 
 function Field(props: {
@@ -87,8 +98,9 @@ export function SignInPage() {
     setBusy(true)
     setError(null)
     try {
-      await login(phone, passphrase)
-      navigate(returnTo, { replace: true })
+      const user = await login(phone, passphrase)
+      // Heading somewhere specific (e.g. the cart)? Go there. Otherwise, to this account's own area.
+      navigate(returnTo !== '/' ? returnTo : HOME_FOR_ROLE[user.role], { replace: true })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.')
     } finally {
@@ -102,6 +114,10 @@ export function SignInPage() {
         <MokalaScene />
       </div>
       <h1 className="page-title">Sign in</h1>
+      <p className="notice" style={{ marginTop: -4, marginBottom: 16 }}>
+        <strong>One account for everything.</strong> Customers, sellers and couriers all sign in here with their phone
+        number. We take you to the right place: sellers go straight to “My shop”.
+      </p>
       <form className="form" onSubmit={onSubmit} noValidate>
         {error && (
           <p className="notice error" role="alert">
@@ -175,6 +191,10 @@ export function RegisterPage() {
   return (
     <main className="page">
       <h1 className="page-title">Create an account</h1>
+      <p className="notice" style={{ marginTop: -4, marginBottom: 16 }}>
+        <strong>Want to sell?</strong> Create this account first. Then apply to sell from your Profile, and once support
+        approves your shop, “My shop” appears in this same account.
+      </p>
       <form className="form" onSubmit={onSubmit} noValidate>
         {error && (
           <p className="notice error" role="alert">

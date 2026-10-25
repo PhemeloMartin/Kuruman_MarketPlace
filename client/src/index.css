@@ -1257,3 +1257,344 @@ body {
   font-size: 0.78rem;
   color: var(--muted);
 }
+
+/* ---------- Home: landing page ("Shop by market") ---------- */
+/* Home may use the full width on a laptop, like a shop website; other pages stay phone-width. */
+@media (min-width: 900px) {
+  .app.app-wide {
+    max-width: 1200px;
+  }
+  .app-wide .site-header,
+  .app-wide .page {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+.hero {
+  position: relative;
+  margin: 8px -16px 0;
+}
+
+.hero-art svg {
+  display: block;
+  width: 100%;
+  height: 190px;
+}
+
+.hero-card {
+  position: relative;
+  margin: -48px 16px 0;
+  padding: 16px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(34, 32, 28, 0.14);
+}
+
+.hero-title {
+  font-size: 1.5rem;
+  margin: 16px 0 8px;
+}
+
+.hero-text {
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+
+.hero-small {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  border-radius: var(--radius);
+  background: var(--primary-tint);
+}
+
+.tabs button {
+  min-height: 44px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--primary-dark);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tabs button[aria-selected='true'] {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* Market dropdown, search words, Search button: stacked on a phone, one row when there's room. */
+.search-bar {
+  display: grid;
+  gap: 8px;
+}
+
+.search-bar .search {
+  margin: 0;
+}
+
+.search-bar .select {
+  height: var(--tap);
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-weight: 500;
+}
+
+.steps {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+  display: grid;
+  gap: 10px;
+}
+
+.steps li {
+  counter-increment: step;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.steps li::before {
+  content: counter(step);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primary-tint);
+  color: var(--primary-dark);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.steps li[data-done='true']::before {
+  content: '✓';
+  background: var(--primary);
+  color: #fff;
+}
+
+.trust-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.trust-strip li {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.trust-strip svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--primary);
+}
+
+.home-section {
+  margin-top: 28px;
+}
+
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.market-tile {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+}
+
+.market-tile:hover .market-name {
+  text-decoration: underline;
+}
+
+.market-art {
+  display: block;
+  aspect-ratio: 1;
+}
+
+.market-art svg,
+.market-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.market-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 12px;
+}
+
+.market-name {
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.market-blurb {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.market-count {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.results-title {
+  font-size: 1.3rem;
+}
+
+.results-words {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.sell-band {
+  display: grid;
+  gap: 14px;
+  margin: 32px 0 0;
+  padding: 20px;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: #fff;
+}
+
+.sell-band h2 {
+  color: #fff;
+  font-size: 1.25rem;
+}
+
+.sell-band p {
+  margin: 8px 0 0;
+  color: #e6f4ee;
+}
+
+.btn-light {
+  background: #fff;
+  color: var(--primary-dark);
+}
+
+.btn-light:hover {
+  background: var(--primary-tint);
+}
+
+.home-footer {
+  display: grid;
+  gap: 16px;
+  margin: 24px -16px -24px;
+  padding: 24px 16px;
+  background: #12382f;
+  color: #cfe3db;
+  font-size: 0.9rem;
+}
+
+.footer-brand {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.home-footer p {
+  margin: 6px 0 0;
+}
+
+.home-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+}
+
+.home-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #fff;
+}
+
+@media (min-width: 600px) {
+  .search-bar {
+    grid-template-columns: minmax(0, 150px) minmax(0, 1fr) auto;
+  }
+  .market-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .trust-strip {
+    grid-template-columns: repeat(4, auto);
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 900px) {
+  .app-wide .hero {
+    margin: 8px 0 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .app-wide .hero-art svg {
+    height: 440px;
+  }
+  .app-wide .hero-card {
+    position: absolute;
+    top: 50%;
+    left: 40px;
+    transform: translateY(-50%);
+    width: min(560px, 55%);
+    margin: 0;
+    padding: 24px;
+  }
+  .app-wide .hero-title {
+    font-size: 2.1rem;
+  }
+  .app-wide .market-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .app-wide .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .app-wide .sell-band {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    padding: 28px 32px;
+  }
+  .app-wide .home-footer {
+    grid-template-columns: 1fr auto;
+    margin: 24px -32px -24px;
+    padding: 32px;
+  }
+}
