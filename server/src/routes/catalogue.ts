@@ -22,7 +22,7 @@ catalogueRouter.get("/categories", async (_req, res) => {
 });
 
 const PRODUCT_COLUMNS = `
-  p.id, p.name, p.description, p.unit_label, p.price_cents, p.image_url,
+  p.id, p.name, p.description, p.unit_label, p.price_cents, p.image_url, p.collection_only,
   (p.stock_qty - p.reserved_qty) AS available_qty,
   c.slug AS category, c.name AS category_name,
   b.id AS business_id, b.name AS business_name, b.area`;
@@ -35,6 +35,7 @@ function toProduct(row: any) {
     unitLabel: row.unit_label,
     priceCents: row.price_cents,
     imageUrl: row.image_url,
+    collectionOnly: row.collection_only,
     availableQty: row.available_qty,
     category: row.category,
     categoryName: row.category_name,
@@ -78,7 +79,13 @@ catalogueRouter.get("/products/:id", async (req, res) => {
   if (r.rowCount === 0) return res.status(404).json({ error: "Product not found." });
   const photos = await pool.query("SELECT url FROM photos WHERE product_id = $1 ORDER BY sort_order, id", [id]);
   const product = toProduct(r.rows[0]);
-  res.json({ ...product, photos: photos.rows.map((p) => p.url), businessRating: await ratingOf(product.business.id) });
+  const wa = await pool.query("SELECT whatsapp_phone FROM businesses WHERE id = $1", [product.business.id]);
+  res.json({
+    ...product,
+    photos: photos.rows.map((p) => p.url),
+    businessRating: await ratingOf(product.business.id),
+    businessWhatsapp: wa.rows[0].whatsapp_phone,
+  });
 });
 
 // GET /api/shops/:id - a shop's public page: who they are and everything they have on sale.
@@ -87,7 +94,7 @@ catalogueRouter.get("/shops/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) return res.status(404).json({ error: "Shop not found." });
   const b = await pool.query(
-    "SELECT id, name, description, area, cover_photo_url, created_at FROM businesses WHERE id = $1 AND is_active",
+    "SELECT id, name, description, area, cover_photo_url, whatsapp_phone, created_at FROM businesses WHERE id = $1 AND is_active",
     [id]
   );
   if (b.rowCount === 0) return res.status(404).json({ error: "Shop not found." });
@@ -109,6 +116,7 @@ catalogueRouter.get("/shops/:id", async (req, res) => {
     area: shop.area,
     coverPhotoUrl: shop.cover_photo_url,
     sellingSince: shop.created_at,
+    whatsapp: shop.whatsapp_phone, // only set if the seller chose to show it
     products: products.rows.map(toProduct),
     rating: await ratingOf(id),
     reviews: await publicReviews(id),

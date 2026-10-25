@@ -29,6 +29,8 @@ export function CartPage() {
   const [policy, setPolicy] = useState<Policy | null>(null)
   const online = useOnline()
   const [fulfilment, setFulfilment] = useState<'delivery' | 'pickup'>('pickup')
+  // Items that must be collected (bricks, sand, livestock): the server refuses delivery for them too.
+  const mustCollect = cart.lines.filter((l) => l.collectionOnly)
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online'>('cash')
   const [address, setAddress] = useState('')
   const [notes, setNotes] = useState<string[]>([])
@@ -191,6 +193,12 @@ export function CartPage() {
 
       <fieldset className="choice-group">
         <legend>How do you want it?</legend>
+        {mustCollect.length > 0 && (
+          <p className="fine-print" style={{ marginTop: 0 }}>
+            🚚 Delivery isn’t possible for {mustCollect.map((l) => l.name).join(', ')}: too big for a courier, so please
+            collect it from the seller.
+          </p>
+        )}
         <div className="choices">
           <label className="choice">
             <input
@@ -198,6 +206,7 @@ export function CartPage() {
               name="fulfilment"
               checked={fulfilment === 'delivery'}
               onChange={() => setFulfilment('delivery')}
+              disabled={mustCollect.length > 0}
             />
             Delivery
           </label>

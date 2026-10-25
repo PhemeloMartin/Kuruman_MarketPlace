@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { MokalaSmall } from '../components/Art'
 import { Stars, StarPicker } from '../components/Stars'
+import { QrCode } from '../components/QrCode'
 import { api, ApiError } from '../lib/api'
 import { formatRand } from '../lib/money'
 
@@ -310,6 +311,7 @@ export function OrdersPage() {
                       <span className="code" translate="no" aria-label={`Collection code ${codes[o.id].code.split('').join(' ')}`}>
                         {codes[o.id].code}
                       </span>
+                      <QrCode text={codes[o.id].code} label="The same code as a QR code, for scanning" />
                       <span className="fine-print">
                         Show this to the {o.status === 'out_for_delivery' ? 'courier' : 'seller'} when you get your
                         order. Valid until{' '}

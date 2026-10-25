@@ -248,4 +248,13 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       20% acceptance; at least 3 orders and 3 reviews; on-site orders only), card on Home with "How is this
       chosen?", badge on the shop page; demo order history with reviews in English, Setswana and Afrikaans;
       `npm run test:reviews` (10 checks)
+- [x] WhatsApp: "Share on WhatsApp" on product and shop pages and the seller dashboard; optional seller WhatsApp
+      number for "Ask the seller" / "Chat on WhatsApp" (messages always carry a link back to the site); link previews
+      (Open Graph tags written by the server) so shared links show the photo, name and price
+- [x] Collection only for heavy or live items (bricks, sand, livestock): tag on cards, note on the product page,
+      delivery disabled in the cart, refused by the server
+- [x] QR handover: the customer's 6-digit code is also shown as a QR code; seller (pickup) and courier (delivery)
+      can scan it with the camera (BarcodeDetector; typing still works)
+- [x] Barcodes: optional per product (unique per shop), scan to fill in, and "scan a barcode" in the product list
+      to jump to that product; `npm run test:sharing` (8 checks)
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

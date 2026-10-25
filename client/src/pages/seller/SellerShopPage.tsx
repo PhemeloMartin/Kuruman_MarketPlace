@@ -11,12 +11,14 @@ interface MyShop {
   description: string | null
   area: string
   coverPhotoUrl: string | null
+  whatsappPhone: string | null
 }
 
 // What customers see at the top of the shop page: a cover photo and a few words about the shop.
 export function SellerShopPage() {
   const [shop, setShop] = useState<MyShop | null>(null)
   const [description, setDescription] = useState('')
+  const [whatsapp, setWhatsapp] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
 
@@ -24,6 +26,7 @@ export function SellerShopPage() {
     return api<MyShop>('/seller/shop').then((s) => {
       setShop(s)
       setDescription(s.description ?? '')
+      setWhatsapp(s.whatsappPhone ? '0' + s.whatsappPhone.slice(3) : '')
     })
   }
   useEffect(() => {
@@ -109,6 +112,29 @@ export function SellerShopPage() {
           onClick={() => run(() => api('/seller/shop', { method: 'PATCH', body: { description } }), 'Saved.')}
         >
           Save
+        </button>
+      </section>
+
+      <section className="card">
+        <label htmlFor="whatsapp">
+          <strong>WhatsApp number (optional)</strong>
+        </label>
+        <p className="fine-print" style={{ marginTop: 4 }}>
+          Shows a “Chat on WhatsApp” button so customers can ask questions. Their message includes a link to your
+          product here, and orders and payments still happen on KurumanMarketPlace, where they’re protected. Leave it
+          empty to hide the button.
+        </p>
+        <div className="input-wrap">
+          <input id="whatsapp" type="tel" inputMode="tel" placeholder="071 234 5678" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
+        </div>
+        <button
+          type="button"
+          className="btn btn-primary btn-block"
+          style={{ marginTop: 10 }}
+          disabled={busy}
+          onClick={() => run(() => api('/seller/shop', { method: 'PATCH', body: { whatsappPhone: whatsapp } }), whatsapp.trim() ? 'WhatsApp button is on.' : 'WhatsApp button is off.')}
+        >
+          Save WhatsApp number
         </button>
       </section>
 

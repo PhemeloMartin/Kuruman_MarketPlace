@@ -196,6 +196,15 @@ async function main() {
       }
     }
 
+    // Too big (or alive) for a courier: customers collect these.
+    await client.query(
+      `UPDATE products SET collection_only = TRUE
+        WHERE category_id IN (SELECT id FROM categories WHERE slug IN ('building', 'livestock')) OR name = 'Lucerne bale'`
+    );
+    // Packaged goods have barcodes the seller can scan (made-up numbers in the 600 = South Africa range).
+    await client.query("UPDATE products SET barcode = '6001234500017' WHERE name = 'Maize meal'");
+    await client.query("UPDATE products SET barcode = '6009876500025' WHERE name = 'Cement'");
+
     // Order history from the last few weeks: completed pickup orders paid in cash, most with a review.
     // It makes the ratings, the seller numbers and "Entrepreneur of the Month" meaningful in a demo.
     // Reviews are in English, Setswana and Afrikaans, like real Kuruman customers would write.

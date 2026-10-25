@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { BackIcon } from '../../components/Icons'
 import { PhotoManager } from '../../components/PhotoManager'
+import { PRODUCT_BARCODES, Scanner, canScan } from '../../components/Scanner'
 import { ProductPhoto } from '../../components/ProductCard'
 import { api, ApiError } from '../../lib/api'
 import { formatRand, parseRandToCents } from '../../lib/money'
@@ -28,8 +29,19 @@ function BackLink({ to, label }: { to: string; label: string }) {
 }
 
 export function SellerProductsPage() {
+  const navigate = useNavigate()
   const [products, setProducts] = useState<SellerProduct[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [scanning, setScanning] = useState(false)
+  const [notFound, setNotFound] = useState<string | null>(null)
+
+  // Scan a packet's barcode to jump straight to that product (e.g. to update its stock).
+  function found(code: string) {
+    setScanning(false)
+    const p = products?.find((x) => x.barcode === code)
+    if (p) navigate(`/seller/products/${p.id}`)
+    else setNotFound(code)
+  }
 
   useEffect(() => {
     api<SellerProduct[]>('/seller/products')
@@ -41,6 +53,18 @@ export function SellerProductsPage() {
     <main className="page">
       <BackLink to="/seller" label="Dashboard" />
       <h1 className="page-title">Your products</h1>
+      {canScan() && (
+        <button type="button" className="btn btn-outline btn-block scan-btn" onClick={() => setScanning(true)}>
+          📷 Scan a barcode to find a product
+        </button>
+      )}
+      {notFound && (
+        <p className="notice" role="status">
+          No product has barcode <span translate="no">{notFound}</span> yet.{' '}
+          <Link to={`/seller/products/new?barcode=${encodeURIComponent(notFound)}`}>Add it as a new product</Link>
+        </p>
+      )}
+      {scanning && <Scanner formats={PRODUCT_BARCODES} title="Scan the barcode" onResult={found} onClose={() => setScanning(false)} />}
       {error && (
         <p className="notice error" role="alert">
           {error}
@@ -97,7 +121,10 @@ export function SellerProductFormPage() {
     stockQty: '',
     description: '',
     isActive: true,
+    collectionOnly: false,
+    barcode: params.get('barcode') ?? '',
   })
+  const [scanning, setScanning] = useState(false)
   const [fields, setFields] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -143,6 +170,8 @@ export function SellerProductFormPage() {
           stockQty: String(p.stockQty),
           description: p.description ?? '',
           isActive: p.isActive,
+          collectionOnly: p.collectionOnly,
+          barcode: p.barcode ?? '',
         })
         setLoaded(true)
       })
@@ -173,6 +202,8 @@ export function SellerProductFormPage() {
       priceCents,
       stockQty,
       description: form.description,
+      collectionOnly: form.collectionOnly,
+      barcode: form.barcode,
       ...(isNew ? { category: form.category, aiSuggestionId: ai?.suggestionId } : { isActive: form.isActive }),
     }
     try {
@@ -327,6 +358,40 @@ export function SellerProductFormPage() {
             />
             Show this product to customers
           </label>
+        )}
+
+        <label className="choice">
+          <input
+            type="checkbox"
+            checked={form.collectionOnly}
+            onChange={(e) => setForm((f) => ({ ...f, collectionOnly: e.target.checked }))}
+          />
+          Customers must collect it (too big or alive for a courier, e.g. bricks, sand, livestock)
+        </label>
+
+        <div className="field" data-invalid={Boolean(fields.barcode)}>
+          <label htmlFor="barcode">Barcode (optional)</label>
+          <p className="hint">For packaged goods: scan it once, then scan the packet later to find this product fast.</p>
+          <div className="input-wrap">
+            <input id="barcode" inputMode="numeric" value={form.barcode} onChange={set('barcode')} maxLength={32} />
+            {canScan() && (
+              <button type="button" className="link-btn" onClick={() => setScanning(true)}>
+                Scan
+              </button>
+            )}
+          </div>
+          {err('barcode')}
+        </div>
+        {scanning && (
+          <Scanner
+            formats={PRODUCT_BARCODES}
+            title="Scan the barcode"
+            onClose={() => setScanning(false)}
+            onResult={(code) => {
+              setScanning(false)
+              setForm((f) => ({ ...f, barcode: code }))
+            }}
+          />
         )}
 
         <button type="submit" className="btn btn-primary btn-block" disabled={busy}>

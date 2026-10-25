@@ -119,7 +119,7 @@ ordersRouter.post("/", shopper, async (req, res) => {
     const ids = order.items.map((i) => i.productId);
     const products = await client.query(
       `SELECT p.id, p.business_id, p.name, p.unit_label, p.price_cents, p.stock_qty, p.reserved_qty,
-              p.is_active, b.is_active AS business_active, b.owner_id
+              p.is_active, p.collection_only, b.is_active AS business_active, b.owner_id
          FROM products p JOIN businesses b ON b.id = p.business_id
         WHERE p.id = ANY($1::bigint[])
         ORDER BY p.id
@@ -156,6 +156,16 @@ ordersRouter.post("/", shopper, async (req, res) => {
         error: "Some items are no longer available in that quantity. Please review your cart.",
         code: "STOCK_CHANGED",
         problems,
+      });
+    }
+
+    // Bricks, sand or a goat can't go on a courier's motorbike: such items must be collected.
+    const mustCollect = order.items.map((i) => byId.get(i.productId)).filter((p) => p.collection_only);
+    if (order.fulfilment === "delivery" && mustCollect.length) {
+      await client.query("ROLLBACK");
+      return res.status(422).json({
+        error: `${mustCollect.map((p) => p.name).join(", ")} must be collected from the seller. Please choose pickup.`,
+        fields: { fulfilment: "Collection only for these items." },
       });
     }
 

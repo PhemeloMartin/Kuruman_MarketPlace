@@ -54,3 +54,13 @@ CREATE TABLE IF NOT EXISTS reviews (
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_reviews_business ON reviews(business_id, created_at DESC);
+
+-- 2026-10-26: WhatsApp, heavy items and barcodes.
+-- A business WhatsApp number the SELLER chooses to show for "Chat on WhatsApp" (empty = no button).
+-- Customers' numbers are never shown to sellers this way.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS whatsapp_phone VARCHAR(15);
+-- Too big or alive for a courier (bricks, sand, livestock): the customer must collect it.
+ALTER TABLE products ADD COLUMN IF NOT EXISTS collection_only BOOLEAN NOT NULL DEFAULT FALSE;
+-- The barcode on the packet, so the seller can scan it to find the product and update stock.
+ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode VARCHAR(32);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_products_barcode ON products(business_id, barcode) WHERE barcode IS NOT NULL;

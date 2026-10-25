@@ -10,6 +10,7 @@ export interface CartLine {
   unitLabel: string
   priceCents: number
   quantity: number
+  collectionOnly?: boolean // must be collected (missing in carts saved before this was added)
 }
 
 interface CartDraft {
@@ -50,6 +51,7 @@ function lineFrom(product: Product): CartLine {
     unitLabel: product.unitLabel,
     priceCents: product.priceCents,
     quantity: 1,
+    collectionOnly: product.collectionOnly,
   }
 }
 

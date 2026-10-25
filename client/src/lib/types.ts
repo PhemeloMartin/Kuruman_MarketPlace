@@ -26,12 +26,14 @@ export interface Product {
   unitLabel: string
   priceCents: number
   imageUrl: string | null
+  collectionOnly: boolean // too big or alive for a courier: customers collect it
   availableQty: number
   category: string
   categoryName: string
   business: { id: number; name: string; area: string }
   photos?: string[] // all photos, first = main; only on the single-product answer
   businessRating?: Rating // only on the single-product answer
+  businessWhatsapp?: string | null // only if the seller chose to show it
 }
 
 export interface Rating {
@@ -70,6 +72,7 @@ export interface Shop {
   area: string
   coverPhotoUrl: string | null
   sellingSince: string
+  whatsapp: string | null // only if the seller chose to show it
   products: Product[]
   rating: Rating
   reviews: Review[]
@@ -132,6 +135,8 @@ export interface SellerProduct {
   lowStockThreshold: number
   isActive: boolean
   imageUrl: string | null
+  collectionOnly: boolean
+  barcode: string | null
   category: string
   categoryName: string
 }

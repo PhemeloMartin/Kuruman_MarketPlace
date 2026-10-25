@@ -2159,3 +2159,70 @@ label.busy {
     padding: 24px 28px;
   }
 }
+
+/* ---------- WhatsApp, collect-only tag, QR codes and the camera scanner ---------- */
+.tag {
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fdf1d8;
+  color: #7a5313;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.share-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 4px;
+}
+
+.share-row .btn {
+  flex: 1 1 160px;
+}
+
+/* WhatsApp's own green, darkened so white text passes WCAG AA contrast. */
+.btn-whatsapp {
+  background: #128c4b;
+  color: #fff;
+}
+
+.btn-whatsapp:hover {
+  background: #0d6e3a;
+}
+
+.whatsapp-tile {
+  border-color: #b7e0c8;
+  background: #effaf3;
+}
+
+.scan-btn {
+  margin: 4px 0 12px;
+}
+
+.qr {
+  display: block;
+  margin: 12px auto 4px;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.scanner {
+  width: min(420px, 92vw);
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  display: grid;
+  gap: 10px;
+}
+
+.scanner-video {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background: #000;
+  outline: 3px solid var(--sun);
+  outline-offset: -20px;
+}

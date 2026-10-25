@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { PlusIcon, ShopIcon } from '../../components/Icons'
+import { CodeScanButton } from '../../components/CodeScanButton'
+import { pageUrl, shareLink } from '../../lib/whatsapp'
 import { api, ApiError } from '../../lib/api'
 import { formatRand, parseRandToCents } from '../../lib/money'
 import type { CashToConfirm, Kpis, Rating, Review, SellerOrder, SellerProduct } from '../../lib/types'
@@ -211,6 +213,15 @@ export function SellerDashboardPage() {
           <span aria-hidden="true" className="tile-emoji">👀</span>
           See my shop
         </Link>
+        <a
+          className="action-tile whatsapp-tile"
+          href={shareLink(`Order from ${dashboard.business.name} on KurumanMarketPlace:`, pageUrl(`/shop/${dashboard.business.id}`))}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span aria-hidden="true" className="tile-emoji">💬</span>
+          Share my shop on WhatsApp
+        </a>
       </div>
 
       <section aria-labelledby="numbers-heading" className="seller-section">
@@ -424,6 +435,12 @@ function OrderCard({ order: o, onChanged }: { order: SellerOrder; onChanged: () 
             act('pickup', { code })
           }}
         >
+          <CodeScanButton
+            onCode={(scanned) => {
+              setCode(scanned)
+              act('pickup', { code: scanned })
+            }}
+          />
           <label htmlFor={`code-${o.id}`}>Customer’s collection code</label>
           <p className="fine-print" style={{ marginTop: 0 }}>
             Ask to see the 6-digit code in their Orders screen.

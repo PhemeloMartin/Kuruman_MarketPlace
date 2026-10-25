@@ -21,6 +21,7 @@ import { supportPrivacyRouter } from "./routes/supportPrivacy";
 import { privacyRouter } from "./routes/privacy";
 import { notificationsRouter } from "./routes/notifications";
 import { POLICY } from "./lib/policy";
+import { previewTags, withPreview } from "./lib/linkPreview";
 
 export const app = express();
 // Behind a tunnel or hosting proxy, the real caller's IP arrives in the X-Forwarded-For header
@@ -106,10 +107,12 @@ if (process.env.NODE_ENV === "production" && fs.existsSync(CLIENT_DIST)) {
     })
   );
   // Any other page address (e.g. /orders) is the React app, which does its own routing.
-  app.use((req, res, next) => {
+  // Product and shop pages get link-preview tags first, so a link shared on WhatsApp shows a photo.
+  const indexHtml = fs.readFileSync(path.join(CLIENT_DIST, "index.html"), "utf8");
+  app.use(async (req, res, next) => {
     if (req.method !== "GET" || req.path.startsWith("/api/")) return next();
     res.set("Cache-Control", "no-cache");
-    res.sendFile(path.join(CLIENT_DIST, "index.html"));
+    res.type("html").send(withPreview(indexHtml, await previewTags(req.path)));
   });
 }
 

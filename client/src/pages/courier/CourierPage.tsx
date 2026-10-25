@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, ApiError } from '../../lib/api'
+import { CodeScanButton } from '../../components/CodeScanButton'
 import { formatRand } from '../../lib/money'
 
 interface OpenJob {
@@ -327,6 +328,12 @@ function ActiveJob({ job: j, onChanged }: { job: MyJob; onChanged: () => void })
               act('deliver', { code })
             }}
           >
+            <CodeScanButton
+              onCode={(scanned) => {
+                setCode(scanned)
+                act('deliver', { code: scanned })
+              }}
+            />
             <label htmlFor={`dcode-${j.id}`}>Customer’s delivery code</label>
             <p className="fine-print" style={{ marginTop: 0 }}>
               The customer opens their order and shows you a 6-digit code.

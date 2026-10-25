@@ -5,6 +5,7 @@ import { BackIcon, CheckIcon, PlusIcon } from '../components/Icons'
 import { ProductPhoto } from '../components/ProductCard'
 import { RatingLine } from '../components/Stars'
 import { api } from '../lib/api'
+import { chatLink, pageUrl, shareLink } from '../lib/whatsapp'
 import { formatRand } from '../lib/money'
 import type { Product } from '../lib/types'
 
@@ -84,6 +85,12 @@ export function ProductPage() {
       <p className="big-price" translate="no">
         {formatRand(product.priceCents)}
       </p>
+      {product.collectionOnly && (
+        <p className="notice" style={{ margin: '8px 0' }}>
+          🚚 <strong>Collect only.</strong> This is too big for courier delivery: you collect it from the seller in{' '}
+          {product.business.area}.
+        </p>
+      )}
       <p className={soldOut || product.availableQty <= 5 ? 'urgent' : 'product-meta'}>
         {soldOut ? 'Sold out for now' : product.availableQty <= 5 ? `Only ${product.availableQty} left` : 'In stock'}
       </p>
@@ -97,6 +104,27 @@ export function ProductPage() {
           Go to cart
         </Link>
       )}
+
+      <div className="share-row">
+        <a
+          className="btn btn-whatsapp"
+          href={shareLink(`Look at this on KurumanMarketPlace: ${product.name}, ${formatRand(product.priceCents)}`, pageUrl(`/product/${product.id}`))}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Share on WhatsApp
+        </a>
+        {product.businessWhatsapp && (
+          <a
+            className="btn btn-outline"
+            href={chatLink(product.businessWhatsapp, `Hi! I'm asking about "${product.name}" on KurumanMarketPlace:`, pageUrl(`/product/${product.id}`))}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Ask the seller
+          </a>
+        )}
+      </div>
 
       {product.description && (
         <section style={{ marginTop: 20 }}>

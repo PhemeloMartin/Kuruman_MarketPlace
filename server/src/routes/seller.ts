@@ -11,6 +11,7 @@ import { consumeReservation, recordStatusChange, releaseReservation, returnToSto
 import { audit } from "../lib/audit";
 import { MAX_PHOTO_BYTES, deleteStoredImage, detectImageType, savePhoto } from "../lib/photoStore";
 import { cleanText, publicReviews, ratingOf } from "../lib/reviews";
+import { normaliseSaPhone } from "../lib/phone";
 
 // Everything here is for an approved entrepreneur, and only ever about THEIR business.
 // The business is looked up from the session user - never taken from the request (BR-13).
@@ -419,7 +420,8 @@ sellerRouter.post("/cash/:orderId/acknowledge", async (req, res) => {
 sellerRouter.get("/products", async (req, res) => {
   const r = await pool.query(
     `SELECT p.id, p.name, p.description, p.unit_label, p.price_cents, p.stock_qty, p.reserved_qty,
-            p.low_stock_threshold, p.is_active, p.image_url, c.slug AS category, c.name AS category_name
+            p.low_stock_threshold, p.is_active, p.image_url, p.collection_only, p.barcode,
+            c.slug AS category, c.name AS category_name
        FROM products p JOIN categories c ON c.id = p.category_id
       WHERE p.business_id = $1
       ORDER BY p.is_active DESC, p.name`,
@@ -438,11 +440,19 @@ sellerRouter.get("/products", async (req, res) => {
       lowStockThreshold: p.low_stock_threshold,
       isActive: p.is_active,
       imageUrl: p.image_url,
+      collectionOnly: p.collection_only,
+      barcode: p.barcode,
       category: p.category,
       categoryName: p.category_name,
     }))
   );
 });
+
+// Each barcode can belong to only one of the seller's products (a unique index in the database).
+const DUPLICATE_BARCODE = {
+  error: "Another of your products already has this barcode.",
+  fields: { barcode: "Already used on another product." },
+};
 
 function parseProduct(body: any, partial: boolean) {
   const fields: Record<string, string> = {};
@@ -473,6 +483,12 @@ function parseProduct(body: any, partial: boolean) {
     out.description = typeof body.description === "string" ? body.description.trim().slice(0, 1000) || null : null;
   }
   if (has("isActive")) out.is_active = Boolean(body.isActive);
+  if (has("collectionOnly")) out.collection_only = Boolean(body.collectionOnly);
+  if (has("barcode")) {
+    const code = typeof body.barcode === "string" ? body.barcode.replace(/\s/g, "") : "";
+    if (code && !/^[0-9A-Za-z-]{4,32}$/.test(code)) fields.barcode = "That doesn't look like a barcode.";
+    out.barcode = code || null;
+  }
   return { fields, out };
 }
 
@@ -516,9 +532,11 @@ sellerRouter.post("/products", requireActiveShop, async (req, res) => {
   try {
     await client.query("BEGIN");
     const r = await client.query(
-      `INSERT INTO products (business_id, category_id, name, description, unit_label, price_cents, stock_qty)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-      [req.business!.id, cat.rows[0].id, out.name, out.description ?? null, out.unit_label, out.price_cents, out.stock_qty]
+      `INSERT INTO products (business_id, category_id, name, description, unit_label, price_cents, stock_qty,
+                             collection_only, barcode)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+      [req.business!.id, cat.rows[0].id, out.name, out.description ?? null, out.unit_label, out.price_cents, out.stock_qty,
+       out.collection_only ?? false, out.barcode ?? null]
     );
     productId = Number(r.rows[0].id);
 
@@ -536,8 +554,9 @@ sellerRouter.post("/products", requireActiveShop, async (req, res) => {
       );
     }
     await client.query("COMMIT");
-  } catch (err) {
+  } catch (err: any) {
     await client.query("ROLLBACK");
+    if (err.code === "23505") return res.status(409).json(DUPLICATE_BARCODE);
     throw err;
   } finally {
     client.release();
@@ -562,6 +581,7 @@ sellerRouter.patch("/products/:id", requireActiveShop, async (req, res) => {
     if (r.rowCount === 0) return res.status(404).json({ error: "Product not found." });
     res.json({ id });
   } catch (err: any) {
+    if (err.code === "23505") return res.status(409).json(DUPLICATE_BARCODE);
     // The database refuses stock below what customers have already reserved.
     if (err.code === "23514") {
       return res.status(409).json({
@@ -704,19 +724,46 @@ sellerRouter.delete("/photos/:id", requireActiveShop, async (req, res) => {
 
 // The seller's own shop details (the public page is GET /api/shops/:id).
 sellerRouter.get("/shop", async (req, res) => {
-  const r = await pool.query("SELECT id, name, description, area, cover_photo_url FROM businesses WHERE id = $1", [req.business!.id]);
+  const r = await pool.query(
+    "SELECT id, name, description, area, cover_photo_url, whatsapp_phone FROM businesses WHERE id = $1",
+    [req.business!.id]
+  );
   const b = r.rows[0];
-  res.json({ id: Number(b.id), name: b.name, description: b.description, area: b.area, coverPhotoUrl: b.cover_photo_url });
+  res.json({
+    id: Number(b.id),
+    name: b.name,
+    description: b.description,
+    area: b.area,
+    coverPhotoUrl: b.cover_photo_url,
+    whatsappPhone: b.whatsapp_phone,
+  });
 });
 
 // Sellers write their own "about us". The shop name and area were checked by support at approval,
 // so changing those goes through support.
+// The WhatsApp number is optional and the seller's own choice; empty removes the button.
 sellerRouter.patch("/shop", requireActiveShop, async (req, res) => {
-  const description = typeof req.body?.description === "string" ? req.body.description.trim() : "";
-  if (description.length > 600) {
-    return res.status(422).json({ error: "Keep it under 600 characters.", fields: { description: "Up to 600 characters." } });
+  const sets: string[] = [];
+  const values: unknown[] = [req.business!.id];
+  if (req.body?.description !== undefined) {
+    const description = typeof req.body.description === "string" ? req.body.description.trim() : "";
+    if (description.length > 600) {
+      return res.status(422).json({ error: "Keep it under 600 characters.", fields: { description: "Up to 600 characters." } });
+    }
+    values.push(description || null);
+    sets.push(`description = $${values.length}`);
   }
-  await pool.query("UPDATE businesses SET description = $2 WHERE id = $1", [req.business!.id, description || null]);
+  if (req.body?.whatsappPhone !== undefined) {
+    const typed = typeof req.body.whatsappPhone === "string" ? req.body.whatsappPhone.trim() : "";
+    const phone = typed ? normaliseSaPhone(typed) : null;
+    if (typed && !phone) {
+      return res.status(422).json({ error: "Enter a South African number, e.g. 071 234 5678.", fields: { whatsappPhone: "Not a valid number." } });
+    }
+    values.push(phone);
+    sets.push(`whatsapp_phone = $${values.length}`);
+  }
+  if (!sets.length) return res.status(422).json({ error: "Nothing to change." });
+  await pool.query(`UPDATE businesses SET ${sets.join(", ")} WHERE id = $1`, values);
   res.json({ ok: true });
 });
 

@@ -6,6 +6,7 @@ import { KurumanPanorama } from '../components/Markets'
 import { ProductCard } from '../components/ProductCard'
 import { RatingLine, Stars } from '../components/Stars'
 import { api } from '../lib/api'
+import { chatLink, pageUrl, shareLink } from '../lib/whatsapp'
 import type { Shop } from '../lib/types'
 
 // A shop's own page: cover photo, who they are, and everything they sell.
@@ -58,6 +59,26 @@ export function ShopPage() {
         <RatingLine rating={shop.rating} />
       </a>
       {shop.description && <p style={{ whiteSpace: 'pre-line' }}>{shop.description}</p>}
+      <div className="share-row">
+        <a
+          className="btn btn-whatsapp"
+          href={shareLink(`${shop.name} is on KurumanMarketPlace. Order from them here:`, pageUrl(`/shop/${shop.id}`))}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Share on WhatsApp
+        </a>
+        {shop.whatsapp && (
+          <a
+            className="btn btn-outline"
+            href={chatLink(shop.whatsapp, `Hi ${shop.name}! I found you on KurumanMarketPlace:`, pageUrl(`/shop/${shop.id}`))}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Chat on WhatsApp
+          </a>
+        )}
+      </div>
 
       <section aria-labelledby="shop-products" style={{ marginTop: 20 }}>
         <div className="section-head">
