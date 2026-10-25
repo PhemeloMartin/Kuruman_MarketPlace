@@ -7,6 +7,9 @@
 // It changes demo data (approves an application, suspends and reinstates accounts):
 // run `npm run db:setup` and `npm run db:seed` afterwards.
 
+// Demo mode: the API hands the SMS code back, so the test can "read the SMS".
+process.env.SMS_DEMO_SHOW_CODES = "true";
+
 import assert from "assert/strict";
 import { AddressInfo } from "net";
 import { app } from "../app";
@@ -64,8 +67,11 @@ async function main() {
     });
 
     await check("sign-up can't create staff: a 'support' role sent by the browser is ignored", async () => {
-      const r = await call("", "POST", "/api/auth/register", {
-        phone: "0719990001", displayName: "Sneaky", passphrase: "trying to become staff", role: "support",
+      // A random number, so reruns don't find the account from last time.
+      const phone = "079" + String(Date.now()).slice(-7);
+      const sent = await call("", "POST", "/api/auth/code", { phone });
+      const r = await call("", "POST", "/api/auth/code/verify", {
+        phone, code: sent.data.demoCode, displayName: "Sneaky", role: "support",
       });
       assert.equal(r.status, 201);
       assert.equal(r.data.user.role, "consumer");

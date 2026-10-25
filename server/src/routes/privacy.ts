@@ -4,7 +4,9 @@ import rateLimit from "express-rate-limit";
 import { pool } from "../db";
 import { requireAuth } from "../auth/session";
 import { audit } from "../lib/audit";
+import { RESEND_AFTER_SECONDS, checkCode, issueCode, useCode } from "../lib/phoneCodes";
 import { exportFor, holdsFor } from "../lib/privacy";
+import { SMS_DEMO_SHOW_CODES } from "../lib/sms";
 
 // A person's own privacy rights (spec FR-20, UC-16). Mounted at /api/privacy.
 // Staff accounts are managed by an administrator, not through these routes.
@@ -17,28 +19,57 @@ privacyRouter.use(requireAuth, (req, res, next) => {
 const LANGUAGES = ["en", "tn", "af"];
 const DUE_DAYS = 30; // spec NFR-06: target resolution within 30 days
 
-// Passphrase checks here are the "proportionate verification" for sensitive requests:
-// someone who picks up an unlocked phone can't download or close the account.
+// Confirming it's really you is the "proportionate verification" for sensitive requests: someone
+// who picks up an unlocked phone can't download or close the account. You confirm with a fresh SMS
+// code (POST /confirm-code first); demo accounts that have a passphrase may use that instead.
 const verifyLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 5,
   keyGenerator: (req) => `privacy-${req.user?.id}`,
-  skipSuccessfulRequests: true, // only failed attempts (e.g. a wrong passphrase) count
+  skipSuccessfulRequests: true, // only failed attempts (e.g. a wrong code) count
   standardHeaders: "draft-8",
   legacyHeaders: false,
   message: { error: "Too many attempts. Please wait 15 minutes and try again." },
 });
 
-async function passphraseOk(req: Request, res: Response): Promise<boolean> {
-  const given = typeof req.body?.passphrase === "string" ? req.body.passphrase : "";
-  const r = await pool.query("SELECT password_hash FROM users WHERE id = $1", [req.user!.id]);
-  if (!r.rows[0]?.password_hash || !(await bcrypt.compare(given, r.rows[0].password_hash))) {
+async function identityConfirmed(req: Request, res: Response): Promise<boolean> {
+  const fail = async (error: string, status = 401) => {
     await audit(pool, { actorId: req.user!.id, action: "privacy.verify", resourceType: "user", resourceId: req.user!.id, outcome: "failed" });
-    res.status(401).json({ error: "That passphrase isn't right.", fields: { passphrase: "Enter your passphrase." } });
+    res.status(status).json({ error, fields: { code: error } });
     return false;
+  };
+
+  if (typeof req.body?.passphrase === "string") {
+    const r = await pool.query("SELECT password_hash FROM users WHERE id = $1", [req.user!.id]);
+    if (!r.rows[0]?.password_hash || !(await bcrypt.compare(req.body.passphrase, r.rows[0].password_hash))) {
+      return fail("That passphrase isn't right.");
+    }
+    return true;
   }
-  return true;
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const check = await checkCode(client, req.user!.phone, "confirm", req.body?.code);
+    if (check.ok) await useCode(client, check.codeId);
+    await client.query("COMMIT"); // keeps a counted wrong try, or uses up the right code
+    return check.ok ? true : fail(check.error, check.status === 423 ? 423 : 401);
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
 }
+
+// POST /api/privacy/confirm-code - sends a confirmation code by SMS to the account's own number.
+privacyRouter.post("/confirm-code", async (req, res) => {
+  const issued = await issueCode(req.user!.phone, "confirm");
+  if (!issued.ok) {
+    return res.status(429).json({ error: `A code was sent a moment ago. Try again in ${Math.min(issued.waitSeconds, 3600)} seconds.` });
+  }
+  res.json({ sent: true, resendAfterSeconds: RESEND_AFTER_SECONDS, ...(SMS_DEMO_SHOW_CODES ? { demoCode: issued.code } : {}) });
+});
 
 // GET /api/privacy/requests - my privacy requests and what happened to them.
 privacyRouter.get("/requests", async (req, res) => {
@@ -61,10 +92,10 @@ privacyRouter.get("/requests", async (req, res) => {
   );
 });
 
-// POST /api/privacy/export { passphrase } - "download my data" (right of access).
+// POST /api/privacy/export { code } - "download my data" (right of access).
 // Answered straight away, and still tracked: a closed privacy_access case plus an audit event.
 privacyRouter.post("/export", verifyLimiter, async (req, res) => {
-  if (!(await passphraseOk(req, res))) return;
+  if (!(await identityConfirmed(req, res))) return;
   const data = await exportFor(pool, req.user!.id);
   const c = await pool.query(
     `INSERT INTO support_cases (case_type, requester_id, status, resolution, resolution_reason, closed_at)
@@ -104,7 +135,7 @@ privacyRouter.patch("/profile", async (req, res) => {
   res.json({ updated: cols });
 });
 
-// POST /api/privacy/requests { type: "correction", details } or { type: "deletion", passphrase }
+// POST /api/privacy/requests { type: "correction", details } or { type: "deletion", code }
 privacyRouter.post("/requests", verifyLimiter, async (req, res) => {
   const type = req.body?.type;
   let details: Record<string, unknown> = {};
@@ -115,7 +146,7 @@ privacyRouter.post("/requests", verifyLimiter, async (req, res) => {
     }
     details = { text };
   } else if (type === "deletion") {
-    if (!(await passphraseOk(req, res))) return;
+    if (!(await identityConfirmed(req, res))) return;
     // Shown to support straight away; checked again when they act.
     details = { holdsAtRequest: await holdsFor(pool, req.user!.id) };
   } else {

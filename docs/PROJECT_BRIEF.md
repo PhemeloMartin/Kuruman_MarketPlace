@@ -59,7 +59,9 @@ handover code valid **15 min**, max 5 wrong attempts.
 | Categories | Six AI labels (spec Table 34) | The catalogue uses the same six: fresh produce, pantry & groceries, clothing & accessories, household, crafts & gifts, personal care. |
 | Payfast credentials | — | The shared public sandbox merchant's passphrase no longer matches, so online payment stays off until the student's own free sandbox account is configured. Contract tests cover the verification logic. |
 | Order state names | `PENDING_SELLER`, … | Lower-case names in the DB: `pending_acceptance`, `awaiting_payment`, `confirmed`, `ready`, `out_for_delivery`, `completed`, `declined`, `cancelled`, `expired`. Same meaning. |
-| Password hashing | Argon2id | bcrypt (cost 10) for the MVP — well-known, no native build on Windows. Argon2id is the documented upgrade. |
+| Password hashing | Argon2id | bcrypt (cost 10) for the MVP — well-known, no native build on Windows. Argon2id is the documented upgrade. Only support staff (and seeded demo accounts) have a passphrase now. |
+| Sign-in | Phone + passphrase (spec 7.3) | **One-time SMS code** for customers, sellers and couriers (no password; inclusive for elderly users). Support keeps passphrase + authenticator app. Until an SMS gateway is connected, demo mode shows the code on screen (`SMS_DEMO_SHOW_CODES`). |
+| Session length | 30 min idle / 12 h (spec 9.2) | Support keeps 30 min / 12 h. Others: 14 days idle / 30 days, so a paid SMS isn't needed every visit; "Sign out" ends it at once on a shared phone. |
 | API prefix | `/api/v1/…` | `/api/…` for the MVP. |
 | Imagery | — | Local Kuruman imagery in decorative areas only (banner, login, empty states, About). Never behind prices, totals or buttons. Product photos are the seller's own. Lawfully licensed, WebP ~100–200 KB. |
 
@@ -140,7 +142,7 @@ KPI check against the spec's worked example: `npm run test:kpi` in `server` (cha
 | 071 000 0009 | Tumelo | entrepreneur (building materials, animal feed, livestock) |
 | 071 000 0010 | Dineo | entrepreneur (street food caravan) |
 
-Support accounts also need an authenticator app (Google/Microsoft Authenticator) the first time they
+Everyone except support signs in with an SMS code (shown on screen in demo mode). Support accounts use **Support staff sign-in** with the passphrase, and also need an authenticator app (Google/Microsoft Authenticator) the first time they
 open the console: scan the QR code shown, then enter the 6-digit code.
 
 ---
@@ -225,4 +227,8 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       "Shop by market" tiles (10 markets, incl. street food, building materials, livestock, animal feed) with item
       counts, results view in the address bar (?market=…&q=…, shareable), wide layout on laptops; one account for
       everyone, sign-in takes each role to its own area
+- [x] Sign-in with an SMS code (like WhatsApp): phone -> 6-digit code -> name for new numbers; only a hash of the code,
+      10 min, 5 tries, 1 a minute / 5 an hour per number; same answers whether or not a number is registered;
+      support can't use SMS alone; privacy download/closure confirmed with a fresh code; demo mode shows the code;
+      sessions 30 days for members, 30 min idle for staff; `npm run test:signin` (12 checks)
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

@@ -16,7 +16,8 @@
     "test:refunds": "tsx src/scripts/testRefunds.ts",
     "test:operations": "tsx src/scripts/testOperations.ts",
     "test:privacy": "tsx src/scripts/testPrivacy.ts",
-    "test:notifications": "tsx src/scripts/testNotifications.ts"
+    "test:notifications": "tsx src/scripts/testNotifications.ts",
+    "test:signin": "tsx src/scripts/testSignIn.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

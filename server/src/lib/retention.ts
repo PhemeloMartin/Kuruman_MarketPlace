@@ -19,8 +19,13 @@ export async function runRetention() {
   );
   // Sessions that can no longer be used (expired, or idle past the limit): nothing to keep.
   const sessions = await pool.query(
-    `DELETE FROM sessions WHERE expires_at < now() - interval '1 day' OR last_seen_at < now() - interval '1 day'`
+    `DELETE FROM sessions s USING users u
+      WHERE u.id = s.user_id
+        AND (s.expires_at < now() - interval '1 day'
+             OR s.last_seen_at < now() - CASE WHEN u.role = 'support' THEN interval '1 day' ELSE interval '15 days' END)`
   );
+  // SMS codes live 10 minutes; after a day there is no reason to keep even their hashes.
+  await pool.query(`DELETE FROM phone_codes WHERE created_at < now() - interval '1 day'`);
   // AI suggestion outcomes: 30 days (spec 8.2).
   const ai = await pool.query(`DELETE FROM ai_suggestions WHERE created_at < now() - interval '30 days'`);
   // Notifications: 30 days (Table 38). Delivered outbox events are only a delivery log: 30 days too.

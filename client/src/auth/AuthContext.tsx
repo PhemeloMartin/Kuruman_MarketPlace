@@ -3,11 +3,23 @@ import type { ReactNode } from 'react'
 import { api } from '../lib/api'
 import type { User } from '../lib/types'
 
+// What the server answers when it has sent an SMS code. demoCode is only there in demo mode,
+// when no SMS gateway is connected: the code is shown on screen instead of being sent.
+export interface CodeSent {
+  resendAfterSeconds: number
+  demoCode?: string
+}
+
+export type VerifyResult = { user: User } | { needsName: true }
+
 interface AuthState {
   user: User | null
   loading: boolean
-  login: (phone: string, passphrase: string) => Promise<User>
-  register: (input: { phone: string; displayName: string; passphrase: string }) => Promise<void>
+  requestCode: (phone: string) => Promise<CodeSent>
+  // Signs in with the SMS code. A number without an account answers { needsName: true }: call
+  // again with the same code and a name to create the account.
+  verifyCode: (phone: string, code: string, displayName?: string) => Promise<VerifyResult>
+  staffLogin: (phone: string, passphrase: string) => Promise<User>
   logout: () => Promise<void>
   refresh: () => Promise<void>
 }
@@ -27,15 +39,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false))
   }, [])
 
-  const login = useCallback(async (phone: string, passphrase: string) => {
+  const requestCode = useCallback(
+    (phone: string) => api<CodeSent>('/auth/code', { method: 'POST', body: { phone } }),
+    [],
+  )
+
+  const verifyCode = useCallback(async (phone: string, code: string, displayName?: string) => {
+    const r = await api<VerifyResult>('/auth/code/verify', { method: 'POST', body: { phone, code, displayName } })
+    if ('user' in r) setUser(r.user)
+    return r
+  }, [])
+
+  // Support staff: passphrase first, then the authenticator-app code in the console.
+  const staffLogin = useCallback(async (phone: string, passphrase: string) => {
     const r = await api<{ user: User }>('/auth/login', { method: 'POST', body: { phone, passphrase } })
     setUser(r.user)
     return r.user
-  }, [])
-
-  const register = useCallback(async (input: { phone: string; displayName: string; passphrase: string }) => {
-    const r = await api<{ user: User }>('/auth/register', { method: 'POST', body: input })
-    setUser(r.user)
   }, [])
 
   // Asks the server again - e.g. after support approves you as a seller, or after the
@@ -51,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refresh }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, requestCode, verifyCode, staffLogin, logout, refresh }}>{children}</AuthContext.Provider>
   )
 }
 

@@ -59,6 +59,7 @@ export async function closeAccount(client: PoolClient, userId: number, staffId: 
   await client.query("DELETE FROM sessions WHERE user_id = $1", [userId]);
   await client.query("DELETE FROM notifications WHERE user_id = $1", [userId]);
   // 2. Login details and name: erased; the row stays as a neutral surrogate for old records.
+  await client.query("DELETE FROM phone_codes WHERE phone = (SELECT phone FROM users WHERE id = $1)", [userId]);
   await client.query(
     `UPDATE users SET phone = NULL, password_hash = NULL, display_name = 'Closed account', is_active = FALSE,
             totp_secret_enc = NULL, totp_pending_enc = NULL, closed_at = now(), updated_at = now()
@@ -166,7 +167,9 @@ export async function exportFor(db: Db, userId: number) {
       language: u.preferred_language,
       createdAt: u.created_at,
       updatedAt: u.updated_at,
-      passphrase: "Stored only as a one-way hash, which can't be turned back into your passphrase.",
+      signIn:
+        "You sign in with one-time SMS codes. We keep only a one-way hash of each code, for one day. " +
+        "No passphrase is stored for your account (except demo accounts, where it is a one-way hash).",
     },
     signedInSessions: sessions.rows,
     ordersYouPlaced: orders.rows,

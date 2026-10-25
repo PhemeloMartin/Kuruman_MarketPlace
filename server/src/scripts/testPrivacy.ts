@@ -6,10 +6,14 @@
 // Starts its own copy of the API on a spare port. It creates a test account and orders:
 // run `npm run db:setup` and `npm run db:seed` afterwards.
 
+// Demo mode: the API hands the SMS code back, so the test can "read the SMS".
+process.env.SMS_DEMO_SHOW_CODES = "true";
+
 import assert from "assert/strict";
 import { AddressInfo } from "net";
 import { app } from "../app";
 import { pool } from "../db";
+import { normaliseSaPhone } from "../lib/phone";
 import { runRetention } from "../lib/retention";
 import { currentStep, totpCode } from "../lib/totp";
 
@@ -32,6 +36,24 @@ async function login(phone: string, passphrase = PASSPHRASE): Promise<string> {
   const r = await call("", "POST", "/api/auth/login", { phone, passphrase });
   assert.equal(r.status, 200, `login ${phone}`);
   return r.setCookie!.split(";")[0];
+}
+
+// Signs up the way the app does: ask for an SMS code, then send it back with your name.
+async function signUp(phone: string, displayName: string) {
+  const sent = await call("", "POST", "/api/auth/code", { phone });
+  assert.equal(sent.status, 200, "code sent");
+  const r = await call("", "POST", "/api/auth/code/verify", { phone, code: sent.data.demoCode, displayName });
+  assert.equal(r.status, 201, "account created");
+  return r;
+}
+
+// A fresh confirmation code for a privacy request. Codes can only be re-sent after a minute, so the
+// test first makes the earlier codes look older instead of waiting.
+async function confirmCode(cookie: string, phone: string): Promise<string> {
+  await pool.query("UPDATE phone_codes SET created_at = created_at - interval '2 minutes' WHERE phone = $1", [normaliseSaPhone(phone)]);
+  const r = await call(cookie, "POST", "/api/privacy/confirm-code");
+  assert.equal(r.status, 200, "confirmation code sent");
+  return r.data.demoCode;
 }
 
 async function staffLogin(phone: string): Promise<string> {
@@ -62,8 +84,7 @@ async function main() {
     const support = await staffLogin("0710000004");
     const approvalsOnly = await staffLogin("0710000007");
 
-    const reg = await call("", "POST", "/api/auth/register", { phone, displayName: "Privacy Tester", passphrase: "a long test passphrase" });
-    assert.equal(reg.status, 201);
+    const reg = await signUp(phone, "Privacy Tester");
     const tester = reg.setCookie!.split(";")[0];
     const testerId = reg.data.user.id;
 
@@ -73,12 +94,13 @@ async function main() {
     }, { "Idempotency-Key": `pv-${run}-1` });
     assert.equal(order.status, 201);
 
-    await check("downloading your data needs your passphrase again", async () => {
-      assert.equal((await call(tester, "POST", "/api/privacy/export", { passphrase: "wrong passphrase here" })).status, 401);
+    await check("downloading your data needs a fresh SMS code", async () => {
+      await confirmCode(tester, phone);
+      assert.equal((await call(tester, "POST", "/api/privacy/export", { code: "12345x" })).status, 401);
     });
 
     await check("the download holds your own data - and nobody else's", async () => {
-      const mine = await call(tester, "POST", "/api/privacy/export", { passphrase: "a long test passphrase" });
+      const mine = await call(tester, "POST", "/api/privacy/export", { code: await confirmCode(tester, phone) });
       assert.equal(mine.status, 200);
       assert.equal(mine.data.account.phone.slice(-7), phone.slice(-7));
       assert.equal(mine.data.ordersYouPlaced.length, 1);
@@ -119,9 +141,11 @@ async function main() {
     // A waiting application is not a hold - it's simply withdrawn when the account closes.
     assert.equal((await call(tester, "POST", "/api/applications", { type: "courier", vehicleType: "bicycle", area: "Seoding" })).status, 201);
 
-    await check("closing your account needs your passphrase", async () => {
-      assert.equal((await call(tester, "POST", "/api/privacy/requests", { type: "deletion", passphrase: "nope nope nope" })).status, 401);
-      assert.equal((await call(tester, "POST", "/api/privacy/requests", { type: "deletion", passphrase: "a long test passphrase" })).status, 201);
+    await check("closing your account needs a fresh SMS code", async () => {
+      assert.equal((await call(tester, "POST", "/api/privacy/requests", { type: "deletion", code: "000000x" })).status, 401);
+      const code = await confirmCode(tester, phone);
+      assert.equal((await call(tester, "POST", "/api/privacy/requests", { type: "deletion", code })).status, 201);
+      assert.equal((await call(tester, "POST", "/api/privacy/export", { code })).status, 401, "a code works only once");
     });
 
     const deletionCase = async () =>
@@ -146,7 +170,7 @@ async function main() {
 
     await check("once nothing is pending, the account is closed: login details and addresses erased", async () => {
       await call(tester, "POST", `/api/orders/${order.data.id}/cancel`);
-      await call(tester, "POST", "/api/privacy/requests", { type: "deletion", passphrase: "a long test passphrase" });
+      await call(tester, "POST", "/api/privacy/requests", { type: "deletion", code: await confirmCode(tester, phone) });
       const c = await deletionCase();
       assert.deepEqual(c.holds, []);
       assert.equal((await call(support, "POST", `/api/support/privacy/cases/${c.id}/close-account`, { reason: "Requested by the account holder." })).status, 200);
@@ -162,10 +186,10 @@ async function main() {
       assert.deepEqual(a.details, { erased: true });
     });
 
-    await check("the old session stops working and the passphrase no longer signs in", async () => {
+    await check("the old session stops working, and the account's SMS codes are deleted", async () => {
       assert.equal((await call(tester, "GET", "/api/auth/me")).data.user, null);
-      const r = await call("", "POST", "/api/auth/login", { phone, passphrase: "a long test passphrase" });
-      assert.equal(r.status, 401);
+      const codes = await pool.query("SELECT 1 FROM phone_codes WHERE phone = $1", [normaliseSaPhone(phone)]);
+      assert.equal(codes.rowCount, 0);
     });
 
     await check("the order itself is kept for the seller's records, under 'Closed account'", async () => {
@@ -174,8 +198,9 @@ async function main() {
       assert.equal(o.customerName, "Closed account");
     });
 
-    await check("the phone number is free to register again", async () => {
-      assert.equal((await call("", "POST", "/api/auth/register", { phone, displayName: "New Person", passphrase: "another long passphrase" })).status, 201);
+    await check("the phone number is free to sign up again, as a new account", async () => {
+      const again = await signUp(phone, "New Person");
+      assert.notEqual(again.data.user.id, testerId);
     });
 
     await check("retention: delivery addresses go 30 days after an order ends - unless a case holds them", async () => {

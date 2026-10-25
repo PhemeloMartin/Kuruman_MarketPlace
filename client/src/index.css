@@ -1598,3 +1598,23 @@ body {
     padding: 32px;
   }
 }
+
+/* ---------- Sign in with an SMS code ---------- */
+.lead {
+  margin: -6px 0 16px;
+  color: var(--muted);
+}
+
+/* Big, spaced digits: easy to read back from the SMS and to check before continuing. */
+.input-wrap .code-input {
+  font-size: 1.6rem;
+  letter-spacing: 0.4em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.demo-code {
+  font-size: 1.1rem;
+  letter-spacing: 0.15em;
+  color: var(--primary-dark);
+}

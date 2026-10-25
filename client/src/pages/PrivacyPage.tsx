@@ -31,8 +31,8 @@ export function PrivacyPage() {
           for. Required: without them you can’t order.
         </li>
         <li>
-          <strong>Your passphrase</strong> – stored only in scrambled form (a one-way hash). Nobody, including us, can
-          read it.
+          <strong>Sign-in codes</strong> – you sign in with a one-time code we send by SMS. We keep only a scrambled
+          form of each code (a one-way hash), and delete it after a day.
         </li>
         <li>
           <strong>Delivery address and notes</strong> – only for delivery orders, to get the order to you.
@@ -76,8 +76,7 @@ export function PrivacyPage() {
           <strong>Correct it</strong> – change your name on your Profile, or ask support to correct anything else.
         </li>
         <li>
-          <strong>Close your account</strong> – ask from your Profile. We remove your phone number, passphrase, name and
-          addresses. Records of orders and payments stay, marked “Closed account”, because sellers and couriers need
+          <strong>Close your account</strong> – ask from your Profile. We remove your phone number, name and addresses. Records of orders and payments stay, marked “Closed account”, because sellers and couriers need
           them for their own records and the law may require them. If an order or refund is still in progress, we’ll
           tell you and close the account once it’s finished.
         </li>

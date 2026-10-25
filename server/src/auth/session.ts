@@ -26,26 +26,34 @@ declare global {
 }
 
 export const SESSION_COOKIE = "kmp_session";
-const IDLE_LIMIT_MINUTES = 30; // spec 9.2: log out after 30 min without activity
-const ABSOLUTE_LIMIT_HOURS = 12; // ...and always after 12 hours
+// How long a sign-in lasts.
+// Support staff: spec 9.2 - signed out after 30 minutes without activity, and always after 12 hours.
+// Everyone else signs in with an SMS code, which costs money and effort each time, so they stay
+// signed in on their own phone: up to 30 days, or 14 days without using the app. (Agreed decision,
+// docs/PROJECT_BRIEF.md section 3. "Sign out" on the Profile page ends it at once, e.g. on a shared phone.)
+const STAFF_IDLE_MINUTES = 30;
+const STAFF_ABSOLUTE_HOURS = 12;
+const MEMBER_IDLE_MINUTES = 14 * 24 * 60;
+const MEMBER_ABSOLUTE_HOURS = 30 * 24;
 
 function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
 // Creates a session row and sets the cookie. The raw token only ever lives in the cookie.
-export async function startSession(res: Response, userId: number): Promise<void> {
+export async function startSession(res: Response, userId: number, role: Role): Promise<void> {
   const token = crypto.randomBytes(32).toString("base64url");
+  const hours = role === "support" ? STAFF_ABSOLUTE_HOURS : MEMBER_ABSOLUTE_HOURS;
   await pool.query(
     `INSERT INTO sessions (user_id, token_hash, expires_at)
      VALUES ($1, $2, now() + make_interval(hours => $3))`,
-    [userId, hashToken(token), ABSOLUTE_LIMIT_HOURS]
+    [userId, hashToken(token), hours]
   );
   res.cookie(SESSION_COOKIE, token, {
     httpOnly: true, // JavaScript in the page can't read it, so an XSS bug can't steal it
     sameSite: "lax", // not sent on cross-site form posts (CSRF protection)
     secure: process.env.NODE_ENV === "production", // HTTPS-only once hosted
-    maxAge: ABSOLUTE_LIMIT_HOURS * 60 * 60 * 1000,
+    maxAge: hours * 60 * 60 * 1000,
     path: "/",
   });
 }
@@ -70,9 +78,9 @@ export async function loadSession(req: Request, _res: Response, next: NextFuncti
        JOIN users u ON u.id = s.user_id
       WHERE s.token_hash = $1
         AND s.expires_at > now()
-        AND s.last_seen_at > now() - make_interval(mins => $2)
+        AND s.last_seen_at > now() - make_interval(mins => CASE WHEN u.role = 'support' THEN $2::int ELSE $3::int END)
         AND u.is_active`,
-    [tokenHash, IDLE_LIMIT_MINUTES]
+    [tokenHash, STAFF_IDLE_MINUTES, MEMBER_IDLE_MINUTES]
   );
   if (r.rowCount === 0) return next();
 

@@ -336,21 +336,16 @@ function SellSteps() {
     <>
       <p className="hero-text">Free to list. Use the same account you shop with: no second account, no separate sign-in.</p>
       <ol className="steps">
-        <li data-done={step > 1}>Create an account with your phone number</li>
+        <li data-done={step > 1}>Join with your phone number: we SMS you a code</li>
         <li data-done={step > 2}>Apply to sell: your shop name, area and what you sell</li>
         <li data-done={step > 2}>Support checks it, and “My shop” appears in your menu</li>
       </ol>
       {!user ? (
         <>
-          <Link to="/register" state={{ from: '/profile#sell' }} className="btn btn-primary btn-block">
-            Create an account
+          <Link to="/signin" state={{ from: '/profile#sell' }} className="btn btn-primary btn-block">
+            Sign in or join with your phone
           </Link>
-          <p className="hero-small">
-            Already have one?{' '}
-            <Link to="/signin" state={{ from: '/profile#sell' }}>
-              Sign in
-            </Link>
-          </p>
+          <p className="hero-small">We SMS you a code. No password needed.</p>
         </>
       ) : user.role === 'entrepreneur' ? (
         <Link to="/seller" className="btn btn-primary btn-block">

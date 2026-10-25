@@ -52,7 +52,8 @@ python service.py
 | B | Seller Kgomotso | 071 000 0002 | Private / InPrivate window |
 | C | Courier Pieter | 071 000 0003 | A different browser (e.g. Chrome if A is Edge), or your phone |
 
-Passphrase for all: `Kuruman Oasis 2026`
+Sign in with the phone number: the site shows the SMS code on screen (**demo mode**, no SMS gateway yet).
+Support accounts use **Support staff sign-in** with the passphrase `Kuruman Oasis 2026` (or your private SEED_PASSPHRASE).
 
 Tip: press **F12 → device toolbar** (phone icon) and pick a phone size, so it looks like the real thing.
 
@@ -211,9 +212,9 @@ Authenticator on your phone (delete the old "KurumanMarketPlace" entry in the ap
    stock** or **Can’t resell**. **Say:** "Returned goods are only restocked after the seller inspects them. If the
    customer had paid online, a refund case would open automatically." (FR-15, UC-13, BR-10)
 8. **Privacy** (2 minutes): as Boitumelo (071 000 0008) → **Profile** → **How we use your information**, then
-   **Download my information** (asks for the passphrase again) and **Close my account**. In the console →
+   **Download my information** (asks for a fresh SMS code) and **Close my account**. In the console →
    **Privacy** → **Close account** with a reason. Boitumelo is signed out.
-   **Say:** "Closing an account isn't deleting every row. Phone, passphrase, name and addresses are erased, but orders
+   **Say:** "Closing an account isn't deleting every row. Phone, name and addresses are erased, but orders
    and payments stay as 'Closed account', because sellers need them and the law may require them. If an order or
    refund were still in progress, the server would refuse and support explains the hold." (FR-20, BR-16, TC-20)
 9. Optional: sign in as **Sipho (071 000 0007)**, approvals only — there's no Audit log tab, and the server
@@ -252,8 +253,8 @@ once; duplicate Payfast notification → one message; failed after 5 tries → v
 ```
 npm run test:privacy
 ```
-→ 15 checks: passphrase needed, download holds only your own data, holds block closure, closure erases contact
-details but keeps orders, the number can register again, addresses removed after 30 days: **TC-20: 15 checks PASSED**.
+→ 15 checks: a fresh SMS code needed, download holds only your own data, holds block closure, closure erases contact
+details but keeps orders, the number can sign up again, addresses removed after 30 days: **TC-20: 15 checks PASSED**.
 
 ```
 npm run test:operations
@@ -301,7 +302,8 @@ refunds → exactly one accepted, no "refunded" without Payfast's reference, cas
 | How do you stop two people buying the last item? | Row locks (`SELECT … FOR UPDATE`) in product-id order inside one transaction, plus a database CHECK that reserved stock can't exceed stock. I tested two simultaneous orders — one wins. |
 | What if the customer taps "Send" twice? | Every checkout has an idempotency key; the same key returns the same order, a different cart with the same key is refused. |
 | Can a customer make themselves a seller? | No. Registration always creates a consumer; the role comes from the database via the session, never from the browser. |
-| How are logins kept safe? | Passphrases hashed with bcrypt; a random session token in an HttpOnly, SameSite cookie; only its SHA-256 hash is stored; 30-min idle and 12-hour limits; rate-limited login; the same error for a wrong number or wrong passphrase. |
+| How are logins kept safe? | No passwords for customers, sellers and couriers: a one-time 6-digit SMS code (only its hash stored, 10 minutes, 5 tries, one new code a minute and 5 an hour per number). Support staff use a bcrypt-hashed passphrase plus an authenticator app. A random session token in an HttpOnly, SameSite cookie, only its SHA-256 hash stored; staff signed out after 30 idle minutes, others stay signed in on their phone up to 30 days. `npm run test:signin` (12 checks). |
+| Why SMS codes instead of passwords? | Inclusivity: many users are elderly or new to smartphones. Nothing to remember or forget, the same pattern as WhatsApp and banking apps, and the phone number is already the account. |
 | Why not trust the Payfast return page? | Anyone can visit a return URL. Only the verified server-to-server notification counts. |
 | Is the AI deciding anything? | No. It only suggests; the seller confirms every time, and we record whether they accepted or overrode it. |
 | What happens offline? | Browse the saved catalogue and build a cart draft; anything that changes money, stock or status needs a connection. |

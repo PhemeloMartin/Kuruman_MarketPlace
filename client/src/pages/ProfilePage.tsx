@@ -46,11 +46,11 @@ export function ProfilePage() {
         </p>
         <div style={{ display: 'grid', gap: 10, marginTop: 16 }}>
           <Link to="/signin" className="btn btn-primary">
-            Sign in
+            Sign in or join
           </Link>
-          <Link to="/register" className="btn btn-outline">
-            Create an account
-          </Link>
+          <p className="fine-print" style={{ margin: 0, textAlign: 'center' }}>
+            Just your phone number: we SMS you a code.
+          </p>
         </div>
         <p className="version-label">{VERSION_LABEL}</p>
       </main>

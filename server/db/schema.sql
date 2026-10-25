@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS payment_events CASCADE;
 DROP TABLE IF EXISTS ai_suggestions CASCADE;
 DROP TABLE IF EXISTS cash_receipts CASCADE;
 DROP TABLE IF EXISTS sessions CASCADE;
+DROP TABLE IF EXISTS phone_codes CASCADE;
 DROP TABLE IF EXISTS order_status_history CASCADE;
 DROP TABLE IF EXISTS payments CASCADE;
 DROP TABLE IF EXISTS deliveries CASCADE;
@@ -31,6 +32,8 @@ CREATE TABLE users (
   id                 BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   -- phone and password_hash are erased when an account is closed (spec BR-16, Table 38);
   -- the row itself stays so old orders and payments still point at "a closed account".
+  -- Customers, sellers and couriers sign in with a one-time SMS code (phone_codes), so they have
+  -- no password_hash. Support staff sign in with a passphrase plus an authenticator app.
   phone              VARCHAR(15)  UNIQUE,
   display_name       VARCHAR(80)  NOT NULL,
   password_hash      TEXT,
@@ -56,8 +59,10 @@ CREATE TABLE users (
   updated_at         TIMESTAMPTZ  NOT NULL DEFAULT now(),
   closed_at          TIMESTAMPTZ,                 -- set when the account is closed at the person's request
   CHECK (role = 'support' OR staff_scopes = '{}'),
-  -- An open account must have its login details; a closed one has them erased.
-  CHECK (closed_at IS NOT NULL OR (phone IS NOT NULL AND password_hash IS NOT NULL))
+  -- An open account must have its phone number (that's how people sign in); a closed one has it
+  -- erased. Support staff must also have a passphrase.
+  CHECK (closed_at IS NOT NULL OR phone IS NOT NULL),
+  CHECK (closed_at IS NOT NULL OR role <> 'support' OR password_hash IS NOT NULL)
 );
 
 -- Login sessions. The browser only holds a random token in an HttpOnly cookie;
@@ -72,6 +77,21 @@ CREATE TABLE sessions (
   mfa_verified_at TIMESTAMPTZ                   -- support: when THIS session passed the second step
 );
 CREATE INDEX idx_sessions_user ON sessions(user_id);
+
+-- One-time codes sent by SMS (lib/phoneCodes.ts): to sign in without a passphrase, and to confirm
+-- sensitive actions such as "download my data". Only a hash of the code is stored. A code is used
+-- once, expires after 10 minutes and stops working after 5 wrong tries. Deleted after a day.
+CREATE TABLE phone_codes (
+  id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  phone           VARCHAR(15) NOT NULL,
+  purpose         VARCHAR(20) NOT NULL CHECK (purpose IN ('sign_in', 'confirm')),
+  code_hash       CHAR(64)    NOT NULL,
+  failed_attempts INTEGER     NOT NULL DEFAULT 0,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at      TIMESTAMPTZ NOT NULL,
+  used_at         TIMESTAMPTZ
+);
+CREATE INDEX idx_phone_codes_phone ON phone_codes(phone, purpose, created_at);
 
 -- One business per entrepreneur for the MVP.
 CREATE TABLE businesses (
