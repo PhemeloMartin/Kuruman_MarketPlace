@@ -161,6 +161,30 @@ The domain is registered at **domains.co.za** (bought 25/10/2026, renews every y
 
 Database changes no longer need a reset: the server applies `server/db/migrations.sql` every time it starts.
 
+## 6c. Real SMS with BulkSMS
+
+1. Sign up at **https://www.bulksms.com** (South Africa) and buy the smallest credit bundle.
+2. **Settings → API Tokens → Create Token**. Copy the Token ID and Token Secret (shown once).
+3. Render → `kurumanmarketplace` → **Environment**: `BULKSMS_TOKEN_ID` and `BULKSMS_TOKEN_SECRET` → Save.
+4. Replies (market stalls answering 1 / 2 / the code): in BulkSMS set up a **webhook** for received messages with the
+   address `https://kurumanmarketplace.co.za/api/sms/inbound?token=` followed by the value of `SMS_INBOUND_TOKEN`
+   (Render → Environment → the eye icon). Replies to your BulkSMS messages then reach the site.
+5. The demo accounts' made-up numbers (071 000 0xxx) never get real SMS; real numbers do. Keep
+   `SMS_DEMO_SHOW_CODES=true` for the presentation so demo sign-ins still show their code on screen.
+
+## 6d. Free calls with Twilio (trial is free)
+
+1. Sign up at **https://www.twilio.com** (free trial). Verify your own phone number, and in **Phone Numbers → Verified
+   Caller IDs** add every phone you'll use in the demo - a trial account can only call verified numbers.
+2. **Phone Numbers → Buy a number**: the trial gives one free. Its number (e.g. `+1...`) is `TWILIO_CALLER_ID`.
+3. **Voice → Settings → Geo permissions**: tick **South Africa**.
+4. **Account → API keys → Create API key** (Standard): copy the SID (`TWILIO_API_KEY_SID`) and secret (`TWILIO_API_KEY_SECRET`).
+5. **Voice → TwiML Apps → Create**: name it KurumanMarketPlace, **Voice request URL**
+   `https://kurumanmarketplace.co.za/api/calls/twiml` (POST). Its SID is `TWILIO_TWIML_APP_SID`.
+6. From the Console home: **Account SID** (`TWILIO_ACCOUNT_SID`) and **Auth Token** (`TWILIO_AUTH_TOKEN`).
+7. Put all six into Render → `kurumanmarketplace` → **Environment** → Save. The "Call free" buttons appear by themselves.
+   `PUBLIC_APP_URL` must be exactly `https://kurumanmarketplace.co.za` (Twilio's signature is checked against it).
+
 ## 7. Things to know about the free plans
 
 - **Render free services sleep** after 15 minutes without visitors; the next visit takes about a minute to wake

@@ -231,6 +231,15 @@ export function HomePage() {
             {productList}
           </section>
 
+          <Link to="/directory" className="directory-band">
+            <span aria-hidden="true">🛠</span>
+            <span>
+              <strong>Need a plumber, hairdresser or mechanic?</strong>
+              <br />
+              <span className="product-meta">Kuruman Business Directory: local services you can call.</span>
+            </span>
+          </Link>
+
           <SellBand />
           <HomeFooter />
         </main>
@@ -450,6 +459,7 @@ function HomeFooter() {
       <nav aria-label="More">
         <Link to="/?market=all">All products</Link>
         <Link to="/profile#sell">Sell with us</Link>
+        <Link to="/directory">Business Directory</Link>
         <Link to="/orders">My orders</Link>
         <Link to="/privacy">Privacy</Link>
       </nav>

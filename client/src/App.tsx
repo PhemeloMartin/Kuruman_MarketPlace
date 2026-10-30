@@ -8,6 +8,7 @@ import { HomePage } from './pages/HomePage'
 import { ProductPage } from './pages/ProductPage'
 import { ShopPage } from './pages/ShopPage'
 import { DemoPhonePage } from './pages/DemoPhonePage'
+import { DirectoryPage } from './pages/DirectoryPage'
 import { SellerShopPage } from './pages/seller/SellerShopPage'
 import { SellerReviewsPage } from './pages/seller/SellerReviewsPage'
 import { OrdersPage } from './pages/OrdersPage'
@@ -33,6 +34,7 @@ export default function App() {
                 <Route path="product/:id" element={<ProductPage />} />
                 <Route path="shop/:id" element={<ShopPage />} />
                 <Route path="demo/phone" element={<DemoPhonePage />} />
+                <Route path="directory" element={<DirectoryPage />} />
                 <Route path="cart" element={<CartPage />} />
                 <Route path="orders" element={<OrdersPage />} />
                 <Route path="profile" element={<ProfilePage />} />

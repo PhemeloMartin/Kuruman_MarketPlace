@@ -277,4 +277,14 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       product, 24% lower MAE than the best baseline on a synthetic backtest) as "Next 7 days" on the seller dashboard;
       multilingual search = hand-made glossary + pg_trgm (not ML). Background AI worker; site works if the AI is down;
       `npm run test:ai` (9 checks, fake AI service)
+- [x] Voice notes: sellers record up to 60 s per product in the browser (any language); audio checked by its first
+      bytes; customers play it on the product page
+- [x] Kuruman Business Directory (/directory): local services with Call/WhatsApp; anyone signed in suggests a listing
+      with the owner's consent; support approves/rejects with a reason (audit log); demo listings
+- [x] WhatsApp Channel helper: support's "WhatsApp post" tab builds the weekly post (Entrepreneur of the Month, new
+      shops, popular products, stalls, new services), every line linking to the site
+- [x] Real SMS through BulkSMS (token in Render; demo numbers never texted; replies via webhook, accepted as a list)
+- [x] Free calls over data (Twilio): server decides who may call (order participants; shops that switch calls on),
+      the browser never sees a number, Twilio's signature checked, each call id used once, 5-minute and 10-a-day
+      limits, calls kept 30 days; `npm run test:extras` (12 checks)
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

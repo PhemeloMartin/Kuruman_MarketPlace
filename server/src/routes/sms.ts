@@ -17,9 +17,13 @@ smsRouter.post("/sms/inbound", async (req, res) => {
   const given = typeof req.query.token === "string" ? req.query.token : "";
   const ok = expected.length >= 16 && given.length === expected.length && crypto.timingSafeEqual(Buffer.from(given), Buffer.from(expected));
   if (!ok) return res.status(403).json({ error: "Not allowed." });
-  const from = String(req.body?.from ?? req.body?.sourceAddress ?? req.body?.msisdn ?? "");
-  const text = String(req.body?.text ?? req.body?.message ?? req.body?.body ?? "");
-  await handleInboundSms(from, text);
+  // BulkSMS sends a list of messages; other gateways send one. Field names differ a little too.
+  const messages = Array.isArray(req.body) ? req.body : [req.body ?? {}];
+  for (const m of messages.slice(0, 20)) {
+    const from = String(m?.from ?? m?.sourceAddress ?? m?.msisdn ?? "");
+    const text = String(m?.body ?? m?.text ?? m?.message ?? "");
+    if (from && text) await handleInboundSms(from, text);
+  }
   res.json({ ok: true });
 });
 

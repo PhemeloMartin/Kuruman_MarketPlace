@@ -22,6 +22,7 @@ interface MyShop {
   stallOpens: string | null
   stallCloses: string | null
   smsAlerts: boolean
+  callsEnabled: boolean
 }
 
 const WEEKDAYS = [
@@ -185,6 +186,29 @@ export function SellerShopPage() {
         <Link to="/demo/phone" className="link-btn">
           Try it on the demo phone
         </Link>
+      </section>
+
+      <section className="card">
+        <strong>Free calls from customers</strong>
+        <p className="fine-print" style={{ marginTop: 4 }}>
+          Shows a “Call free” button on your shop page. Customers call over their mobile data, so they need no airtime,
+          and your business phone rings. Neither of you sees the other’s number. Customers with an order can always
+          call you free.
+        </p>
+        <label className="choice">
+          <input
+            type="checkbox"
+            checked={shop.callsEnabled}
+            disabled={busy}
+            onChange={(e) =>
+              run(
+                () => api('/seller/shop', { method: 'PATCH', body: { callsEnabled: e.target.checked } }),
+                e.target.checked ? 'Free calls are on.' : 'Free calls are off.',
+              )
+            }
+          />
+          Let customers call my business phone free
+        </label>
       </section>
 
       <section className="card">

@@ -109,11 +109,15 @@ catalogueRouter.get("/products/:id", async (req, res) => {
   const photos = await pool.query("SELECT url FROM photos WHERE product_id = $1 ORDER BY sort_order, id", [id]);
   const product = toProduct(r.rows[0]);
   const wa = await pool.query("SELECT whatsapp_phone FROM businesses WHERE id = $1", [product.business.id]);
+  const voice = await pool.query("SELECT duration_seconds, created_at FROM voice_notes WHERE product_id = $1", [id]);
   res.json({
     ...product,
     photos: photos.rows.map((p) => p.url),
     businessRating: await ratingOf(product.business.id),
     businessWhatsapp: wa.rows[0].whatsapp_phone,
+    voiceNote: voice.rowCount
+      ? { url: `/api/voice/${id}?v=${new Date(voice.rows[0].created_at).getTime()}`, seconds: voice.rows[0].duration_seconds }
+      : null,
   });
 });
 
@@ -124,6 +128,7 @@ catalogueRouter.get("/shops/:id", async (req, res) => {
   if (!Number.isInteger(id) || id <= 0) return res.status(404).json({ error: "Shop not found." });
   const b = await pool.query(
     `SELECT id, name, description, area, cover_photo_url, whatsapp_phone, own_delivery_fee_cents, own_delivery_note, created_at,
+            calls_enabled,
             kind, stall_location, stall_days, to_char(stall_opens, 'HH24:MI') AS opens, to_char(stall_closes, 'HH24:MI') AS closes,
             -- "Here today": today (South African time) is a stall day and it's within opening hours.
             (kind = 'market_stall'
@@ -154,6 +159,7 @@ catalogueRouter.get("/shops/:id", async (req, res) => {
     whatsapp: shop.whatsapp_phone, // only set if the seller chose to show it
     ownDeliveryFeeCents: shop.own_delivery_fee_cents,
     ownDeliveryNote: shop.own_delivery_note,
+    callsEnabled: shop.calls_enabled,
     kind: shop.kind,
     stall:
       shop.kind === "market_stall"
@@ -170,6 +176,21 @@ catalogueRouter.get("/shops/:id", async (req, res) => {
 // GET /api/spotlight - this month's Entrepreneur of the Month (null if no shop qualifies yet).
 catalogueRouter.get("/spotlight", async (_req, res) => {
   res.json({ spotlight: await currentSpotlight() });
+});
+
+// GET /api/voice/:productId - the product's voice note. The ?v= part changes with each new
+// recording, so it can be cached like a photo.
+catalogueRouter.get("/voice/:productId", async (req, res) => {
+  const r = await pool.query(
+    `SELECT v.data, v.content_type FROM voice_notes v JOIN products p ON p.id = v.product_id
+      WHERE v.product_id = $1 AND p.is_active`,
+    [Number(req.params.productId)]
+  );
+  if (r.rowCount === 0) return res.status(404).end();
+  res.set("Cache-Control", "public, max-age=31536000, immutable");
+  res.set("Content-Type", r.rows[0].content_type);
+  res.set("X-Content-Type-Options", "nosniff");
+  res.send(r.rows[0].data);
 });
 
 // GET /api/photos/:id - a photo kept in our own database (when Cloudinary isn't configured).

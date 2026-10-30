@@ -51,6 +51,24 @@ services:
       # The SMS gateway calls /api/sms/inbound?token=... with replies; this is that secret token.
       - key: SMS_INBOUND_TOKEN
         generateValue: true
+      # Real SMS through BulkSMS (Settings -> API Tokens). Without them, SMS are only logged.
+      - key: BULKSMS_TOKEN_ID
+        sync: false
+      - key: BULKSMS_TOKEN_SECRET
+        sync: false
+      # Free calls over data (Twilio console). All six are needed; without them the "Call free" buttons stay hidden.
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_API_KEY_SID
+        sync: false
+      - key: TWILIO_API_KEY_SECRET
+        sync: false
+      - key: TWILIO_TWIML_APP_SID
+        sync: false
+      - key: TWILIO_CALLER_ID
+        sync: false
       - key: SMS_DEMO_SHOW_CODES
         value: "true"
       - key: PAYFAST_SANDBOX

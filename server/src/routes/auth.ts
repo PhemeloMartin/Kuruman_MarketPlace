@@ -72,7 +72,13 @@ authRouter.post("/code", codeLimiter, async (req, res) => {
       fields: { phone: "Enter a South African phone number." },
     });
   }
-  const issued = await issueCode(phone, "sign_in");
+  let issued: Awaited<ReturnType<typeof issueCode>>;
+  try {
+    issued = await issueCode(phone, "sign_in");
+  } catch (err: any) {
+    console.error("Sign-in SMS failed:", err?.message ?? err);
+    return res.status(503).json({ error: "We couldn't send the SMS right now. Please try again in a minute." });
+  }
   if (!issued.ok) {
     return res.status(429).json({
       error:

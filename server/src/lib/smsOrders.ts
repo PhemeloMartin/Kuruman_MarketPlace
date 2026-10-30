@@ -73,8 +73,15 @@ export async function handleInboundSms(fromRaw: string, textRaw: string): Promis
     } else {
       reply = { text: "KurumanMarketPlace: reply 1 to accept the newest order, 2 if sold out, or type the customer's 6-digit code when they collect." };
     }
-    await sendLoggedSms(client, from, reply.text, reply.orderId ?? null);
+    // Our answer is recorded with the change, then sent once it's saved: if the SMS gateway is down,
+    // the stall holder's "1" still counts (they also see the order on the site).
+    await client.query("INSERT INTO sms_messages (phone, direction, body, order_id) VALUES ($1, 'out', $2, $3)", [
+      from,
+      reply.text,
+      reply.orderId ?? null,
+    ]);
     await client.query("COMMIT");
+    await sendSms(from, reply.text).catch((err) => console.error("Reply SMS not sent:", err.message));
     return reply;
   } catch (err) {
     await client.query("ROLLBACK");

@@ -2451,3 +2451,83 @@ label.busy {
   display: grid;
   gap: 8px;
 }
+
+/* ---------- Voice notes ---------- */
+.voice-card {
+  margin: 12px 0;
+}
+
+.voice-card.listen {
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: #fdf6e6;
+  border: 1px solid #f2dfb6;
+}
+
+.voice-player {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.recording {
+  margin-top: 8px;
+  font-weight: 600;
+  color: #7a2f1b;
+}
+
+.rec-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: #c8432b;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rec-dot { animation: none; }
+}
+
+/* ---------- Business Directory and calls ---------- */
+.directory-card .share-row {
+  margin-bottom: 0;
+}
+
+.directory-band {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 28px;
+  padding: 16px 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+}
+
+.directory-band > span:first-child {
+  font-size: 1.8rem;
+}
+
+.call-box {
+  margin-top: 10px;
+}
+
+.call-live {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-tint);
+  color: var(--primary-dark);
+  font-weight: 600;
+}

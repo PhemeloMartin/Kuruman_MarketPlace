@@ -94,3 +94,14 @@ export async function deleteStoredImage(storage: string, storageKey: string | nu
     console.warn(`Photo ${storageKey} not removed from Cloudinary: ${err?.message ?? err}`);
   }
 }
+
+// Voice notes: the same "check the first bytes" rule as photos, for the audio formats phones record in.
+export const MAX_VOICE_BYTES = 1024 * 1024;
+
+export function detectAudioType(buf: Buffer): "audio/webm" | "audio/ogg" | "audio/mp4" | "audio/mpeg" | null {
+  if (buf.length > 4 && buf.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]))) return "audio/webm"; // Chrome, Android
+  if (buf.length > 4 && buf.toString("ascii", 0, 4) === "OggS") return "audio/ogg"; // Firefox
+  if (buf.length > 12 && buf.toString("ascii", 4, 8) === "ftyp") return "audio/mp4"; // iPhone Safari
+  if (buf.length > 3 && (buf.toString("ascii", 0, 3) === "ID3" || (buf[0] === 0xff && (buf[1] & 0xe0) === 0xe0))) return "audio/mpeg";
+  return null;
+}

@@ -123,3 +123,53 @@ CREATE INDEX IF NOT EXISTS idx_screenings_open ON screenings(flagged, status);
 -- Typo-tolerant search ("spinich" finds spinach): letter-trigram similarity on product names.
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE INDEX IF NOT EXISTS idx_products_name_trgm ON products USING gin (lower(name) gin_trgm_ops);
+
+-- 2026-10-30: voice notes. A seller can record up to a minute about a product, in any language -
+-- easier than typing for many sellers. One note per product; a new recording replaces the old one.
+-- Kept in the database: a minute of compressed speech is only about 100-250 KB.
+CREATE TABLE IF NOT EXISTS voice_notes (
+  id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  product_id       BIGINT      NOT NULL UNIQUE REFERENCES products(id) ON DELETE CASCADE,
+  business_id      BIGINT      NOT NULL REFERENCES businesses(id),
+  content_type     VARCHAR(20) NOT NULL CHECK (content_type IN ('audio/webm', 'audio/ogg', 'audio/mp4', 'audio/mpeg')),
+  data             BYTEA       NOT NULL,
+  bytes            INTEGER     NOT NULL CHECK (bytes > 0),
+  duration_seconds SMALLINT    CHECK (duration_seconds BETWEEN 1 AND 60),
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 2026-10-30: Kuruman Business Directory - local SERVICES (plumbers, hairdressers, mechanics...) that people
+-- phone directly. Free to list; the owner (or someone with the owner's permission) consents to the phone
+-- number being public; support approves each listing before it appears.
+CREATE TABLE IF NOT EXISTS directory_listings (
+  id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  name          VARCHAR(100) NOT NULL,
+  category      VARCHAR(30)  NOT NULL,
+  description   VARCHAR(400),
+  area          VARCHAR(80)  NOT NULL,
+  phone         VARCHAR(15)  NOT NULL,
+  has_whatsapp  BOOLEAN      NOT NULL DEFAULT FALSE,
+  hours         VARCHAR(80),
+  submitted_by  BIGINT       NOT NULL REFERENCES users(id),
+  consent_at    TIMESTAMPTZ  NOT NULL,           -- when the submitter confirmed the right to publish the number
+  status        VARCHAR(10)  NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'removed')),
+  decided_by    BIGINT       REFERENCES users(id),
+  decided_at    TIMESTAMPTZ,
+  decision_note TEXT,
+  created_at    TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_directory_status ON directory_listings(status, category);
+
+-- 2026-10-30: free calls over data (Twilio). The browser never learns anyone's number: the server picks
+-- the number from the order or shop and Twilio dials it. Kept 30 days (who called whom is personal data).
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS calls_enabled BOOLEAN NOT NULL DEFAULT FALSE;  -- shop page "Call free"
+CREATE TABLE IF NOT EXISTS calls (
+  id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  caller_id    BIGINT      NOT NULL REFERENCES users(id),
+  callee_phone VARCHAR(15) NOT NULL,              -- only the server and Twilio ever see it
+  order_id     BIGINT      REFERENCES orders(id) ON DELETE SET NULL,
+  business_id  BIGINT      REFERENCES businesses(id),
+  connected_at TIMESTAMPTZ,                       -- when Twilio asked us where to connect it (used once)
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_calls_caller ON calls(caller_id, created_at);

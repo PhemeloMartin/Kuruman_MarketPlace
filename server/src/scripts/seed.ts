@@ -226,6 +226,33 @@ async function main() {
       );
     }
 
+    // Kuruman Business Directory: made-up local services (demo numbers in the 071 000 02xx range).
+    const listings: [string, string, string, string, string, boolean, string][] = [
+      ["Thabo's Plumbing (demo)", "plumbing", "Geysers, burst pipes, toilets and taps. Call-outs in town and nearby villages.", "Kuruman town", "+27710000201", true, "Mon-Sat 07:00-18:00"],
+      ["Lindiwe Hair Studio (demo)", "hair_beauty", "Braids, relaxers, cuts and nails. Walk-ins welcome.", "Wrenchville", "+27710000202", true, "Tue-Sat 08:00-17:00"],
+      ["Mothibistad Auto Repairs (demo)", "mechanic", "Services, brakes, clutches and diagnostics for cars and bakkies.", "Mothibistad", "+27710000203", false, "Mon-Fri 08:00-17:00"],
+      ["Mma Neo Sewing (demo)", "sewing", "School uniforms, traditional dresses, alterations and repairs.", "Seoding", "+27710000204", true, "Mon-Fri 09:00-16:00"],
+      ["Kgosi Electrical (demo)", "electrical", "Wiring, prepaid meters, COC certificates and solar installations.", "Kuruman town", "+27710000205", false, "Mon-Sat 07:30-17:00"],
+      ["Batlharos Moving & Transport (demo)", "transport", "Bakkie and truck hire for furniture, building material and livestock.", "Batlharos", "+27710000206", true, "Every day 06:00-20:00"],
+      ["Grade 12 Maths Lessons (demo)", "lessons", "Maths and Physical Science lessons for Grades 10-12, after school and Saturdays.", "Wrenchville", "+27710000207", true, "Mon-Sat 15:00-19:00"],
+      ["Kalahari Catering (demo)", "events", "Weddings, funerals and parties: food, tents and chairs.", "Kuruman town", "+27710000208", true, "By appointment"],
+    ];
+    for (const [name, category, description, area, phone, whatsapp, hours] of listings) {
+      await client.query(
+        `INSERT INTO directory_listings (name, category, description, area, phone, has_whatsapp, hours, submitted_by, consent_at,
+                                         status, decided_by, decided_at, decision_note)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now(), 'approved', $9, now(), 'Demo listing')`,
+        [name, category, description, area, phone, whatsapp, hours, userIds.customer, userIds.support]
+      );
+    }
+    // One waiting for support, so the approvals list isn't empty in the demo.
+    await client.query(
+      `INSERT INTO directory_listings (name, category, description, area, phone, has_whatsapp, hours, submitted_by, consent_at)
+       VALUES ('Quick Fix Phone Repairs (demo)', 'repairs', 'Cracked screens, batteries and charging ports.', 'Kuruman town',
+               '+27710000209', TRUE, 'Mon-Sat 09:00-17:00', $1, now())`,
+      [userIds.customer]
+    );
+
     // Tumelo's shop delivers bricks, sand and feed with its own bakkie and truck.
     await client.query(
       `UPDATE businesses SET own_delivery_fee_cents = 35000, own_delivery_note = 'Bakkie and 4-ton truck. Kuruman, Batlharos and Mothibistad.'

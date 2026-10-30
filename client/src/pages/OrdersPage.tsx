@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext'
 import { MokalaSmall } from '../components/Art'
 import { Stars, StarPicker } from '../components/Stars'
 import { QrCode } from '../components/QrCode'
+import { CallButton } from '../components/CallButton'
 import { api, ApiError } from '../lib/api'
 import { formatRand } from '../lib/money'
 import { FULFILMENT_LABEL } from '../lib/types'
@@ -237,6 +238,9 @@ export function OrdersPage() {
                 <p className="fine-print">{o.statusReason}</p>
               )}
               {o.problemReported && <p className="fine-print">Problem reported. Our support team will contact you.</p>}
+              {['pending_acceptance', 'awaiting_payment', 'confirmed', 'ready', 'out_for_delivery'].includes(o.status) && (
+                <CallButton target={{ orderId: o.id, with: 'seller' }} label="Call the seller free" />
+              )}
               {o.review && (
                 <div className="my-review">
                   <Stars value={o.review.rating} /> <span className="product-meta">Your review</span>

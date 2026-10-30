@@ -4,6 +4,7 @@ import { useAddToCart } from '../cart/useAddToCart'
 import { BackIcon, CheckIcon, PlusIcon } from '../components/Icons'
 import { ProductPhoto } from '../components/ProductCard'
 import { RatingLine } from '../components/Stars'
+import { VoiceNotePlayer } from '../components/VoiceNote'
 import { api } from '../lib/api'
 import { chatLink, pageUrl, shareLink } from '../lib/whatsapp'
 import { formatRand } from '../lib/money'
@@ -135,6 +136,8 @@ export function ProductPage() {
           </a>
         )}
       </div>
+
+      {product.voiceNote && <VoiceNotePlayer note={product.voiceNote} />}
 
       {product.description && (
         <section style={{ marginTop: 20 }}>

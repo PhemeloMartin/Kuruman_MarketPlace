@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { PlusIcon, ShopIcon } from '../../components/Icons'
 import { CodeScanButton } from '../../components/CodeScanButton'
 import { ForecastCard } from '../../components/ForecastCard'
+import { CallButton } from '../../components/CallButton'
 import { pageUrl, shareLink } from '../../lib/whatsapp'
 import { api, ApiError } from '../../lib/api'
 import { formatRand, parseRandToCents } from '../../lib/money'
@@ -371,6 +372,9 @@ function OrderCard({ order: o, onChanged }: { order: SellerOrder; onChanged: () 
         </span>
       </p>
       {o.notes && <p className="fine-print">Note: {o.notes}</p>}
+      {['pending_acceptance', 'awaiting_payment', 'confirmed', 'ready', 'out_for_delivery'].includes(o.status) && (
+        <CallButton target={{ orderId: o.id, with: 'customer' }} label="Call the customer free" />
+      )}
 
       {o.status === 'pending_acceptance' && !declining && (
         <>

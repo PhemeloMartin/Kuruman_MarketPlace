@@ -4,6 +4,7 @@ import { useAddToCart } from '../cart/useAddToCart'
 import { BackIcon } from '../components/Icons'
 import { KurumanPanorama } from '../components/Markets'
 import { ProductCard } from '../components/ProductCard'
+import { CallButton } from '../components/CallButton'
 import { RatingLine, Stars } from '../components/Stars'
 import { api } from '../lib/api'
 import { chatLink, pageUrl, shareLink } from '../lib/whatsapp'
@@ -104,6 +105,8 @@ export function ShopPage() {
           </a>
         )}
       </div>
+
+      {shop.callsEnabled && <CallButton target={{ shopId: shop.id }} label={`Call ${shop.name} free`} />}
 
       <section aria-labelledby="shop-products" style={{ marginTop: 20 }}>
         <div className="section-head">

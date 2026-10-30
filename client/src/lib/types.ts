@@ -43,6 +43,7 @@ export interface Product {
   photos?: string[] // all photos, first = main; only on the single-product answer
   businessRating?: Rating // only on the single-product answer
   businessWhatsapp?: string | null // only if the seller chose to show it
+  voiceNote?: { url: string; seconds: number | null } | null // only on the single-product answer
 }
 
 export interface Rating {
@@ -100,6 +101,7 @@ export interface Shop {
   whatsapp: string | null // only if the seller chose to show it
   ownDeliveryFeeCents: number | null // the shop delivers with its own vehicle at this fee (null = it doesn't)
   ownDeliveryNote: string | null
+  callsEnabled: boolean
   kind: 'shop' | 'market_stall'
   stall: { location: string | null; days: number[]; opens: string | null; closes: string | null; hereNow: boolean } | null
   products: Product[]
@@ -167,6 +169,7 @@ export interface SellerProduct {
   imageUrl: string | null
   collectionOnly: boolean
   barcode: string | null
+  voiceNote: { url: string; seconds: number | null } | null
   category: string
   categoryName: string
 }

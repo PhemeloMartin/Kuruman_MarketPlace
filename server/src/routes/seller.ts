@@ -9,7 +9,7 @@ import { POLICY } from "../lib/policy";
 import { openOrderCase } from "../lib/cases";
 import { consumeReservation, recordStatusChange, releaseReservation, returnToStock } from "../lib/stock";
 import { audit } from "../lib/audit";
-import { MAX_PHOTO_BYTES, deleteStoredImage, detectImageType, savePhoto } from "../lib/photoStore";
+import { MAX_PHOTO_BYTES, MAX_VOICE_BYTES, deleteStoredImage, detectAudioType, detectImageType, savePhoto } from "../lib/photoStore";
 import { cleanText, publicReviews, ratingOf, themeCounts } from "../lib/reviews";
 import { normaliseSaPhone } from "../lib/phone";
 import { forecastSales } from "../lib/aiClient";
@@ -473,8 +473,9 @@ sellerRouter.get("/products", async (req, res) => {
   const r = await pool.query(
     `SELECT p.id, p.name, p.description, p.unit_label, p.price_cents, p.stock_qty, p.reserved_qty,
             p.low_stock_threshold, p.is_active, p.image_url, p.collection_only, p.barcode,
-            c.slug AS category, c.name AS category_name
+            c.slug AS category, c.name AS category_name, v.duration_seconds AS voice_seconds, v.created_at AS voice_at
        FROM products p JOIN categories c ON c.id = p.category_id
+       LEFT JOIN voice_notes v ON v.product_id = p.id
       WHERE p.business_id = $1
       ORDER BY p.is_active DESC, p.name`,
     [req.business!.id]
@@ -494,6 +495,7 @@ sellerRouter.get("/products", async (req, res) => {
       imageUrl: p.image_url,
       collectionOnly: p.collection_only,
       barcode: p.barcode,
+      voiceNote: p.voice_at ? { url: `/api/voice/${p.id}?v=${new Date(p.voice_at).getTime()}`, seconds: p.voice_seconds } : null,
       category: p.category,
       categoryName: p.category_name,
     }))
@@ -779,7 +781,7 @@ sellerRouter.get("/shop", async (req, res) => {
   const r = await pool.query(
     `SELECT id, name, description, area, cover_photo_url, whatsapp_phone, own_delivery_fee_cents, own_delivery_note,
             phone, kind, stall_location, stall_days, to_char(stall_opens, 'HH24:MI') AS opens,
-            to_char(stall_closes, 'HH24:MI') AS closes, sms_alerts
+            to_char(stall_closes, 'HH24:MI') AS closes, sms_alerts, calls_enabled
        FROM businesses WHERE id = $1`,
     [req.business!.id]
   );
@@ -800,6 +802,7 @@ sellerRouter.get("/shop", async (req, res) => {
     stallOpens: b.opens,
     stallCloses: b.closes,
     smsAlerts: b.sms_alerts,
+    callsEnabled: b.calls_enabled,
   });
 });
 
@@ -837,6 +840,10 @@ sellerRouter.patch("/shop", requireActiveShop, async (req, res) => {
     const note = cleanText(req.body?.ownDeliveryNote, 200);
     values.push(fee === null ? null : note || null);
     sets.push(`own_delivery_note = $${values.length}`);
+  }
+  if (req.body?.callsEnabled !== undefined) {
+    values.push(Boolean(req.body.callsEnabled));
+    sets.push(`calls_enabled = $${values.length}`);
   }
   if (req.body?.smsAlerts !== undefined) {
     values.push(Boolean(req.body.smsAlerts));
@@ -950,4 +957,37 @@ sellerRouter.get("/forecast", async (req, res) => {
     });
   }
   res.json({ available: true, modelVersion, products });
+});
+
+// ---------------------------------------------------------------------------
+// Voice notes: up to a minute about a product, in the seller's own words and language
+// ---------------------------------------------------------------------------
+
+const rawAudio = express.raw({ type: ["audio/webm", "audio/ogg", "audio/mp4", "audio/mpeg"], limit: MAX_VOICE_BYTES });
+
+// PUT /api/seller/products/:id/voice?seconds=23 - the recording itself as the body. Replaces any old one.
+sellerRouter.put("/products/:id/voice", requireActiveShop, rawAudio, async (req, res) => {
+  const audio = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+  const type = detectAudioType(audio);
+  if (!type) return res.status(422).json({ error: "That recording couldn't be read. Please record it again." });
+  const seconds = Math.round(Number(req.query.seconds));
+  const duration = Number.isFinite(seconds) && seconds >= 1 && seconds <= 60 ? seconds : null;
+  const productId = Number(req.params.id);
+  const p = await pool.query("SELECT id FROM products WHERE id = $1 AND business_id = $2", [productId, req.business!.id]);
+  if (p.rowCount === 0) return res.status(404).json({ error: "Product not found." });
+  await pool.query(
+    `INSERT INTO voice_notes (product_id, business_id, content_type, data, bytes, duration_seconds)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (product_id) DO UPDATE
+       SET content_type = EXCLUDED.content_type, data = EXCLUDED.data, bytes = EXCLUDED.bytes,
+           duration_seconds = EXCLUDED.duration_seconds, created_at = now()`,
+    [productId, req.business!.id, type, audio, audio.length, duration]
+  );
+  // A changed recording gets a new address (the time is part of it), so phones don't play an old copy.
+  res.status(201).json({ url: `/api/voice/${productId}?v=${Date.now()}`, seconds: duration });
+});
+
+sellerRouter.delete("/products/:id/voice", requireActiveShop, async (req, res) => {
+  await pool.query("DELETE FROM voice_notes WHERE product_id = $1 AND business_id = $2", [Number(req.params.id), req.business!.id]);
+  res.status(204).end();
 });

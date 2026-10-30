@@ -9,6 +9,7 @@ import { AuditTab } from './AuditTab'
 import { MoneyTab } from './MoneyTab'
 import { OperationsTab } from './OperationsTab'
 import { FlagsTab } from './FlagsTab'
+import { DirectoryTab, WhatsappPostTab } from './CommunityTab'
 import { PrivacyTab } from './PrivacyTab'
 
 // Restricted support console (spec UI-13). The server checks every request again - these
@@ -156,6 +157,8 @@ function MfaStep() {
 const TABS: { key: string; label: string; scope: StaffScope }[] = [
   { key: 'applications', label: 'Applications', scope: 'approvals' },
   { key: 'accounts', label: 'Accounts', scope: 'approvals' },
+  { key: 'directory', label: 'Directory', scope: 'approvals' },
+  { key: 'whatsapp', label: 'WhatsApp post', scope: 'approvals' },
   { key: 'money', label: 'Money', scope: 'payments' },
   { key: 'deliveries', label: 'Deliveries', scope: 'operations' },
   { key: 'flags', label: 'Flagged', scope: 'operations' },
@@ -180,6 +183,8 @@ function Console({ scopes }: { scopes: StaffScope[] }) {
       </div>
       {tab === 'applications' && <ApplicationsTab />}
       {tab === 'accounts' && <AccountsTab />}
+      {tab === 'directory' && <DirectoryTab />}
+      {tab === 'whatsapp' && <WhatsappPostTab />}
       {tab === 'money' && <MoneyTab />}
       {tab === 'deliveries' && <OperationsTab />}
       {tab === 'flags' && <FlagsTab />}

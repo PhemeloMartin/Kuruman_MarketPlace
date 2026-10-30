@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { BackIcon } from '../../components/Icons'
 import { PhotoManager } from '../../components/PhotoManager'
+import { VoiceNoteRecorder } from '../../components/VoiceNote'
 import { PRODUCT_BARCODES, Scanner, canScan } from '../../components/Scanner'
 import { ProductPhoto } from '../../components/ProductCard'
 import { api, ApiError } from '../../lib/api'
@@ -113,6 +114,7 @@ export function SellerProductFormPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loaded, setLoaded] = useState(isNew)
   const [reserved, setReserved] = useState(0)
+  const [voiceNote, setVoiceNote] = useState<SellerProduct['voiceNote']>(null)
   const [form, setForm] = useState({
     name: '',
     category: '',
@@ -162,6 +164,7 @@ export function SellerProductFormPage() {
           return
         }
         setReserved(p.reservedQty)
+        setVoiceNote(p.voiceNote)
         setForm({
           name: p.name,
           category: p.category,
@@ -251,6 +254,7 @@ export function SellerProductFormPage() {
         </p>
       )}
       {!isNew && <PhotoManager productId={Number(id)} />}
+      {!isNew && loaded && <VoiceNoteRecorder key={id} productId={Number(id)} existing={voiceNote} />}
       <form className="form" onSubmit={onSubmit} noValidate>
         {error && (
           <p className="notice error" role="alert">
