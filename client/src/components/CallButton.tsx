@@ -13,6 +13,19 @@ function callsAvailable(): Promise<boolean> {
   return configured
 }
 
+// Says what actually went wrong, so the person (and support) know what to do next.
+function callErrorMessage(err: unknown): string {
+  if (err instanceof ApiError) return err.message
+  const e = err as { name?: string; code?: number } | null
+  if (e?.name === 'NotAllowedError' || e?.code === 31208 || e?.code === 31401) {
+    return 'The call needs your microphone. Allow it in the browser (the lock icon next to the address), then try again.'
+  }
+  if (e?.name === 'TypeError' || e?.name === 'ChunkLoadError') {
+    return 'The app was just updated. Refresh the page, then try again.'
+  }
+  return `The call couldn’t start${e?.code ? ` (error ${e.code})` : ''}. Check your connection and try again.`
+}
+
 // "Call free": the call goes over this phone's mobile data (no airtime), and the other person's normal
 // phone rings. The server decides whether this call is allowed and dials the number itself - this page
 // never sees anyone's phone number. Twilio's library is loaded only when a call starts.
@@ -63,7 +76,7 @@ export function CallButton({ target, label }: { target: Target; label: string })
       }
     } catch (err) {
       setPhase('idle')
-      setError(err instanceof ApiError ? err.message : 'The call couldn’t start. Allow the microphone and try again.')
+      setError(callErrorMessage(err))
     }
   }
 

@@ -118,7 +118,9 @@ if (process.env.NODE_ENV === "production" && fs.existsSync(CLIENT_DIST)) {
   // Product and shop pages get link-preview tags first, so a link shared on WhatsApp shows a photo.
   const indexHtml = fs.readFileSync(path.join(CLIENT_DIST, "index.html"), "utf8");
   app.use(async (req, res, next) => {
-    if (req.method !== "GET" || req.path.startsWith("/api/")) return next();
+    // A missing file (e.g. an old version's script after an update) is "not found", never the
+    // home page - otherwise the browser gets HTML where it expected JavaScript.
+    if (req.method !== "GET" || req.path.startsWith("/api/") || req.path.startsWith("/assets/")) return next();
     res.set("Cache-Control", "no-cache");
     res.type("html").send(withPreview(indexHtml, await previewTags(req.path)));
   });
