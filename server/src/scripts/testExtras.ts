@@ -185,9 +185,13 @@ async function main() {
       assert.match(await again.text(), /expired/, "a call id works only once");
     });
 
-    await check("at most 10 free calls a day per person", async () => {
+    await check("at most 10 free calls a day per person; calls that never connected don't count", async () => {
       await pool.query(
-        "INSERT INTO calls (caller_id, callee_phone) SELECT id, '+27710000002' FROM users, generate_series(1, 9) WHERE phone = '+27710000001'"
+        "INSERT INTO calls (caller_id, callee_phone) SELECT id, '+27710000002' FROM users, generate_series(1, 20) WHERE phone = '+27710000001'"
+      );
+      assert.equal((await call(thato, "POST", "/api/calls/start", { orderId: Number(order), with: "seller" })).status, 200);
+      await pool.query(
+        "INSERT INTO calls (caller_id, callee_phone, connected_at) SELECT id, '+27710000002', now() FROM users, generate_series(1, 9) WHERE phone = '+27710000001'"
       );
       assert.equal((await call(thato, "POST", "/api/calls/start", { orderId: Number(order), with: "seller" })).status, 429);
     });

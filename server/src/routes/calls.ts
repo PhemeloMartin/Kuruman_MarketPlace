@@ -63,7 +63,9 @@ callsRouter.post("/calls/start", requireAuth, async (req, res) => {
   const target = await findTarget(req.user!.id, req.body);
   if (!target) return res.status(403).json({ error: "You can't call this person from here." });
   const today = await pool.query(
-    "SELECT count(*)::int AS n FROM calls WHERE caller_id = $1 AND created_at > now() - interval '1 day'",
+    // Only calls that reached Twilio count: a call that never started (no data, microphone blocked)
+    // shouldn't use up the day's free calls.
+    "SELECT count(*)::int AS n FROM calls WHERE caller_id = $1 AND connected_at IS NOT NULL AND created_at > now() - interval '1 day'",
     [req.user!.id]
   );
   if (today.rows[0].n >= CALLS_PER_DAY) {

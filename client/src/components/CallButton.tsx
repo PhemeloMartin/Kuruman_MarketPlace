@@ -66,8 +66,8 @@ export function CallButton({ target, label }: { target: Target; label: string })
       connection.on('accept', () => setPhase('talking'))
       connection.on('disconnect', finish)
       connection.on('cancel', finish)
-      connection.on('error', () => {
-        setError('The call dropped. Check your data connection and try again.')
+      connection.on('error', (e: { code?: number }) => {
+        setError(`The call dropped${e?.code ? ` (error ${e.code})` : ''}. Check your data connection and try again.`)
         finish()
       })
       hangUp.current = () => {
