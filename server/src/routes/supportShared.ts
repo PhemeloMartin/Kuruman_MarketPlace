@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { PoolClient } from "pg";
 import { pool } from "../db";
+import { holdResponse } from "../lib/holdResponse";
 
 // Helpers used by every support route file (support.ts, supportMoney.ts).
 
@@ -15,17 +16,21 @@ export function reasonFrom(req: Request, res: Response): string | null {
 }
 
 // Runs `work` in a transaction; any error rolls everything back, including the audit row.
-export async function inTransaction(work: (client: PoolClient) => Promise<void>) {
+// The route's answer is sent after COMMIT, not before (see lib/holdResponse.ts).
+export async function inTransaction(res: Response, work: (client: PoolClient) => Promise<void>) {
   const client = await pool.connect();
+  const answer = holdResponse(res);
   try {
     await client.query("BEGIN");
     await work(client);
     await client.query("COMMIT");
   } catch (err) {
+    answer.drop();
     await client.query("ROLLBACK");
     throw err;
   } finally {
     client.release();
+    answer.release();
   }
 }
 

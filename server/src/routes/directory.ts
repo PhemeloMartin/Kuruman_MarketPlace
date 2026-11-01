@@ -106,7 +106,7 @@ directoryRouter.post("/support/directory/:id", requireStaff("approvals"), async 
   if (!["approve", "reject", "remove"].includes(decision)) return res.status(422).json({ error: "Choose approve, reject or remove." });
   const reason = reasonFrom(req, res);
   if (!reason) return;
-  await inTransaction(async (client) => {
+  await inTransaction(res, async (client) => {
     const from = decision === "remove" ? "approved" : "pending";
     const status = decision === "approve" ? "approved" : decision === "reject" ? "rejected" : "removed";
     const r = await client.query(

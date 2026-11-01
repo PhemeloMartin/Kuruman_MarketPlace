@@ -8,6 +8,7 @@ import { predictCategory } from "../lib/aiClient";
 import { POLICY } from "../lib/policy";
 import { openOrderCase } from "../lib/cases";
 import { consumeReservation, recordStatusChange, releaseReservation, returnToStock } from "../lib/stock";
+import { holdResponse } from "../lib/holdResponse";
 import { audit } from "../lib/audit";
 import { MAX_PHOTO_BYTES, MAX_VOICE_BYTES, deleteStoredImage, detectAudioType, detectImageType, savePhoto } from "../lib/photoStore";
 import { cleanText, publicReviews, ratingOf, themeCounts } from "../lib/reviews";
@@ -139,6 +140,7 @@ async function withMyOrder(
     return;
   }
   const client = await pool.connect();
+  const answer = holdResponse(res); // sent after COMMIT, not before
   try {
     await client.query("BEGIN");
     const r = await client.query(
@@ -159,10 +161,12 @@ async function withMyOrder(
     // `work` may have already committed or rolled back; this is then a harmless no-op.
     await client.query("COMMIT");
   } catch (err) {
+    answer.drop();
     await client.query("ROLLBACK");
     throw err;
   } finally {
     client.release();
+    answer.release();
   }
 }
 

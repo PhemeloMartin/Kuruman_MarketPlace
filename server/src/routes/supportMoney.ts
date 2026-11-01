@@ -161,7 +161,7 @@ supportMoneyRouter.post("/refund-cases/:id/refunds", async (req, res) => {
   if (!Number.isInteger(amount) || amount <= 0) {
     return res.status(422).json({ error: "Enter the amount to refund.", fields: { amountCents: "Enter an amount." } });
   }
-  await inTransaction(async (client) => {
+  await inTransaction(res, async (client) => {
     const c = await lockOpenCase(client, req, res, "refund");
     if (!c) return;
     // Locking the payment row is what makes the cap safe: a second refund for the same
@@ -230,7 +230,7 @@ supportMoneyRouter.post("/refunds/:id/complete", async (req, res) => {
       fields: { providerReference: "Copy it from the Payfast dashboard." },
     });
   }
-  await inTransaction(async (client) => {
+  await inTransaction(res, async (client) => {
     const found = await lockPendingRefund(client, req, res);
     if (!found) return;
     const { refund, payment } = found;
@@ -268,7 +268,7 @@ supportMoneyRouter.post("/refunds/:id/complete", async (req, res) => {
 supportMoneyRouter.post("/refunds/:id/fail", async (req, res) => {
   const reason = reasonFrom(req, res);
   if (!reason) return;
-  await inTransaction(async (client) => {
+  await inTransaction(res, async (client) => {
     const found = await lockPendingRefund(client, req, res);
     if (!found) return;
     await client.query(
@@ -293,7 +293,7 @@ supportMoneyRouter.post("/refunds/:id/fail", async (req, res) => {
 supportMoneyRouter.post("/refund-cases/:id/close", async (req, res) => {
   const reason = reasonFrom(req, res);
   if (!reason) return;
-  await inTransaction(async (client) => {
+  await inTransaction(res, async (client) => {
     const c = await lockOpenCase(client, req, res, "refund");
     if (!c) return;
     const payments = await paymentsWithBalances(client, Number(c.order_id));
@@ -319,7 +319,7 @@ supportMoneyRouter.post("/refund-cases/:id/close", async (req, res) => {
 supportMoneyRouter.post("/cash-cases/:id/settle", async (req, res) => {
   const reason = reasonFrom(req, res);
   if (!reason) return;
-  await inTransaction(async (client) => {
+  await inTransaction(res, async (client) => {
     const c = await lockOpenCase(client, req, res, "cash_dispute");
     if (!c) return;
     const k = await client.query(

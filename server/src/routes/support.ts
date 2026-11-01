@@ -171,7 +171,7 @@ async function lockOpenApplication(client: PoolClient, req: Request, res: Respon
 supportRouter.post("/applications/:id/approve", requireStaff("approvals"), async (req, res) => {
   const reason = reasonFrom(req, res);
   if (!reason) return;
-  await inTransaction(async (client) => {
+  await inTransaction(res, async (client) => {
     const found = await lockOpenApplication(client, req, res);
     if (!found) return;
     const { app, applicant } = found;
@@ -224,7 +224,7 @@ supportRouter.post("/applications/:id/approve", requireStaff("approvals"), async
 supportRouter.post("/applications/:id/reject", requireStaff("approvals"), async (req, res) => {
   const reason = reasonFrom(req, res);
   if (!reason) return;
-  await inTransaction(async (client) => {
+  await inTransaction(res, async (client) => {
     const found = await lockOpenApplication(client, req, res);
     if (!found) return;
     await closeCase(client, Number(found.app.id), "rejected", reason, req.user!.id);
@@ -280,7 +280,7 @@ function setActive(kind: "business" | "courier", active: boolean) {
     if (!reason) return;
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return res.status(404).json({ error: "Not found." });
-    await inTransaction(async (client) => {
+    await inTransaction(res, async (client) => {
       const r = await client.query(
         `UPDATE ${table} SET is_active = $2 WHERE ${idColumn} = $1 AND is_active = $3 RETURNING ${idColumn}`,
         [id, active, !active]

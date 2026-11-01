@@ -141,7 +141,7 @@ async function refundIfPaidOnline(client: PoolClient, order: { id: number; consu
 supportOpsRouter.post("/cases/:id/retry", async (req, res) => {
   const reason = reasonFrom(req, res);
   if (!reason) return;
-  await inTransaction(async (client) => {
+  await inTransaction(res, async (client) => {
     const found = await lockCaseAndOrder(client, req, res);
     if (!found) return;
     const { c, order, delivery } = found;
@@ -164,7 +164,7 @@ supportOpsRouter.post("/cases/:id/retry", async (req, res) => {
 supportOpsRouter.post("/cases/:id/cancel-order", async (req, res) => {
   const reason = reasonFrom(req, res);
   if (!reason) return;
-  await inTransaction(async (client) => {
+  await inTransaction(res, async (client) => {
     const found = await lockCaseAndOrder(client, req, res);
     if (!found) return;
     const { c, order, delivery } = found;
@@ -202,7 +202,7 @@ supportOpsRouter.post("/cases/:id/cancel-order", async (req, res) => {
 supportOpsRouter.post("/cases/:id/refund", async (req, res) => {
   const reason = reasonFrom(req, res);
   if (!reason) return;
-  await inTransaction(async (client) => {
+  await inTransaction(res, async (client) => {
     const found = await lockCaseAndOrder(client, req, res);
     if (!found) return;
     const { c, order } = found;
@@ -226,7 +226,7 @@ supportOpsRouter.post("/cases/:id/refund", async (req, res) => {
 supportOpsRouter.post("/cases/:id/close", async (req, res) => {
   const reason = reasonFrom(req, res);
   if (!reason) return;
-  await inTransaction(async (client) => {
+  await inTransaction(res, async (client) => {
     const found = await lockCaseAndOrder(client, req, res);
     if (!found) return;
     if (found.order.status === "delivery_failed") {
@@ -334,7 +334,7 @@ supportOpsRouter.post("/flags/:id", async (req, res) => {
   if (decision !== "dismiss" && decision !== "hide") return res.status(422).json({ error: "Choose dismiss or hide." });
   const reason = reasonFrom(req, res);
   if (!reason) return;
-  await inTransaction(async (client) => {
+  await inTransaction(res, async (client) => {
     const f = await client.query("SELECT * FROM screenings WHERE id = $1 AND flagged AND status = 'new' FOR UPDATE", [
       Number(req.params.id),
     ]);

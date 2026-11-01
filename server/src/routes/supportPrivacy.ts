@@ -60,7 +60,7 @@ async function lockOpenPrivacyCase(client: PoolClient, id: number) {
 supportPrivacyRouter.post("/cases/:id/close-account", async (req, res) => {
   const reason = reasonFrom(req, res);
   if (!reason) return;
-  await inTransaction(async (client) => {
+  await inTransaction(res, async (client) => {
     const c = await lockOpenPrivacyCase(client, Number(req.params.id));
     if (!c || c.case_type !== "privacy_deletion") return void res.status(404).json({ error: "Request not found." });
     if (c.status !== "open") return void res.status(409).json({ error: "This request has already been handled." });
@@ -81,7 +81,7 @@ supportPrivacyRouter.post("/cases/:id/close-account", async (req, res) => {
 supportPrivacyRouter.post("/cases/:id/hold", async (req, res) => {
   const reason = reasonFrom(req, res);
   if (!reason) return;
-  await inTransaction(async (client) => {
+  await inTransaction(res, async (client) => {
     const c = await lockOpenPrivacyCase(client, Number(req.params.id));
     if (!c) return void res.status(404).json({ error: "Request not found." });
     if (c.status !== "open") return void res.status(409).json({ error: "This request has already been handled." });
@@ -96,7 +96,7 @@ supportPrivacyRouter.post("/cases/:id/hold", async (req, res) => {
 supportPrivacyRouter.post("/cases/:id/resolve", async (req, res) => {
   const reason = reasonFrom(req, res);
   if (!reason) return;
-  await inTransaction(async (client) => {
+  await inTransaction(res, async (client) => {
     const c = await lockOpenPrivacyCase(client, Number(req.params.id));
     if (!c || c.case_type !== "privacy_correction") return void res.status(404).json({ error: "Request not found." });
     if (c.status !== "open") return void res.status(409).json({ error: "This request has already been handled." });

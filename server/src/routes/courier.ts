@@ -4,6 +4,7 @@ import { pool } from "../db";
 import { requireRole } from "../auth/session";
 import { checkHandoverCode } from "../lib/handover";
 import { consumeReservation, recordStatusChange } from "../lib/stock";
+import { holdResponse } from "../lib/holdResponse";
 import { openOrderCase } from "../lib/cases";
 import { POLICY } from "../lib/policy";
 
@@ -132,6 +133,7 @@ async function withMyJob(req: Request, res: Response, work: (client: PoolClient,
     return;
   }
   const client = await pool.connect();
+  const answer = holdResponse(res); // sent after COMMIT, not before
   try {
     await client.query("BEGIN");
     const d = await client.query("SELECT id, order_id, status, courier_id, released_to_courier_id FROM deliveries WHERE id = $1 FOR UPDATE", [id]);
@@ -152,10 +154,12 @@ async function withMyJob(req: Request, res: Response, work: (client: PoolClient,
     await work(client, job);
     await client.query("COMMIT");
   } catch (err) {
+    answer.drop();
     await client.query("ROLLBACK");
     throw err;
   } finally {
     client.release();
+    answer.release();
   }
 }
 
