@@ -60,10 +60,21 @@ Tip: press **F12 → device toolbar** (phone icon) and pick a phone size, so it 
 **Reset the hosted demo data 1–2 days before presenting** (HOSTING.md, section 1 commands), so the demo order
 history, reviews and Entrepreneur of the Month fall inside the last 30 days.
 
-**Our own AI (Tier 2):** sign in as Dineo → dashboard **Next 7 days**: "Kota: about 65 this week, busiest on Saturday…
-you may run short". Open her shop page → **What customers say** → "AI summary: Customers mention tasty (5)… food cold
-(1)". Search **spinasie** or **sepinatshe** → spinach and morogo ("Also searched: spinach…"). In the support console →
-**Flagged**: the beadwork listing "WhatsApp me on 072 555 1234, cheaper than here" → **Take off sale** with a reason.
+**Our own AI (Tier 2):** the demo data has 12 weeks of synthetic sales for every shop and 96 reviews in English,
+Setswana and Afrikaans, so every AI feature has something to show. Give the AI worker 5 minutes after a reset: it
+reads 30 reviews and texts a minute.
+- Sign in as Dineo → dashboard **Next 7 days**: e.g. "Vetkoek with mince: about 74 this week, busiest on Friday…
+  You have 40 available, so you may run short." The numbers follow the calendar (weekdays, paydays), so they change a
+  little each day. Kgomotso gets a forecast too (bread, spinach, tomatoes).
+- Dineo's shop page → **What customers say** → "AI summary: Customers mention tasty (15), friendly (6), good price (6),
+  fresh (5), food cold (4), quick (4)". As a seller, **Reviews** shows how the AI read each review: "AI reads this as neutral · tasty, food cold".
+- Search **spinasie** or **sepinatshe** → spinach and morogo ("Also searched: spinach…").
+- Support console → **Flagged** (5 items): the beadwork key ring "WhatsApp me on 072 555 1234, cheaper than here", the
+  goat "Send a R500 deposit by eWallet…" and a review at Tumelo's saying "call me on 073 456 7812" → **Take off sale** /
+  **Hide the review** with a reason. Two honest reviews are flagged too ("Pragtige kralewerk…", "phone first to check
+  they have stock") → **It's fine**. **Say:** "About one flag in ten is a false alarm — that's why the AI never hides
+  anything by itself."
+
 **Say:** "Four models, all trained by us, each with a model card, a baseline and an honest report — and the AI only
 advises: a person always decides." Open `ai/reports/` to show the numbers, including where targets weren't met.
 
@@ -302,6 +313,11 @@ refunds → exactly one accepted, no "refunded" without Payfast's reference, cas
   and the 95% interval includes 0.75. The dataset is 240 products I authored, and the Setswana and Afrikaans still need
   fluent-speaker review, so the next step is better data — not more tuning, which would just be fitting the test set.
   The first version scored 0.66; I changed the tuning method to grouped cross-validation and I disclose that in the model card."
+- **Review and scam AI:** "reviews-v2 and screening-v2 learn from 260 and 160 examples in three languages that I wrote.
+  I more than doubled the data after the first versions got the demo wrong: praise like 'good quality' was read as a
+  quality complaint, and honest reviews were flagged as scams. On new, larger test sets, review sentiment scores 0.69
+  (macro-F1, was 0.51) and screening 0.85 (F1, was 0.74). Setswana is still the weakest language, and the Setswana and
+  Afrikaans examples still need a fluent speaker's check."
 - **Languages:** "Phase 1 uses Google Translate. Payment and legal wording must be reviewed by fluent speakers before real use (NFR-09)."
 - **Payments:** "Sandbox only. The design doesn't claim one merchant account can collect for every seller in production."
 - **Scope still to build:** reviewed translations, hosting. Notifications are in-app only; SMS/push are optional

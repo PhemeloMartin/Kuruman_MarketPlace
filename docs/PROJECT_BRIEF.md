@@ -142,6 +142,8 @@ KPI check against the spec's worked example: `npm run test:kpi` in `server` (cha
 | 071 000 0009 | Tumelo | entrepreneur (building materials, animal feed, livestock) |
 | 071 000 0010 | Dineo | entrepreneur (street food caravan) |
 | 071 000 0011–13 | Lesego, Anna, Kabelo | consumers with past orders and reviews (demo history) |
+| 071 000 0101–16 | Mpho, Kagiso, Refilwe and 13 more | consumers who wrote the demo reviews (96 reviews in English, Setswana and Afrikaans) |
+| 071 000 0099 | Walk-in customers | places the SYNTHETIC 12-week sales history of every shop (for the forecasts and numbers) |
 | 071 000 0014 | Mma Kefilwe's stall phone | basic phone: gets orders by SMS (open /demo/phone) — not a login |
 | 071 000 0015 | Tebogo | entrepreneur: helper who manages Mma Kefilwe's market stall |
 
@@ -269,10 +271,11 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       completed; only the business's own phone counts; every change in the order history; gateway webhook
       /api/sms/inbound with a secret token; order SMS kept 30 days; demo basic-phone page /demo/phone (demo mode
       only); `npm run test:stalls` (9 checks)
-- [x] Tier 2 AI (all our own models, ai/README.md): reviews-v1 (sentiment: macro-F1 0.505 vs keyword 0.381 and majority
-      0.202; themes micro-F1 0.599 vs keyword 0.559 - roughly equal, test set seen once, disclosed) shown as "Customers
-      mention" on shop pages and per review for sellers; screening-v1 (precision 0.765, recall 0.722 vs keyword baseline
-      recall 0.222; recall target 0.90 met in CV but not on test - Setswana weakest) feeds support's "Flagged" tab, where
+- [x] Tier 2 AI (all our own models, ai/README.md): reviews-v2 (260 reviews x 3 languages; sentiment macro-F1 0.691 vs
+      keyword 0.308 and majority 0.204; themes micro-F1 0.669 vs keyword 0.601; new "good quality" theme) shown as
+      "Customers mention" on shop pages and per review for sellers; screening-v2 (160 texts x 3 languages; precision
+      0.912, recall 0.795, F1 0.849 vs keyword F1 0.526; recall target 0.90 met in CV but not on test - Setswana and
+      Afrikaans 0.77) feeds support's "Flagged" tab, where
       a person decides with a reason (audit log), nothing hidden automatically; forecast-v1 (Poisson regression per
       product, 24% lower MAE than the best baseline on a synthetic backtest) as "Next 7 days" on the seller dashboard;
       multilingual search = hand-made glossary + pg_trgm (not ML). Background AI worker; site works if the AI is down;
