@@ -3,16 +3,21 @@ Train and evaluate the review model (Tier 2 AI, model "reviews").
 
     python train_reviews.py
 
-Two jobs, one dataset (data/reviews.psv, 110 reviews x English, Setswana, Afrikaans):
+Two jobs, one dataset (data/reviews.psv, 260 reviews x English, Setswana, Afrikaans):
   1. SENTIMENT - positive / neutral / negative (TF-IDF + multinomial logistic regression).
   2. THEMES    - what the review talks about (fresh, tasty, friendly, quick, slow, good price,
-                 expensive, poor quality, cold, rude). A review can have several themes, so a trained
-                 model would be one yes/no classifier per theme ("one-vs-rest").
+                 expensive, good quality, poor quality, cold, rude). A review can have several themes,
+                 so a trained model would be one yes/no classifier per theme ("one-vs-rest").
 
      History (recorded in the model card): the first run, without class balancing, scored BELOW a
      keyword lexicon on the test reviews. Class balancing was then chosen by cross-validation on
      the development reviews only (CV micro-F1 0.50 vs 0.34). The decision to ship the trained
      model is fixed here in advance - the test set grades it, it does not choose it.
+
+     reviews-v2: 150 more review concepts (more neutral and mixed reviews, Setswana negation such as
+     "ga ke ise ke swabe", "rude" next to "friendly") and a new GOOD QUALITY theme. Without it, praise
+     like "good quality cement" was tagged as a quality problem, because every "quality" example was a
+     complaint. The data was re-split, so this is a new test set (see test_set_note in the card).
 
 Same discipline as the category model:
   - split by review concept: all three translations stay on the same side;
@@ -38,10 +43,10 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 from aikit import HERE, LANGUAGES, SEED, grouped_split, load_psv, sha256, text_features, write_card
 
-MODEL_VERSION = "reviews-v1"
+MODEL_VERSION = "reviews-v2"
 DATA = HERE / "data" / "reviews.psv"
 SENTIMENTS = ["positive", "neutral", "negative"]
-THEMES = ["fresh", "tasty", "friendly", "quick", "slow", "good_price", "expensive", "poor_quality", "cold", "rude"]
+THEMES = ["fresh", "tasty", "friendly", "quick", "slow", "good_price", "expensive", "good_quality", "poor_quality", "cold", "rude"]
 
 # A few obvious words per theme/sentiment, in the three languages - the "keyword baseline" the model must beat.
 KEYWORDS = {
@@ -52,6 +57,7 @@ KEYWORDS = {
     "slow": ["slow", "waited", "late", "bonya", "diegile", "stadig", "gewag"],
     "good_price": ["cheap", "price", "affordable", "tlhwatlhwa", "goedkoop", "prys"],
     "expensive": ["expensive", "overpriced", "tura", "duur"],
+    "good_quality": ["quality", "well made", "strong", "boleng", "nonofile", "gehalte", "sterk"],
     "poor_quality": ["rotten", "stale", "broke", "bodile", "swak", "vrot"],
     "cold": ["cold", "tsididi", "koud"],
     "rude": ["rude", "maitseo", "onbeskof"],
@@ -166,15 +172,15 @@ def main():
         "purpose": "Sentiment and themes of customer reviews, shown as a summary. Advisory only.",
         "method": "TF-IDF word (1-2) + character (3-5) n-grams; multinomial logistic regression (sentiment); "
         "one-vs-rest logistic regression (themes).",
-        "data": "data/reviews.psv - 110 student-authored review concepts x 3 languages (see data/PROVENANCE.md).",
+        "data": "data/reviews.psv - 260 student-authored review concepts x 3 languages (see data/PROVENANCE.md).",
         "split": {"development_concepts": len(dev_ids), "test_concepts": len(test_ids), "grouped_by": "concept_id"},
         "tuning": {"sentiment_C": best_sent_c, "themes_C": best_theme_c, "theme_threshold": theme_threshold, "cv": "5-fold grouped"},
-        "test_set_note": "The test reviews were scored once before class balancing was added (themes then lost to the "
-        "keyword lexicon). Balancing was chosen by grouped cross-validation only, but the test set is no longer strictly "
-        "unseen. The themes margin over the lexicon is small on 23 concepts: treat the two as roughly equal.",
+        "test_set_note": "reviews-v2 re-split the larger dataset, and the test set was scored once, after every choice "
+        "was fixed by grouped cross-validation. Some of its concepts were also in reviews-v1's test set, which was looked "
+        "at once before class balancing was added (that choice carries over), so treat small margins with care.",
         "test_results": results,
         "limits": "Small synthetic dataset; Setswana and Afrikaans unreviewed. Sarcasm and mixed reviews are hard. "
-        "Never used to hide, rank or remove reviews.",
+        "The good_quality theme is new (32 concepts). Never used to hide, rank or remove reviews.",
     }
     write_card("reviews", card)
     write_report(card)

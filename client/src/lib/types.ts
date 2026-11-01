@@ -72,6 +72,7 @@ export const THEME_LABEL: Record<string, string> = {
   slow: 'slow service',
   good_price: 'good price',
   expensive: 'expensive',
+  good_quality: 'good quality',
   poor_quality: 'quality problems',
   cold: 'food cold',
   rude: 'unfriendly',

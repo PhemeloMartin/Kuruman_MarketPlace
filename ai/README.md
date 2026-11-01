@@ -5,8 +5,8 @@ All models are trained by us on our own (student-authored) data; no outside AI s
 | Model | What it does | Train / evaluate | Report |
 |---|---|---|---|
 | `category-v2` | Suggests a product's category (AI-01, below) | `python train.py` | `reports/evaluation.md` |
-| `reviews-v1` | Review sentiment and themes ("Customers mention: fresh (5)") | `python train_reviews.py` | `reports/reviews_evaluation.md` |
-| `screening-v1` | Flags texts that move payment off the site or look like scams, for support to check | `python train_screening.py` | `reports/screening_evaluation.md` |
+| `reviews-v2` | Review sentiment and themes ("Customers mention: fresh (5)") | `python train_reviews.py` | `reports/reviews_evaluation.md` |
+| `screening-v2` | Flags texts that move payment off the site or look like scams, for support to check | `python train_screening.py` | `reports/screening_evaluation.md` |
 | `forecast-v1` | 7-day sales forecast per product, fitted on the shop's own sales (Poisson regression) | `python train_forecast.py` (backtest on synthetic data) | `reports/forecast_evaluation.md` |
 
 Every model has a model card in `models/` with its SHA-256; `service.py` refuses a model file that doesn't match.

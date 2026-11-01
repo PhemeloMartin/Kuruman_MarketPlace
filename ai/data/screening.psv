@@ -179,3 +179,303 @@ s059|ok|af|Lyfroom gemaak met maroela-olie
 s060|ok|en|Not happy, the bread was stale
 s060|ok|tn|Ga ke a itumela, borotho bo ne bo le bogologolo
 s060|ok|af|Nie tevrede nie, die brood was oud
+s061|flag|en|Inbox me for the price, I don't post prices here
+s061|flag|tn|Nkwalele molaetsa go itse tlhwatlhwa, ga ke kwale ditlhwatlhwa fano
+s061|flag|af|Stuur vir my 'n boodskap vir die prys, ek plaas nie pryse hier nie
+s062|flag|en|Pay a booking fee by EFT and I will keep it for you
+s062|flag|tn|Duela tuelo ya go beeletsa ka EFT mme ke tla go e bolokela
+s062|flag|af|Betaal 'n besprekingsfooi per EFT en ek hou dit vir jou
+s063|flag|en|Send R100 by Capitec Pay to confirm your order
+s063|flag|tn|Romela R100 ka Capitec Pay go netefatsa taelo ya gago
+s063|flag|af|Stuur R100 met Capitec Pay om jou bestelling te bevestig
+s064|flag|en|Rather order on my Facebook page, it is cheaper
+s064|flag|tn|Go botoka o odare mo tsebeng ya me ya Facebook, tlhwatlhwa e kwa tlase
+s064|flag|af|Bestel eerder op my Facebook-blad, dit is goedkoper
+s065|flag|en|I only deliver once you pay me on FNB eWallet
+s065|flag|tn|Ke romela fela fa o sena go nduelela ka FNB eWallet
+s065|flag|af|Ek lewer net af as jy my eers op FNB eWallet betaal
+s066|flag|en|Call 073 000 1111 after hours for a cash discount
+s066|flag|tn|Leletsa 073 000 1111 morago ga nako ya tiro go bona phokotso ya kheše
+s066|flag|af|Bel 073 000 1111 na ure vir 'n kontantafslag
+s067|flag|en|Win a free hamper, click the link and enter your bank details
+s067|flag|tn|Fenya hamper mahala, tobetsa linki mme o tsenye dintlha tsa banka ya gago
+s067|flag|af|Wen 'n gratis hamper, klik die skakel en vul jou bankbesonderhede in
+s068|flag|en|Loans with no credit check, pay the R300 admin fee first
+s068|flag|tn|Dikadimo kwa ntle ga go tlhatlhoba sekoloto, duela R300 ya tsamaiso pele
+s068|flag|af|Lenings sonder kredietkontrole, betaal eers die R300 administrasiefooi
+s069|flag|en|Job at my shop, pay R250 for the uniform first
+s069|flag|tn|Tiro kwa lebenkeleng la me, duela R250 ya yunifomo pele
+s069|flag|af|Werk by my winkel, betaal eers R250 vir die uniform
+s070|flag|en|My account here is blocked, send the money to my wife's number
+s070|flag|tn|Akhaonto ya me fano e thibetswe, romela madi kwa nomorong ya mosadi wa me
+s070|flag|af|My rekening hier is geblokkeer, stuur die geld na my vrou se nommer
+s071|flag|en|Send me the code you got by SMS so I can confirm your order
+s071|flag|tn|Nthomelela khoutu e o e amogetseng ka SMS gore ke netefatse taelo ya gago
+s071|flag|af|Stuur vir my die kode wat jy per SMS gekry het sodat ek jou bestelling kan bevestig
+s072|flag|en|The courier fee must be paid to me before I send anything
+s072|flag|tn|Tuelo ya moromiwa e tshwanetse go duelwa go nna pele ke romela sepe
+s072|flag|af|Die koerierfooi moet eers aan my betaal word voor ek iets stuur
+s073|flag|en|Reserve with a 50 percent deposit by bank transfer
+s073|flag|tn|Beeletsa ka madi a pele a diperesente di le 50 ka go fetisa mo bankeng
+s073|flag|af|Bespreek met 'n deposito van 50 persent per bankoorplasing
+s074|flag|en|The app checkout is broken, just pay me directly
+s074|flag|tn|Go duela mo app go robegile, nduelele ka tlhamalalo fela
+s074|flag|af|Die app se betaalpunt is stukkend, betaal my sommer direk
+s075|flag|en|Send me airtime to pay for the order
+s075|flag|tn|Nthomelela airtime go duelela taelo
+s075|flag|af|Stuur vir my lugtyd om vir die bestelling te betaal
+s076|flag|en|Pay with Shoprite money transfer to 061 234 5678
+s076|flag|tn|Duela ka Shoprite money transfer go 061 234 5678
+s076|flag|af|Betaal met Shoprite-geldoordrag na 061 234 5678
+s077|flag|en|Cheap diesel, cash only, meet me behind the garage
+s077|flag|tn|Diesel e e kwa tlase, kheše fela, kopana le nna kwa morago ga karatšhe
+s077|flag|af|Goedkoop diesel, slegs kontant, ontmoet my agter die garage
+s078|flag|en|This seller made me pay before I saw anything, then disappeared
+s078|flag|tn|Morekisi yo o ne a ntuedisa pele ke bona sepe, morago a nyelela
+s078|flag|af|Hierdie verkoper het my laat betaal voor ek iets gesien het en toe verdwyn
+s079|flag|en|He asked for money upfront and then blocked my number
+s079|flag|tn|O ne a kopa madi pele mme morago a thibela nomoro ya me
+s079|flag|af|Hy het geld vooruit gevra en toe my nommer geblokkeer
+s080|flag|en|Get 30 percent off if you buy from me outside this marketplace
+s080|flag|tn|Bona phokotso ya diperesente di le 30 fa o reka mo go nna kwa ntle ga mmaraka ono
+s080|flag|af|Kry 30 persent afslag as jy buite hierdie mark by my koop
+s081|flag|en|Bulk prices only on WhatsApp, send me a message
+s081|flag|tn|Ditlhwatlhwa tsa bontsi di mo WhatsApp fela, nthomelela molaetsa
+s081|flag|af|Grootmaatpryse net op WhatsApp, stuur vir my 'n boodskap
+s082|flag|en|Send a photo of your ID and bank card to verify the order
+s082|flag|tn|Romela setshwantsho sa ID ya gago le karata ya banka go netefatsa taelo
+s082|flag|af|Stuur 'n foto van jou ID en bankkaart om die bestelling te verifieer
+s083|flag|en|I am overseas, pay first and my cousin will bring the goat
+s083|flag|tn|Ke kwa mose ga mawatle, duela pele mme motsala wa me o tla tlisa podi
+s083|flag|af|Ek is oorsee, betaal eers en my neef sal die bok bring
+s084|flag|en|Use my private number to order, the site takes commission
+s084|flag|tn|Dirisa nomoro ya me ya poraefete go odara, saete e tsaya khomišene
+s084|flag|af|Gebruik my privaat nommer om te bestel, die webwerf vat kommissie
+s085|flag|en|Same day delivery if you pay the driver fee to my eWallet now
+s085|flag|tn|Thomelo ka lone letsatsi leo fa o duela tuelo ya mokgweetsi mo eWallet ya me jaanong
+s085|flag|af|Aflewering dieselfde dag as jy nou die bestuurderfooi na my eWallet betaal
+s086|flag|en|Samsung phones still in the box, R900, pay before collection
+s086|flag|tn|Difouno tsa Samsung di sa ntse di le mo lebokoseng, R900, duela pele o tsaya
+s086|flag|af|Samsung-fone nog in die boks, R900, betaal voor afhaal
+s087|flag|en|To get your refund, send me your bank PIN
+s087|flag|tn|Go bona madi a gago a busediwa, nthomelela PIN ya gago ya banka
+s087|flag|af|Om jou terugbetaling te kry, stuur vir my jou bank-PIN
+s088|flag|en|Message me on Telegram for cheaper prices
+s088|flag|tn|Nkwalele mo Telegram go bona ditlhwatlhwa tse di kwa tlase
+s088|flag|af|Stuur vir my 'n boodskap op Telegram vir goedkoper pryse
+s089|flag|en|Prepay the full amount, no refunds
+s089|flag|tn|Duela madi otlhe pele, ga go na go busediwa madi
+s089|flag|af|Betaal die volle bedrag vooruit, geen terugbetalings nie
+s090|flag|en|Lost my phone, pay me on this new number 083 987 6543
+s090|flag|tn|Ke latlhegetswe ke founo, nduelele mo nomorong eno e ntšha 083 987 6543
+s090|flag|af|Het my foon verloor, betaal my op hierdie nuwe nommer 083 987 6543
+s091|flag|en|Pay the deposit at the Shoprite counter and send me the slip
+s091|flag|tn|Duela madi a pele kwa khaontareng ya Shoprite mme o nthomelele risiti
+s091|flag|af|Betaal die deposito by die Shoprite-toonbank en stuur vir my die strokie
+s092|flag|en|WhatsApp orders only, the app is too slow
+s092|flag|tn|Ditaelo tsa WhatsApp fela, app e bonya thata
+s092|flag|af|Slegs WhatsApp-bestellings, die app is te stadig
+s093|flag|en|Order through my Instagram for a special deal
+s093|flag|tn|Odara ka Instagram ya me go bona tumalano e e kgethegileng
+s093|flag|af|Bestel deur my Instagram vir 'n spesiale aanbod
+s094|flag|en|Send the money first, I am an honest seller, trust me
+s094|flag|tn|Romela madi pele, ke morekisi yo o ikanyegang, ntshepe
+s094|flag|af|Stuur eers die geld, ek is 'n eerlike verkoper, vertrou my
+s095|flag|en|Claim your prize, pay a R50 processing fee to receive it
+s095|flag|tn|Tsaya sekgele sa gago, duela tuelo ya R50 go se amogela
+s095|flag|af|Eis jou prys, betaal 'n R50 verwerkingsfooi om dit te ontvang
+s096|ok|en|My wife loved the beaded necklace, thank you
+s096|ok|tn|Mosadi wa me o ratile sebenyane sa molala, ke a leboga
+s096|ok|af|My vrou was mal oor die kraalhalssnoer, dankie
+s097|ok|en|I waited a while but the food was good
+s097|ok|tn|Ke emetse lobaka mme dijo di ne di siame
+s097|ok|af|Ek het 'n rukkie gewag maar die kos was goed
+s098|ok|en|Good price for chicken feed, cheaper than in town
+s098|ok|tn|Tlhwatlhwa e siame ya dijo tsa dikoko, e kwa tlase go feta mo toropong
+s098|ok|af|Goeie prys vir hoenderkos, goedkoper as in die dorp
+s099|ok|en|The truck was late but the bricks were fine
+s099|ok|tn|Lori e diegile mme ditena di ne di siame
+s099|ok|af|Die trok was laat maar die stene was reg
+s100|ok|en|Fresh vegetables every week, thank you mma
+s100|ok|tn|Merogo e ntšha beke le beke, ke a leboga mma
+s100|ok|af|Vars groente elke week, dankie mevrou
+s101|ok|en|Friendly seller, I will buy again
+s101|ok|tn|Morekisi yo o nang le botsalano, ke tla reka gape
+s101|ok|af|Vriendelike verkoper, ek sal weer koop
+s102|ok|en|The SMS confirming my order came quickly
+s102|ok|tn|SMS e e netefatsang taelo ya me e tsile ka bonako
+s102|ok|af|Die SMS wat my bestelling bevestig het, het vinnig gekom
+s103|ok|en|Collected my order with the code, very easy
+s103|ok|tn|Ke tsere taelo ya me ka khoutu, go motlhofo thata
+s103|ok|af|My bestelling met die kode afgehaal, baie maklik
+s104|ok|en|The delivery fee is a bit high but the service is good
+s104|ok|tn|Tuelo ya thomelo e kwa godimo go se kae mme tirelo e siame
+s104|ok|af|Die afleweringsfooi is bietjie hoog maar die diens is goed
+s105|ok|en|Paying cash when I collect is easy for me
+s105|ok|tn|Go duela ka kheše fa ke tsaya go motlhofo mo go nna
+s105|ok|af|Om kontant te betaal wanneer ek afhaal, is maklik vir my
+s106|ok|en|Paid online in the app, quick and safe
+s106|ok|tn|Ke duetse mo inthaneteng mo app, ka bonako e bile go babalesegile
+s106|ok|af|Aanlyn in die app betaal, vinnig en veilig
+s107|ok|en|The seller replied to my review and fixed the problem
+s107|ok|tn|Morekisi o arabile tshekatsheko ya me mme a baakanya bothata
+s107|ok|af|Die verkoper het op my resensie geantwoord en die probleem opgelos
+s108|ok|en|Prices are fair and the bags are full
+s108|ok|tn|Ditlhwatlhwa di siame e bile dikgetsi di tletse
+s108|ok|af|Die pryse is billik en die sakke is vol
+s109|ok|en|Ordered on the site and collected the same day
+s109|ok|tn|Ke odarile mo saeteng mme ka tsaya ka lone letsatsi leo
+s109|ok|af|Op die webwerf bestel en dieselfde dag afgehaal
+s110|ok|en|I sent the shop link to my family on WhatsApp
+s110|ok|tn|Ke rometse linki ya lebenkele kwa ba lelapa la me mo WhatsApp
+s110|ok|af|Ek het die winkel se skakel op WhatsApp vir my familie gestuur
+s111|ok|en|Nice packaging and a handwritten thank you note
+s111|ok|tn|Go phuthela go go ntle le lekwalo la malebogo le le kwadilweng ka seatla
+s111|ok|af|Mooi verpakking en 'n handgeskrewe dankie-briefie
+s112|ok|en|The lady at the stall gave me extra morogo
+s112|ok|tn|Mme kwa setaleng o nkoketseditse morogo
+s112|ok|af|Die tannie by die stalletjie het my ekstra morogo gegee
+s113|ok|en|Healthy hens, already laying eggs
+s113|ok|tn|Dikoko tse di itekanetseng, di setse di beela mae
+s113|ok|af|Gesonde henne, lê reeds eiers
+s114|ok|en|Open every day except Sunday
+s114|ok|tn|Re bula letsatsi le letsatsi kwa ntle ga Sontaga
+s114|ok|af|Elke dag oop behalwe Sondag
+s115|ok|en|We deliver anywhere in Kuruman for R35
+s115|ok|tn|Re romela gongwe le gongwe mo Kuruman ka R35
+s115|ok|af|Ons lewer enige plek in Kuruman af vir R35
+s116|ok|en|Pay cash or online, whatever suits you
+s116|ok|tn|Duela ka kheše kgotsa mo inthaneteng, se se go siametseng
+s116|ok|af|Betaal kontant of aanlyn, wat jou ook al pas
+s117|ok|en|Find us next to the taxi rank
+s117|ok|tn|Re fitlhele fa thoko ga boemelo jwa ditekesi
+s117|ok|af|Kry ons langs die taxistaanplek
+s118|ok|en|Fresh fat cakes from 7 in the morning
+s118|ok|tn|Magwinya a masha go simolola ka 7 mo mosong
+s118|ok|af|Vars vetkoek vanaf 7 in die oggend
+s119|ok|en|Order before 11:30 to skip the lunch queue
+s119|ok|tn|Odara pele ga 11:30 go tila mola wa motshegare
+s119|ok|af|Bestel voor 11:30 om die middagete-tou te vermy
+s120|ok|en|Ask the seller in the app if you need another size
+s120|ok|tn|Botsa morekisi mo app fa o tlhoka bogolo bo bongwe
+s120|ok|af|Vra die verkoper in die app as jy 'n ander grootte nodig het
+s121|ok|en|Discount on bulk orders placed through the app
+s121|ok|tn|Phokotso mo ditaelong tse dikgolo tse di dirwang ka app
+s121|ok|af|Afslag op grootmaatbestellings wat deur die app geplaas word
+s122|ok|en|Track your delivery in the app
+s122|ok|tn|Latedisa thomelo ya gago mo app
+s122|ok|af|Volg jou aflewering in die app
+s123|ok|en|Expensive but worth it
+s123|ok|tn|Go a tura mme go tshwanelwa
+s123|ok|af|Duur maar die moeite werd
+s124|ok|en|The food was cold when I got it
+s124|ok|tn|Dijo di ne di le tsididi fa ke di amogela
+s124|ok|af|Die kos was koud toe ek dit gekry het
+s125|ok|en|Rude lady, I will not go back
+s125|ok|tn|Mme yo o sa nang maitseo, nka se boele
+s125|ok|af|Onbeskofte vrou, ek gaan nie terug nie
+s126|ok|en|The goat was healthy and strong
+s126|ok|tn|Podi e ne e itekanetse e bile e nonofile
+s126|ok|af|Die bok was gesond en sterk
+s127|ok|en|Wrong size, but the seller exchanged it the next day
+s127|ok|tn|Bogolo jo bo phoso, mme morekisi o e fetotse letsatsi le le latelang
+s127|ok|af|Verkeerde grootte, maar die verkoper het dit die volgende dag omgeruil
+s128|ok|en|I paid in the app and collected the goat a week later
+s128|ok|tn|Ke duetse mo app mme ka tsaya podi morago ga beke
+s128|ok|af|Ek het in die app betaal en die bok 'n week later afgehaal
+s129|ok|en|Public holiday hours: open 9 to 1
+s129|ok|tn|Diura tsa letsatsi la boikhutso: re bula 9 go fitlha 1
+s129|ok|af|Openbare vakansiedag-ure: oop 9 tot 1
+s130|ok|en|Cancel in the app if you change your mind
+s130|ok|tn|Phimola mo app fa o fetola mogopolo
+s130|ok|af|Kanselleer in die app as jy van plan verander
+s131|ok|en|Thank you for the quick refund through the app
+s131|ok|tn|Ke a leboga ka madi a a busitsweng ka bonako ka app
+s131|ok|af|Dankie vir die vinnige terugbetaling deur die app
+s132|ok|en|Fresh eggs, R60 a tray
+s132|ok|tn|Mae a masha, R60 ka terei
+s132|ok|af|Vars eiers, R60 'n bak
+s133|ok|en|Order KMP-000123 arrived, all good
+s133|ok|tn|Taelo KMP-000123 e fitlhile, tsotlhe di siame
+s133|ok|af|Bestelling KMP-000123 het aangekom, alles reg
+s134|ok|en|Lucerne R180 a bale, collect from the farm
+s134|ok|tn|Lusere R180 ka bale, e tseye kwa polasing
+s134|ok|af|Lusern R180 per baal, haal by die plaas af
+s135|ok|en|Handmade soap with aloe from our garden
+s135|ok|tn|Sesepa se se dirilweng ka diatla ka kgopane go tswa mo tshingwaneng ya rona
+s135|ok|af|Handgemaakte seep met aalwyn uit ons tuin
+s136|ok|en|Delivery takes about 45 minutes on Saturdays
+s136|ok|tn|Thomelo e tsaya metsotso e ka nna 45 ka Matlhatso
+s136|ok|af|Aflewering neem so 45 minute op Saterdae
+s137|ok|en|The seller answered my question in the app within minutes
+s137|ok|tn|Morekisi o arabile potso ya me mo app mo metsotsong
+s137|ok|af|Die verkoper het my vraag binne minute in die app beantwoord
+s138|ok|en|School shoes in sizes 3 to 8
+s138|ok|tn|Ditlhako tsa sekolo ka bogolo 3 go ya go 8
+s138|ok|af|Skoolskoene in groottes 3 tot 8
+s139|ok|en|Proudly made in Kuruman
+s139|ok|tn|Go dirilwe mo Kuruman ka boikgantsho
+s139|ok|af|Trots gemaak in Kuruman
+s140|ok|en|Sorry for the delay, we were sold out
+s140|ok|tn|Maitshwarelo ka go diega, re ne re rekisitse tsotlhe
+s140|ok|af|Jammer vir die vertraging, ons was uitverkoop
+s141|ok|en|Great service, the collection code worked first time
+s141|ok|tn|Tirelo e ntle, khoutu ya go tsaya e berekile lekgetlo la ntlha
+s141|ok|af|Uitstekende diens, die afhaalkode het die eerste keer gewerk
+s142|ok|en|Not worth R120, too small
+s142|ok|tn|Ga e tshwanelwe ke R120, e nnye thata
+s142|ok|af|Nie R120 werd nie, te klein
+s143|ok|en|I always pay cash at the stall, no problem
+s143|ok|tn|Ke duela ka kheše kwa setaleng ka metlha, ga go na bothata
+s143|ok|af|Ek betaal altyd kontant by die stalletjie, geen probleem nie
+s144|ok|en|Best kota in town and ready fast
+s144|ok|tn|Kota e e gaisang mo toropong e bile e siama ka bonako
+s144|ok|af|Beste kota in die dorp en vinnig gereed
+s145|ok|en|Some bricks cracked on delivery, they replaced them
+s145|ok|tn|Ditena dingwe di thubegile mo thomelong, ba di emiseditse
+s145|ok|af|Party stene het met aflewering gekraak, hulle het dit vervang
+s146|ok|en|Call-outs in Kuruman and the nearby villages
+s146|ok|tn|Re tla kwa Kuruman le kwa metseng e e gaufi
+s146|ok|af|Uitroepe in Kuruman en die nabygeleë dorpies
+s147|ok|en|The SMS said my order was ready
+s147|ok|tn|SMS e ne ya re taelo ya me e siame
+s147|ok|af|Die SMS het gesê my bestelling is gereed
+s148|ok|en|I didn't get my change, but the seller fixed it the next time
+s148|ok|tn|Ga ke a bona tšhenši ya me, mme morekisi o e baakantse lekgetlo le le latelang
+s148|ok|af|Ek het nie my kleingeld gekry nie, maar die verkoper het dit die volgende keer reggemaak
+s149|ok|en|Weekend special: two kotas for R60
+s149|ok|tn|Tlhwatlhwa e e kgethegileng ya bokhutlo jwa beke: dikota di le pedi ka R60
+s149|ok|af|Naweekspesiaal: twee kotas vir R60
+s150|ok|en|Vaccinated goats, papers available
+s150|ok|tn|Dipodi tse di entetsweng, dipampiri di teng
+s150|ok|af|Ingeënte bokke, papiere beskikbaar
+s151|ok|en|The price on the site is the same as at the stall
+s151|ok|tn|Tlhwatlhwa mo saeteng e tshwana le ya kwa setaleng
+s151|ok|af|Die prys op die webwerf is dieselfde as by die stalletjie
+s152|ok|en|Good food, slow service at lunch time
+s152|ok|tn|Dijo tse di siameng, tirelo e bonya ka nako ya motshegare
+s152|ok|af|Goeie kos, stadige diens met middagete
+s153|ok|en|Friendly gogo and fair prices
+s153|ok|tn|Nkoko yo o nang le botsalano le ditlhwatlhwa tse di siameng
+s153|ok|af|Vriendelike ouma en billike pryse
+s154|ok|en|Morogo picked yesterday, very fresh
+s154|ok|tn|Morogo o kgethilwe maabane, o mosha thata
+s154|ok|af|Morogo gister gepluk, baie vars
+s155|ok|en|For your safety, pay only through the app
+s155|ok|tn|Go babalesega ga gago, duela fela ka app
+s155|ok|af|Vir jou veiligheid, betaal slegs deur die app
+s156|ok|en|Lovely bracelet, it was a perfect birthday gift
+s156|ok|tn|Sebenyane sa letsogo se sentle, e ne e le mpho e e siameng ya letsatsi la matsalo
+s156|ok|af|Lieflike armband, dit was 'n perfekte verjaarsdaggeskenk
+s157|ok|en|The stall opens early, perfect before work
+s157|ok|tn|Setala se bula go sa le gale, go siame pele ga tiro
+s157|ok|af|Die stalletjie maak vroeg oop, perfek voor werk
+s158|ok|en|Bricks R2.50 each, delivery extra
+s158|ok|tn|Ditena R2.50 nngwe le nngwe, thomelo e duelwa ka thoko
+s158|ok|af|Stene R2.50 elk, aflewering ekstra
+s159|ok|en|The courier waited while I found my code
+s159|ok|tn|Moromiwa o emetse fa ke batla khoutu ya me
+s159|ok|af|Die koerier het gewag terwyl ek my kode gesoek het
+s160|ok|en|Ask for Dineo at the caravan window
+s160|ok|tn|Botsa Dineo kwa fensetereng ya karabane
+s160|ok|af|Vra vir Dineo by die karavaan se venster

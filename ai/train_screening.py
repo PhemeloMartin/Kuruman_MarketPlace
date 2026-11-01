@@ -15,8 +15,14 @@ is always flagged (posting a number is the usual first step to taking a sale off
 
 The threshold is chosen for HIGH RECALL (catch at least 90% of suspicious texts in
 cross-validation), because a wrong flag costs support a few seconds while a missed scam costs a
-customer money. Data: data/screening.psv - 60 concepts x 3 languages, including "hard" normal
+customer money. Data: data/screening.psv - 160 concepts x 3 languages, including "hard" normal
 texts that mention WhatsApp or cash innocently.
+
+screening-v2: 100 more concepts. Reviews are screened too, and screening-v1 had seen almost no
+ordinary reviews: it flagged honest ones like "Good bread, I waited a while" as suspicious. The new
+normal texts are mostly everyday reviews and listings (happy, angry, about waiting, prices and
+cash); the new suspicious ones add patterns such as booking fees, "inbox me for the price",
+airtime as payment, OTP and PIN requests, and fake prizes or jobs.
 """
 
 import json
@@ -31,7 +37,7 @@ from sklearn.pipeline import Pipeline
 
 from aikit import HERE, LANGUAGES, SEED, grouped_split, load_psv, sha256, text_features, write_card
 
-MODEL_VERSION = "screening-v1"
+MODEL_VERSION = "screening-v2"
 DATA = HERE / "data" / "screening.psv"
 TARGET_RECALL = 0.90
 
@@ -119,14 +125,15 @@ def main():
         "artefact_sha256": sha256(artefact),
         "purpose": "Flag texts that try to move payment or sales off the site, or look like scams, for a support person to review.",
         "method": "TF-IDF word + character n-grams; logistic regression (balanced); OR a South African phone-number rule.",
-        "data": "data/screening.psv - 60 student-authored concepts x 3 languages (30 suspicious, 30 normal incl. hard negatives).",
+        "data": "data/screening.psv - 160 student-authored concepts x 3 languages (65 suspicious, 95 normal incl. hard "
+        "negatives and everyday reviews).",
         "split": {"development_concepts": len(dev_ids), "test_concepts": len(test_ids), "grouped_by": "concept_id"},
         "tuning": {"C": best_c, "threshold": threshold, "rule": f"recall >= {TARGET_RECALL} in 5-fold grouped CV"},
         "test_results": results,
         "human_in_the_loop": "Never blocks, hides or deletes. A flag only puts the item on support's review list; "
         "support decides, and the decision is in the audit log.",
-        "limits": "Very small synthetic dataset; scammers change wording. Unreviewed Setswana/Afrikaans. "
-        "Expect false alarms on honest texts that mention payment.",
+        "limits": "Small synthetic dataset; scammers change wording. Unreviewed Setswana/Afrikaans. "
+        "Expect some false alarms on honest texts that mention payment.",
     }
     write_card("screening", card)
     r = results

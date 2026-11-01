@@ -1,15 +1,15 @@
-# Screening model evaluation (screening-v1)
+# Screening model evaluation (screening-v2)
 
-Held-out test: 12 concepts x 3 languages. Threshold 0.5 chosen for recall >= 0.9 in cross-validation.
+Held-out test: 32 concepts x 3 languages. Threshold 0.49 chosen for recall >= 0.9 in cross-validation.
 
 | | Precision | Recall | F1 |
 |---|---|---|---|
-| **Model + phone rule (shipped)** | 0.765 | 0.722 | 0.743 |
-| Model only | 0.765 | 0.722 | 0.743 |
-| Keyword baseline | 1.0 | 0.222 | 0.364 |
+| **Model + phone rule (shipped)** | 0.912 | 0.795 | 0.849 |
+| Model only | 0.912 | 0.795 | 0.849 |
+| Keyword baseline | 0.833 | 0.385 | 0.526 |
 
-Recall per language: en 0.833, tn 0.5, af 0.833
+Recall per language: en 0.846, tn 0.769, af 0.769
 
 Human in the loop: Never blocks, hides or deletes. A flag only puts the item on support's review list; support decides, and the decision is in the audit log.
 
-Limits: Very small synthetic dataset; scammers change wording. Unreviewed Setswana/Afrikaans. Expect false alarms on honest texts that mention payment.
+Limits: Small synthetic dataset; scammers change wording. Unreviewed Setswana/Afrikaans. Expect some false alarms on honest texts that mention payment.

@@ -1,34 +1,34 @@
 {
-  "model_version": "reviews-v1",
-  "artefact": "reviews-v1.joblib",
-  "artefact_sha256": "c9a9aa1f102efa04ba10626e4ea05b698a8efbbc39ea0dd543caaf0ba74014a8",
+  "model_version": "reviews-v2",
+  "artefact": "reviews-v2.joblib",
+  "artefact_sha256": "0131cb129e0612a59efef44d27442a73db9d849b4eb22d491a5f85e686897fe2",
   "purpose": "Sentiment and themes of customer reviews, shown as a summary. Advisory only.",
   "method": "TF-IDF word (1-2) + character (3-5) n-grams; multinomial logistic regression (sentiment); one-vs-rest logistic regression (themes).",
-  "data": "data/reviews.psv - 110 student-authored review concepts x 3 languages (see data/PROVENANCE.md).",
+  "data": "data/reviews.psv - 260 student-authored review concepts x 3 languages (see data/PROVENANCE.md).",
   "split": {
-    "development_concepts": 87,
-    "test_concepts": 23,
+    "development_concepts": 208,
+    "test_concepts": 52,
     "grouped_by": "concept_id"
   },
   "tuning": {
-    "sentiment_C": 3,
-    "themes_C": 3,
+    "sentiment_C": 30,
+    "themes_C": 30,
     "theme_threshold": 0.3,
     "cv": "5-fold grouped"
   },
-  "test_set_note": "The test reviews were scored once before class balancing was added (themes then lost to the keyword lexicon). Balancing was chosen by grouped cross-validation only, but the test set is no longer strictly unseen. The themes margin over the lexicon is small on 23 concepts: treat the two as roughly equal.",
+  "test_set_note": "reviews-v2 re-split the larger dataset, and the test set was scored once, after every choice was fixed by grouped cross-validation. Some of its concepts were also in reviews-v1's test set, which was looked at once before class balancing was added (that choice carries over), so treat small margins with care.",
   "test_results": {
-    "sentiment_macro_f1": 0.505,
-    "sentiment_majority_baseline": 0.202,
-    "sentiment_keyword_baseline": 0.381,
-    "themes_micro_f1": 0.599,
-    "themes_keyword_baseline": 0.559,
+    "sentiment_macro_f1": 0.691,
+    "sentiment_majority_baseline": 0.204,
+    "sentiment_keyword_baseline": 0.308,
+    "themes_micro_f1": 0.669,
+    "themes_keyword_baseline": 0.601,
     "sentiment_macro_f1_per_language": {
-      "en": 0.589,
-      "tn": 0.465,
-      "af": 0.437
+      "en": 0.787,
+      "tn": 0.596,
+      "af": 0.685
     }
   },
-  "limits": "Small synthetic dataset; Setswana and Afrikaans unreviewed. Sarcasm and mixed reviews are hard. Never used to hide, rank or remove reviews.",
-  "trained_at": "2026-10-25T23:03:16+00:00"
+  "limits": "Small synthetic dataset; Setswana and Afrikaans unreviewed. Sarcasm and mixed reviews are hard. The good_quality theme is new (32 concepts). Never used to hide, rank or remove reviews.",
+  "trained_at": "2026-11-01T18:56:21+00:00"
 }
