@@ -26,6 +26,7 @@ const PERIODS = [
 
 const DECLINE_REASONS = ['Out of stock', 'Closed right now', "Can't prepare it in time"]
 const REFRESH_MS = 20_000 // check for new orders every 20 seconds
+const HISTORY_FIRST = 5 // finished orders shown before "Show all"
 
 function minutesLeft(iso: string): number {
   return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 60000))
@@ -56,6 +57,7 @@ function needsSeller(o: SellerOrder): boolean {
 export function SellerDashboardPage() {
   const { user } = useAuth()
   const [period, setPeriod] = useState('week')
+  const [allHistory, setAllHistory] = useState(false)
   const [dashboard, setDashboard] = useState<Dashboard | null>(null)
   const [orders, setOrders] = useState<SellerOrder[] | null>(null)
   const [cash, setCash] = useState<CashToConfirm[]>([])
@@ -112,9 +114,11 @@ export function SellerDashboardPage() {
   const waitingOnOthers = orders.filter(
     (o) => !needsSeller(o) && ['awaiting_payment', 'ready', 'out_for_delivery', 'delivery_failed'].includes(o.status),
   )
-  const history = orders.filter(
-    (o) => ['completed', 'declined', 'cancelled', 'expired'].includes(o.status) && !o.delivery?.awaitingReturn,
-  )
+  // Finished orders of the last 3 days, newest first. A busy shop has dozens, so only the latest few show at first.
+  const history = orders
+    .filter((o) => ['completed', 'declined', 'cancelled', 'expired'].includes(o.status) && !o.delivery?.awaitingReturn)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+  const historyShown = allHistory ? history : history.slice(0, HISTORY_FIRST)
   const onSale = products.filter((p) => p.isActive)
   // Same rule as the server's low-stock number: what's left to sell is at or below the seller's own warning level.
   const lowStock = onSale.filter((p) => p.availableQty <= p.lowStockThreshold)
@@ -307,10 +311,16 @@ export function SellerDashboardPage() {
         <section aria-labelledby="history-heading" className="seller-section">
           <div className="section-head">
             <h2 id="history-heading">Order history</h2>
+            <span className="product-meta">last 3 days</span>
           </div>
-          {history.map((o) => (
+          {historyShown.map((o) => (
             <OrderCard key={o.id} order={o} onChanged={load} />
           ))}
+          {history.length > historyShown.length && (
+            <button type="button" className="btn btn-outline btn-block" onClick={() => setAllHistory(true)}>
+              Show all {history.length} orders
+            </button>
+          )}
         </section>
       )}
     </main>

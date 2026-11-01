@@ -112,8 +112,13 @@ async function main() {
     await check("Entrepreneur of the Month follows the formula: the food caravan wins on the demo data", async () => {
       const s = (await call("", "GET", "/api/spotlight")).data.spotlight;
       assert.match(s.business.name, /Dineo/);
-      // 50 x 6/6 + 30 x 4.5/5 + 20 x 100% = 97
-      assert.equal(s.score, 97);
+      // The caravan has the most completed orders (50 x 1), its 25 reviews of the last 30 days average 4.4
+      // (30 x 4.4/5 = 26.4), and the acceptance rate counts for 20%. The synthetic history follows the
+      // calendar (weekdays, paydays), so the acceptance rate - not the formula - can differ a little by day.
+      assert.equal(s.reviewCount, 25);
+      assert.equal(s.averageRating, 4.4);
+      assert.ok(s.acceptanceRate > 0.9 && s.acceptanceRate < 1);
+      assert.equal(s.score, Math.round(50 + 26.4 + 20 * s.acceptanceRate));
       assert.match(s.rule, /Only orders placed and completed on the site count/);
     });
 
