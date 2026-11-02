@@ -42,8 +42,6 @@ services:
           type: web
           name: kurumanmarketplace-ai
           envVarKey: AI_SERVICE_TOKEN
-      # Sign-in codes: no SMS gateway yet, so the hosted DEMO shows the code on screen.
-      # Synthetic demo data only - switch this off (and connect a gateway) before any real person signs up.
       # Product and shop photos (cloudinary://API_KEY:API_SECRET@CLOUD_NAME from the Cloudinary dashboard).
       # Without it, photos are kept in the database instead.
       - key: CLOUDINARY_URL
@@ -69,10 +67,13 @@ services:
         sync: false
       - key: TWILIO_CALLER_ID
         sync: false
+      # Sign-in codes go out by real SMS (BulkSMS). "true" would show every code on screen - only for a demo
+      # with made-up accounts, because then anyone could sign in as any number.
       - key: SMS_DEMO_SHOW_CODES
-        value: "true"
+        value: "false"
+      # Real money: live Payfast account (merchant ID, key and passphrase below). "true" = Payfast's sandbox.
       - key: PAYFAST_SANDBOX
-        value: "true"
+        value: "false"
       - key: PAYFAST_MERCHANT_ID
         sync: false
       - key: PAYFAST_MERCHANT_KEY
