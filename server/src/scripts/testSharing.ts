@@ -10,6 +10,7 @@ import { AddressInfo } from "net";
 import { app } from "../app";
 import { pool } from "../db";
 import { previewTags } from "../lib/linkPreview";
+import { canonicalTag, robotsTxt, sitemapXml } from "../lib/seo";
 
 const ORIGIN = "http://localhost:5173";
 let base = "";
@@ -140,6 +141,22 @@ async function main() {
       assert.equal(await previewTags(`/product/${cement.id}`), "");
       await pool.query("UPDATE products SET is_active = TRUE WHERE id = $1", [cement.id]);
       assert.equal(await previewTags("/orders"), "");
+    });
+
+    await check("search engines: a sitemap of public shops and products, private pages kept out", async () => {
+      const robots = robotsTxt();
+      assert.match(robots, /Disallow: \/orders/);
+      assert.match(robots, /Disallow: \/seller/);
+      assert.match(robots, /Sitemap: http.*\/sitemap\.xml/);
+      const sitemap = await sitemapXml();
+      assert.ok(sitemap.includes(`/product/${cement.id}</loc>`));
+      assert.match(sitemap, /\/shop\/\d+<\/loc>/);
+      await pool.query("UPDATE products SET is_active = FALSE WHERE id = $1", [cement.id]);
+      assert.ok(!(await sitemapXml()).includes(`/product/${cement.id}</loc>`), "hidden products aren't listed");
+      await pool.query("UPDATE products SET is_active = TRUE WHERE id = $1", [cement.id]);
+      assert.match(canonicalTag(`/product/${cement.id}`), /rel="canonical"/);
+      assert.equal(canonicalTag("/orders"), "");
+      assert.match(await previewTags(`/product/${cement.id}`), /<meta name="description"/);
     });
 
     console.log(`\n${passed} checks passed.\n`);

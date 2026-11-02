@@ -61,12 +61,18 @@ export async function previewTags(path: string): Promise<string> {
   return (
     Object.entries(tags)
       .map(([k, v]) => `<meta property="${k}" content="${escapeHtml(v)}" />`)
-      .join("\n    ") + `\n    <title>${escapeHtml(title)}</title>`
+      .join("\n    ") +
+    // Google shows the <title> and this description in its search results.
+    `\n    <meta name="description" content="${escapeHtml(description.slice(0, 160))}" />` +
+    `\n    <title>${escapeHtml(title)} | KurumanMarketPlace</title>`
   );
 }
 
-// Puts the tags into the page's <head>, replacing the default <title>.
+// Puts the tags into the page's <head>, replacing the default <title> and description.
 export function withPreview(html: string, tags: string): string {
   if (!tags) return html;
-  return html.replace(/<title>[^<]*<\/title>/, "").replace("</head>", `    ${tags}\n  </head>`);
+  return html
+    .replace(/<title>[^<]*<\/title>/, "")
+    .replace(/<meta name="description"[^>]*>/, "")
+    .replace("</head>", `    ${tags}\n  </head>`);
 }

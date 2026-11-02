@@ -26,6 +26,7 @@ import { privacyRouter } from "./routes/privacy";
 import { notificationsRouter } from "./routes/notifications";
 import { POLICY } from "./lib/policy";
 import { previewTags, withPreview } from "./lib/linkPreview";
+import { canonicalTag, robotsTxt, sitemapXml } from "./lib/seo";
 
 export const app = express();
 // Behind a tunnel or hosting proxy, the real caller's IP arrives in the X-Forwarded-For header
@@ -105,6 +106,7 @@ const CLIENT_DIST = path.join(__dirname, "..", "..", "client", "dist");
 if (process.env.NODE_ENV === "production" && fs.existsSync(CLIENT_DIST)) {
   app.use(
     express.static(CLIENT_DIST, {
+      index: false, // the home page goes through the handler below too (it adds the canonical tag)
       setHeaders(res, filePath) {
         // Files in assets/ have a content hash in their name, so they can be cached for a year.
         // Everything else (index.html, the service worker, the manifest) must be re-checked,
@@ -117,12 +119,20 @@ if (process.env.NODE_ENV === "production" && fs.existsSync(CLIENT_DIST)) {
   // Any other page address (e.g. /orders) is the React app, which does its own routing.
   // Product and shop pages get link-preview tags first, so a link shared on WhatsApp shows a photo.
   const indexHtml = fs.readFileSync(path.join(CLIENT_DIST, "index.html"), "utf8");
+  // For search engines (lib/seo.ts).
+  app.get("/robots.txt", (_req, res) => {
+    res.type("text/plain").send(robotsTxt());
+  });
+  app.get("/sitemap.xml", async (_req, res) => {
+    res.type("application/xml").send(await sitemapXml());
+  });
   app.use(async (req, res, next) => {
     // A missing file (e.g. an old version's script after an update) is "not found", never the
     // home page - otherwise the browser gets HTML where it expected JavaScript.
     if (req.method !== "GET" || req.path.startsWith("/api/") || req.path.startsWith("/assets/")) return next();
     res.set("Cache-Control", "no-cache");
-    res.type("html").send(withPreview(indexHtml, await previewTags(req.path)));
+    const page = withPreview(indexHtml, await previewTags(req.path));
+    res.type("html").send(page.replace("</head>", `  ${canonicalTag(req.path)}\n  </head>`));
   });
 }
 
