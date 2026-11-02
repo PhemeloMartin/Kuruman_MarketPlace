@@ -13,6 +13,8 @@ import {
 } from "../lib/payfast";
 import { recordStatusChange } from "../lib/stock";
 import { openOrderCase } from "../lib/cases";
+import { sendSms } from "../lib/sms";
+import { paidAtStall } from "../lib/smsOrders";
 
 export const paymentsRouter = Router();
 
@@ -191,8 +193,10 @@ paymentsRouter.post(
       if (canApply && current.rows[0].status === "pending") {
         await client.query("UPDATE orders SET status = 'confirmed', payment_due_at = NULL, updated_at = now() WHERE id = $1", [order.id]);
         await recordStatusChange(client, order.id, "awaiting_payment", "confirmed", null, "Online payment verified (Payfast)");
+        const stallSms = await paidAtStall(client, order.id);
         await client.query("COMMIT");
         await logEvent({ ...meta, outcome: "applied" });
+        if (stallSms) await sendSms(stallSms.phone, stallSms.text, { repliable: true }).catch((err) => console.error("Stall SMS not sent:", err.message));
       } else {
         // Real money that can't be applied (order expired/cancelled, or already paid):
         // never resurrect the order, never ignore the money - it needs a refund (spec 5.6),

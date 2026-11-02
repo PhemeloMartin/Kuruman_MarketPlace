@@ -138,7 +138,35 @@ async function answerOrder(client: PoolClient, b: { id: number; owner_id: number
       orderId: id,
     };
   }
+  if (next === "awaiting_payment") {
+    return {
+      text: `KurumanMarketPlace ${o.order_number}: accepted. The customer pays online now; you get an SMS when the money is in.`,
+      orderId: id,
+    };
+  }
   return { text: `KurumanMarketPlace ${o.order_number}: accepted. The customer was told.`, orderId: id };
+}
+
+// The customer paid online for an order at a market stall. A stall holder with a basic phone can't tap
+// "Ready", and the goods are already on the table, so the order is ready to collect at once - and the
+// stall is told by SMS. Runs inside the payment's transaction; returns the SMS to send after COMMIT.
+export async function paidAtStall(client: PoolClient, orderId: number): Promise<{ phone: string; text: string } | null> {
+  const r = await client.query(
+    `SELECT o.order_number, o.total_cents, b.owner_id, b.phone, b.sms_alerts
+       FROM orders o JOIN businesses b ON b.id = o.business_id
+      WHERE o.id = $1 AND o.status = 'confirmed' AND o.fulfilment = 'pickup' AND b.kind = 'market_stall'`,
+    [orderId]
+  );
+  const o = r.rows[0];
+  if (!o) return null;
+  await client.query("UPDATE orders SET status = 'ready', updated_at = now() WHERE id = $1", [orderId]);
+  await recordStatusChange(client, orderId, "confirmed", "ready", o.owner_id, "Ready at the stall");
+  if (!o.sms_alerts || !o.phone) return null;
+  const text =
+    `KurumanMarketPlace ${o.order_number}: PAID online, ${rand(o.total_cents)} - take no cash. When the customer ` +
+    `comes, they show a 6-digit code. Send that code to this number to finish.`;
+  await client.query("INSERT INTO sms_messages (phone, direction, body, order_id) VALUES ($1, 'out', $2, $3)", [o.phone, text, orderId]);
+  return { phone: o.phone, text };
 }
 
 // The customer's code arrived: find the ready pickup order it belongs to and complete it.

@@ -8,12 +8,20 @@
 
 process.env.SMS_DEMO_SHOW_CODES = "true";
 process.env.SMS_INBOUND_TOKEN = "test-inbound-token-123456";
+// Payfast sandbox test values (the notification is signed here, so Payfast itself isn't contacted).
+process.env.PAYFAST_MERCHANT_ID = "10000100";
+process.env.PAYFAST_MERCHANT_KEY = "46f0cd694581a";
+process.env.PAYFAST_PASSPHRASE = "local contract test passphrase";
+process.env.PAYFAST_SANDBOX = "true";
+process.env.PAYFAST_VERIFY_SOURCE_IP = "false";
+process.env.PAYFAST_VERIFY_WITH_SERVER = "false";
 
 import assert from "assert/strict";
 import { AddressInfo } from "net";
 import { app } from "../app";
 import { pool } from "../db";
 import { processOutbox } from "../lib/notificationWorker";
+import { itnSignature, payfastEncode } from "../lib/payfast";
 
 const ORIGIN = "http://localhost:5173";
 const STALL_PHONE = "0710000014";
@@ -58,11 +66,11 @@ async function main() {
     const thato = await login("0710000001");
     const stall = (await pool.query("SELECT id FROM businesses WHERE kind = 'market_stall'")).rows[0];
     const morogo = (await pool.query("SELECT id, stock_qty, reserved_qty FROM products WHERE name LIKE 'Morogo%'")).rows[0];
-    const order = (fulfilment: string, qty = 2) =>
+    const order = (fulfilment: string, qty = 2, paymentMethod = "cash") =>
       call(thato, "POST", "/api/orders", {
         businessId: Number(stall.id), items: [{ productId: Number(morogo.id), quantity: qty }],
-        fulfilment, deliveryAddress: fulfilment === "pickup" ? undefined : "12 Main Street, Kuruman", paymentMethod: "cash",
-      }, { "Idempotency-Key": `stall-${fulfilment}-${qty}-${Date.now()}` });
+        fulfilment, deliveryAddress: fulfilment === "pickup" ? undefined : "12 Main Street, Kuruman", paymentMethod,
+      }, { "Idempotency-Key": `stall-${fulfilment}-${qty}-${paymentMethod}-${Date.now()}` });
 
     await check("a market stall is reserve-and-collect: delivery is refused", async () => {
       assert.equal((await order("delivery")).status, 422);
@@ -123,6 +131,37 @@ async function main() {
       assert.equal(await statusOf(r.data.id), "declined");
       const after = (await pool.query("SELECT reserved_qty FROM products WHERE id = $1", [morogo.id])).rows[0].reserved_qty;
       assert.equal(after, before - 3);
+    });
+
+    await check("paid online: the stall accepts by SMS, gets an SMS when the money is in, and completes by code", async () => {
+      const r = await order("pickup", 1, "online");
+      assert.equal(r.status, 201);
+      const id = r.data.id;
+      assert.match((await sms("1")).data.reply, /pays online now/);
+      assert.equal(await statusOf(id), "awaiting_payment");
+      // Payfast's notification that the money arrived (signed like Payfast signs it).
+      const attempt = await call(thato, "POST", `/api/orders/${id}/payment-attempts`);
+      const fields: [string, string][] = [
+        ["m_payment_id", attempt.data.fields.m_payment_id],
+        ["pf_payment_id", `stall${Date.now()}`],
+        ["payment_status", "COMPLETE"],
+        ["amount_gross", attempt.data.fields.amount],
+        ["merchant_id", "10000100"],
+      ];
+      fields.push(["signature", itnSignature(fields, process.env.PAYFAST_PASSPHRASE!)]);
+      const itn = await fetch(base + "/api/payments/payfast/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: fields.map(([k, v]) => `${k}=${payfastEncode(v)}`).join("&"),
+      });
+      assert.equal(itn.status, 200);
+      assert.equal(await statusOf(id), "ready", "a basic phone can't tap Ready, so a paid stall order is ready at once");
+      const inbox = (await call("", "GET", `/api/demo/phone?number=${STALL_PHONE}`)).data;
+      assert.match(inbox[inbox.length - 1].body, /PAID online, R15\.00 - take no cash/);
+      const code = (await call(thato, "POST", `/api/orders/${id}/handover-code`)).data.code;
+      assert.match((await sms(code)).data.reply, /code correct/);
+      assert.equal(await statusOf(id), "completed");
+      assert.equal((await pool.query("SELECT 1 FROM cash_receipts WHERE order_id = $1", [id])).rowCount, 0, "no cash recorded");
     });
 
     await check("the gateway's address needs the secret token", async () => {
