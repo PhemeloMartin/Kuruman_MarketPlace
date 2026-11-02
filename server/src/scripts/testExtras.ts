@@ -220,6 +220,27 @@ async function main() {
       assert.equal(sent[0].auth, `Basic ${Buffer.from("id1:secret1").toString("base64")}`);
     });
 
+    await check("order SMS are sent repliable (so the seller can answer 1 or 2); if refused, a normal SMS still goes", async () => {
+      const sent: any[] = [];
+      const realFetch = globalThis.fetch;
+      globalThis.fetch = (async (_url: any, init: any) => {
+        const body = JSON.parse(init.body);
+        sent.push(body);
+        return new Response("[]", { status: body.from === "REPLIABLE" && sent.length > 1 ? 403 : 201 });
+      }) as typeof fetch;
+      process.env.BULKSMS_TOKEN_ID = "id1";
+      process.env.BULKSMS_TOKEN_SECRET = "secret1";
+      try {
+        await sendSms("+27821234567", "Reply 1 to accept", { repliable: true }); // accepted as repliable
+        await sendSms("+27821234567", "Reply 1 to accept", { repliable: true }); // refused, then sent plain
+      } finally {
+        globalThis.fetch = realFetch;
+        delete process.env.BULKSMS_TOKEN_ID;
+        delete process.env.BULKSMS_TOKEN_SECRET;
+      }
+      assert.deepEqual(sent.map((m) => m.from ?? "plain"), ["REPLIABLE", "REPLIABLE", "plain"]);
+    });
+
     console.log(`\n${passed} checks passed.\n`);
   } finally {
     server.close();

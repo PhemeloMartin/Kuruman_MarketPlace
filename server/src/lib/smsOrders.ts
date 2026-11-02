@@ -20,7 +20,7 @@ const rand = (cents: number) => `R${(cents / 100).toFixed(2)}`;
 
 export async function sendLoggedSms(db: PoolClient | typeof pool, phone: string, body: string, orderId: number | null = null) {
   await db.query("INSERT INTO sms_messages (phone, direction, body, order_id) VALUES ($1, 'out', $2, $3)", [phone, body, orderId]);
-  await sendSms(phone, body);
+  await sendSms(phone, body, { repliable: true });
 }
 
 // Called by the notification worker when a new order arrives.
@@ -81,7 +81,7 @@ export async function handleInboundSms(fromRaw: string, textRaw: string): Promis
       reply.orderId ?? null,
     ]);
     await client.query("COMMIT");
-    await sendSms(from, reply.text).catch((err) => console.error("Reply SMS not sent:", err.message));
+    await sendSms(from, reply.text, { repliable: true }).catch((err) => console.error("Reply SMS not sent:", err.message));
     return reply;
   } catch (err) {
     await client.query("ROLLBACK");

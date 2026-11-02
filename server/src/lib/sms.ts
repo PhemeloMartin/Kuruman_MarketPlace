@@ -16,7 +16,10 @@ export const SMS_DEMO_SHOW_CODES =
     ? process.env.SMS_DEMO_SHOW_CODES === "true"
     : process.env.NODE_ENV !== "production";
 
-export async function sendSms(to: string, text: string): Promise<void> {
+// repliable: the person must be able to answer this SMS (orders by SMS: "Reply 1 to accept"). BulkSMS then
+// sends it from one of its numbers that can receive replies ("from": "REPLIABLE"), and passes the answer to
+// our webhook (/api/sms/inbound). Plain messages, like sign-in codes, don't need that.
+export async function sendSms(to: string, text: string, options: { repliable?: boolean } = {}): Promise<void> {
   const id = process.env.BULKSMS_TOKEN_ID;
   const secret = process.env.BULKSMS_TOKEN_SECRET;
   if (!id || !secret || DEMO_NUMBER.test(to)) {
@@ -24,15 +27,23 @@ export async function sendSms(to: string, text: string): Promise<void> {
     console.log(`[SMS to ${to.slice(0, 5)}****${to.slice(-2)}] ${text}`);
     return;
   }
-  const res = await fetch("https://api.bulksms.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Basic ${Buffer.from(`${id}:${secret}`).toString("base64")}`,
-    },
-    body: JSON.stringify({ to, body: text }),
-    signal: AbortSignal.timeout(10_000),
-  });
+  const post = (message: object) =>
+    fetch("https://api.bulksms.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Basic ${Buffer.from(`${id}:${secret}`).toString("base64")}`,
+      },
+      body: JSON.stringify(message),
+      signal: AbortSignal.timeout(10_000),
+    });
+  let res = await post(options.repliable ? { to, body: text, from: "REPLIABLE" } : { to, body: text });
+  if (!res.ok && options.repliable && res.status < 500) {
+    // The account can't send repliable SMS (yet): still deliver the order, as a normal SMS. The seller can
+    // then answer on the site instead of by SMS.
+    console.warn(`Repliable SMS refused (status ${res.status}); sent as a normal SMS instead`);
+    res = await post({ to, body: text });
+  }
   if (!res.ok) {
     // Never log the message itself (it may hold a sign-in code); the status is enough to investigate.
     throw new Error(`SMS gateway refused the message (status ${res.status})`);
