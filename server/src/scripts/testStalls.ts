@@ -164,6 +164,25 @@ async function main() {
       assert.equal((await pool.query("SELECT 1 FROM cash_receipts WHERE order_id = $1", [id])).rowCount, 0, "no cash recorded");
     });
 
+    await check("the customer gets an SMS too: one 'ready' when the stall accepts, and 'you pay nothing' when sold out", async () => {
+      const customerSms = async (orderId: number) =>
+        (await pool.query("SELECT body FROM sms_messages WHERE phone = '+27710000001' AND order_id = $1 ORDER BY id", [orderId])).rows.map((m) => m.body);
+      const accepted = (await order("pickup", 1)).data.id;
+      await processOutbox();
+      await sms("1");
+      await processOutbox();
+      const texts = await customerSms(accepted);
+      assert.equal(texts.length, 1, "accepted and ready at once: one SMS, not two");
+      assert.match(texts[0], /ready to collect at Mma Kefilwe's Vegetable Stall. Show your code/);
+      assert.ok(texts[0].length <= 160, "fits in one SMS");
+      assert.match(texts[0], /\/orders$/);
+      const soldOut = (await order("pickup", 1)).data.id;
+      await processOutbox();
+      await sms("2");
+      await processOutbox();
+      assert.match((await customerSms(soldOut))[0], /can't take your order \(Sold out\)\. You pay nothing\./);
+    });
+
     await check("the gateway's address needs the secret token", async () => {
       assert.equal((await call("", "POST", "/api/sms/inbound", { from: STALL_PHONE, text: "1" })).status, 403);
       assert.equal((await call("", "POST", "/api/sms/inbound?token=wrong-token-wrong-token", { from: STALL_PHONE, text: "1" })).status, 403);

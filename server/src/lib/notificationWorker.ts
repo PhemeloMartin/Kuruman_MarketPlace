@@ -1,5 +1,7 @@
 import { PoolClient } from "pg";
 import { pool } from "../db";
+import { customerOrderSms } from "./customerSms";
+import { sendSms } from "./sms";
 import { alertNewOrder } from "./smsOrders";
 
 // The notification worker (spec FR-17, TC-17). It runs separately from the requests that
@@ -109,6 +111,9 @@ export async function processOutbox(options: { failWith?: string } = {}): Promis
   const client = await pool.connect();
   let sent = 0;
   let failed = 0;
+  // Customer SMS are recorded with the event and sent after COMMIT, so a retried event never
+  // texts the customer twice, and a slow SMS gateway doesn't hold the transaction open.
+  const smsToSend: { phone: string; text: string }[] = [];
   try {
     await client.query("BEGIN");
     // SKIP LOCKED: if two workers ever run at once (two servers), they take different events.
@@ -131,8 +136,17 @@ export async function processOutbox(options: { failWith?: string } = {}): Promis
             [n.userId, e.event_type.startsWith("application") || e.event_type.startsWith("privacy") ? null : e.aggregate_id, e.dedupe_key, n.template, n.args ?? {}]
           );
         }
+        const sms = e.event_type === "order.status_changed" ? await customerOrderSms(client, Number(e.aggregate_id), e.payload) : null;
+        if (sms) {
+          await client.query("INSERT INTO sms_messages (phone, direction, body, order_id) VALUES ($1, 'out', $2, $3)", [
+            sms.phone,
+            sms.text,
+            Number(e.aggregate_id),
+          ]);
+        }
         await client.query("UPDATE outbox_events SET status = 'sent', sent_at = now(), last_error = NULL WHERE id = $1", [e.id]);
         await client.query("RELEASE SAVEPOINT one_event");
+        if (sms) smsToSend.push(sms);
         sent++;
       } catch (err) {
         await client.query("ROLLBACK TO SAVEPOINT one_event");
@@ -155,6 +169,9 @@ export async function processOutbox(options: { failWith?: string } = {}): Promis
     throw err;
   } finally {
     client.release();
+  }
+  for (const sms of smsToSend) {
+    await sendSms(sms.phone, sms.text).catch((err) => console.error("Customer SMS not sent:", err.message));
   }
   return { sent, failed };
 }
