@@ -899,6 +899,12 @@ body {
   margin-top: 12px;
 }
 
+/* A 6-digit code in big, spaced digits needs the whole width on a phone: put it above its button
+   (seller pickup, seller delivery, courier delivery), so every digit stays visible while typing. */
+.btn-row:has(.code-input) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .btn-dark {
   background: var(--ink);
   color: #fff;
