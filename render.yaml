@@ -54,6 +54,12 @@ services:
         sync: false
       - key: BULKSMS_TOKEN_SECRET
         sync: false
+      # Email through Resend: notices for the site's admin (e.g. a new seller application to check).
+      # Without the key, emails are only written to the log. See docs/HOSTING.md, section 6e.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false # where admin notices go (at first: the email address of the Resend account)
       # Free calls over data (Twilio console). All six are needed; without them the "Call free" buttons stay hidden.
       - key: TWILIO_ACCOUNT_SID
         sync: false

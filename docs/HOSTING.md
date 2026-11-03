@@ -185,6 +185,23 @@ Database changes no longer need a reset: the server applies `server/db/migration
 7. Put all six into Render → `kurumanmarketplace` → **Environment** → Save. The "Call free" buttons appear by themselves.
    `PUBLIC_APP_URL` must be exactly `https://kurumanmarketplace.co.za` (Twilio's signature is checked against it).
 
+## 6e. Email to the admin with Resend (free)
+
+When someone applies to sell, the admin gets an email ("New seller application: …") with a link to the support
+console. The email never contains the ID document or phone numbers: those stay in the console, encrypted, and
+every look at an ID document is recorded in the audit log.
+
+1. Sign up at **https://resend.com** with the email address that should receive these notices.
+2. **API Keys → Create API Key** (permission: sending access). Copy it (it starts with `re_`, shown once).
+3. Render → `kurumanmarketplace` → **Environment**: `RESEND_API_KEY` = the key, `ADMIN_EMAIL` = the address you
+   signed up with → Save.
+
+Until the site's own domain is verified in Resend, emails come from Resend's test sender (`onboarding@resend.dev`),
+which may only send to the Resend account's own address - which is exactly `ADMIN_EMAIL`. To send from
+`noreply@kurumanmarketplace.co.za` later: Resend → **Domains → Add domain**, add the DNS records it shows at
+Domains South Africa (like the Google verification record), then set `EMAIL_FROM` to
+`KurumanMarketPlace <noreply@kurumanmarketplace.co.za>`.
+
 ## 7. Things to know about the free plans
 
 - **Render free services sleep** after 15 minutes without visitors; the next visit takes about a minute to wake

@@ -45,8 +45,16 @@ export function PrivacyPage() {
           <strong>Sellers:</strong> business name, area, pickup address and phone – shown to customers so they can buy
           and collect. <strong>Couriers:</strong> how you deliver and your area.
         </li>
+        <li>
+          <strong>Sellers applying to sell: your email address and a copy of your ID document</strong> – to check who
+          you are before you can sell (so customers can trust the shops here), and to contact you about your
+          application. You agree to this when you apply. The ID copy is stored encrypted, and used only for that check.
+        </li>
       </ul>
-      <p>We don’t ask for ID numbers or dates of birth, we don’t send marketing, and we don’t build profiles of what you buy.</p>
+      <p>
+        Apart from the ID document sellers give us, we don’t ask for ID numbers or dates of birth. We don’t send
+        marketing, and we don’t build profiles of what you buy.
+      </p>
 
       <h2>Who can see it</h2>
       <ul>
@@ -56,6 +64,10 @@ export function PrivacyPage() {
           Support staff see details only when handling a case about your order, and every time they look at a phone
           number it is recorded.
         </li>
+        <li>
+          A seller’s ID document can be opened only by the support staff who approve sellers, and every time it is
+          opened is recorded. It is never emailed or shown to anyone else.
+        </li>
         <li>Payfast processes online payments under its own privacy terms.</li>
       </ul>
 
@@ -64,6 +76,7 @@ export function PrivacyPage() {
         <li>Delivery addresses: removed 30 days after the order is finished, unless a problem with it is still open.</li>
         <li>Order, payment and refund records: kept as business records for the approved period.</li>
         <li>Your account: until you ask us to close it.</li>
+        <li>Sellers’ ID documents: deleted 30 days after the application is decided (approved or not).</li>
         <li>Records of support decisions: 90 days after the case closes, unless needed for a dispute.</li>
       </ul>
 

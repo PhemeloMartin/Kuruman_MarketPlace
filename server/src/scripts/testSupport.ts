@@ -11,6 +11,7 @@
 process.env.SMS_DEMO_SHOW_CODES = "true";
 
 import assert from "assert/strict";
+import crypto from "crypto";
 import { AddressInfo } from "net";
 import { app } from "../app";
 import { pool } from "../db";
@@ -170,6 +171,40 @@ async function main() {
       assert.equal(mine.data.application.resolution, "rejected");
       assert.match(mine.data.application.reason, /enough couriers/);
       assert.equal((await call(customer, "GET", "/api/auth/me")).data.user.role, "consumer");
+    });
+
+    let lesegoCase = 0;
+    await check("a seller is verified like Payfast does it: email, ID document, seller terms and privacy notice", async () => {
+      const lesego = await login("0710000011");
+      const shop = { type: "seller", businessName: "Lesego's Sewing", area: "Seoding", pickupAddress: "12 Church Street, Seoding", phone: "0821234567" };
+      const missing = await call(lesego, "POST", "/api/applications", shop);
+      assert.equal(missing.status, 422);
+      for (const f of ["email", "idDocument", "agreeTerms", "agreePrivacy"]) assert.ok(missing.data.fields[f], `${f} required`);
+      const pdf = Buffer.concat([Buffer.from("%PDF-1.4\n"), crypto.randomBytes(300)]).toString("base64");
+      const full = { ...shop, email: "Lesego@Example.com", idDocument: pdf, agreeTerms: true, agreePrivacy: true };
+      const notAnId = await call(lesego, "POST", "/api/applications", { ...full, idDocument: Buffer.from("just some text").toString("base64") });
+      assert.equal(notAnId.status, 422, "only a photo or PDF counts as an ID document");
+      const r = await call(lesego, "POST", "/api/applications", full);
+      assert.equal(r.status, 201);
+      lesegoCase = r.data.id;
+      const stored = (await pool.query("SELECT data_enc FROM verification_documents WHERE case_id = $1", [lesegoCase])).rows[0];
+      assert.ok(!stored.data_enc.includes(Buffer.from("%PDF").toString("base64url")), "stored encrypted, not as the file itself");
+      const app = (await call(support, "GET", "/api/support/applications")).data.find((a: any) => a.id === lesegoCase);
+      assert.equal(app.hasIdDocument, true);
+      assert.equal(app.details.email, "lesego@example.com");
+      assert.equal(app.details.termsVersion, "2026-11-03");
+      assert.equal(app.details.privacyVersion, "2026-11-03");
+    });
+
+    await check("only approvers can open the ID document, and every opening is in the audit log", async () => {
+      const open = (cookie: string) => fetch(`${base}/api/support/applications/${lesegoCase}/id-document`, { headers: { Cookie: cookie } });
+      assert.equal((await open(customer)).status, 403);
+      const r = await open(support);
+      assert.equal(r.status, 200);
+      assert.equal(r.headers.get("content-type"), "application/pdf");
+      assert.equal(Buffer.from(await r.arrayBuffer()).subarray(0, 5).toString(), "%PDF-");
+      const log = await pool.query("SELECT 1 FROM audit_events WHERE action = 'application.view_id_document' AND resource_id = $1", [String(lesegoCase)]);
+      assert.equal(log.rowCount, 1);
     });
 
     await check("a suspended shop disappears from the catalogue and can't list products", async () => {

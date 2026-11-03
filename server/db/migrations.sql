@@ -173,3 +173,19 @@ CREATE TABLE IF NOT EXISTS calls (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_calls_caller ON calls(caller_id, created_at);
+
+-- 2026-11-03: seller verification, like Payfast's. A seller applying uploads a copy of their ID document.
+-- It is stored ENCRYPTED (lib/secretBox.ts, the key is not in the database), only support staff who
+-- approve sellers can open it, every opening is in the audit log, and it is deleted 30 days after the
+-- application is decided (lib/retention.ts). The email address and agreements are in the case details.
+CREATE TABLE IF NOT EXISTS verification_documents (
+  id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  case_id      BIGINT      NOT NULL REFERENCES support_cases(id) ON DELETE CASCADE,
+  user_id      BIGINT      NOT NULL REFERENCES users(id),
+  kind         VARCHAR(20) NOT NULL CHECK (kind IN ('id_document')),
+  content_type VARCHAR(40) NOT NULL,
+  data_enc     TEXT        NOT NULL,              -- the file, encrypted (AES-256-GCM)
+  bytes        INTEGER     NOT NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (case_id, kind)
+);

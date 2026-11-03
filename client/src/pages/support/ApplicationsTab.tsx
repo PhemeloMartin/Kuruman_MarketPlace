@@ -9,6 +9,7 @@ interface Application {
   status: 'open' | 'closed'
   applicant: { name: string; phone: string }
   details: Record<string, string>
+  hasIdDocument: boolean
   resolution: 'approved' | 'rejected' | null
   reason: string | null
   resolvedBy: string | null
@@ -66,6 +67,32 @@ export function ApplicationsTab() {
                     <dd>{a.details.description}</dd>
                   </>
                 )}
+                {a.details.email && (
+                  <>
+                    <dt>Email</dt>
+                    <dd translate="no">{a.details.email}</dd>
+                  </>
+                )}
+                <dt>ID document</dt>
+                <dd>
+                  {a.hasIdDocument ? (
+                    // Opens in a new tab; the server records every opening in the audit log.
+                    <a href={`/api/support/applications/${a.id}/id-document`} target="_blank" rel="noopener noreferrer">
+                      Open the ID document
+                    </a>
+                  ) : (
+                    'None (applied before ID checks started)'
+                  )}
+                </dd>
+                {a.details.agreedAt && (
+                  <>
+                    <dt>Agreed to</dt>
+                    <dd>
+                      Seller terms ({a.details.termsVersion}) and privacy notice ({a.details.privacyVersion}),{' '}
+                      {dateTime(a.details.agreedAt)}
+                    </dd>
+                  </>
+                )}
               </>
             ) : (
               <>
@@ -78,7 +105,11 @@ export function ApplicationsTab() {
             <dt>Applied</dt>
             <dd>{dateTime(a.createdAt)}</dd>
           </dl>
-          <p className="fine-print">Verify the details (for example by phone) before approving.</p>
+          <p className="fine-print">
+            {a.type === 'seller'
+              ? 'Check that the name on the ID document matches the applicant, and verify the details (for example by phone) before approving. Opening the ID document is recorded.'
+              : 'Verify the details (for example by phone) before approving.'}
+          </p>
           <div className="btn-row">
             <button type="button" className="btn btn-primary" onClick={() => setDeciding({ app: a, action: 'approve' })}>
               Approve

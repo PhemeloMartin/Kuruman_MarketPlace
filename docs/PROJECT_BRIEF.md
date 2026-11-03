@@ -290,4 +290,9 @@ open the console: scan the QR code shown, then enter the 6-digit code.
 - [x] Free calls over data (Twilio): server decides who may call (order participants; shops that switch calls on),
       the browser never sees a number, Twilio's signature checked, each call id used once, 5-minute and 10-a-day
       limits, calls kept 30 days; `npm run test:extras` (12 checks)
+- [x] Seller verification (like Payfast's): applying to sell needs an email, a copy of the ID document (photo or
+      PDF, checked by its first bytes), and ticking the seller terms (/seller-terms) and the POPIA privacy notice -
+      the versions agreed to are saved. The ID copy is stored encrypted (AES-256-GCM), only approvers can open it,
+      every opening is audited, and it is deleted 30 days after the decision. The admin gets an email (Resend) with
+      a link to the console - never the ID itself. `test:support` (21 checks), `test:extras` (14)
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

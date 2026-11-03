@@ -19,6 +19,7 @@ import { RequireRole } from './auth/RequireRole'
 import { CourierPage } from './pages/courier/CourierPage'
 import { SupportPage } from './pages/support/SupportPage'
 import { PrivacyPage } from './pages/PrivacyPage'
+import { SellerTermsPage } from './pages/SellerTermsPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { UnreadProvider } from './notifications/UnreadContext'
 
@@ -41,6 +42,7 @@ export default function App() {
                 <Route path="signin" element={<SignInPage />} />
                 <Route path="register" element={<RegisterPage />} />
                 <Route path="privacy" element={<PrivacyPage />} />
+                <Route path="seller-terms" element={<SellerTermsPage />} />
                 <Route path="notifications" element={<NotificationsPage />} />
                 <Route element={<RequireRole role="entrepreneur" />}>
                   <Route path="seller" element={<SellerDashboardPage />} />

@@ -43,6 +43,9 @@ const CLIENT_ORIGINS = (process.env.CLIENT_ORIGIN || "http://localhost:5173")
 
 // Only our own client (the React app) may call this API from a browser.
 app.use(cors({ origin: CLIENT_ORIGINS, credentials: true }));
+// A seller's application carries a copy of their ID document (up to 5 MB, sent as base64), so that
+// one address may send more. Parsed here first; the general 100 kB parser below then skips it.
+app.use("/api/applications", express.json({ limit: "8mb" }));
 app.use(express.json({ limit: "100kb" }));
 app.use(cookieParser());
 

@@ -20,6 +20,7 @@ import { AddressInfo } from "net";
 import { app } from "../app";
 import { pool } from "../db";
 import { sendSms } from "../lib/sms";
+import { emailAdmin } from "../lib/email";
 import { currentStep, totpCode } from "../lib/totp";
 
 const ORIGIN = "http://localhost:5173";
@@ -239,6 +240,30 @@ async function main() {
         delete process.env.BULKSMS_TOKEN_SECRET;
       }
       assert.deepEqual(sent.map((m) => m.from ?? "plain"), ["REPLIABLE", "REPLIABLE", "plain"]);
+    });
+
+    await check("the admin's email goes through Resend with the key (only logged when no key is set)", async () => {
+      const sent: { url: string; body: any; auth: string }[] = [];
+      const realFetch = globalThis.fetch;
+      globalThis.fetch = (async (url: any, init: any) => {
+        sent.push({ url: String(url), body: JSON.parse(init.body), auth: init.headers.Authorization });
+        return new Response("{}", { status: 200 });
+      }) as typeof fetch;
+      try {
+        await emailAdmin("No key yet", "Only logged");
+        process.env.RESEND_API_KEY = "re_test";
+        process.env.ADMIN_EMAIL = "admin@example.com";
+        await emailAdmin("New seller application: Test", "Review it in the support console.");
+      } finally {
+        globalThis.fetch = realFetch;
+        delete process.env.RESEND_API_KEY;
+        delete process.env.ADMIN_EMAIL;
+      }
+      assert.equal(sent.length, 1);
+      assert.equal(sent[0].url, "https://api.resend.com/emails");
+      assert.equal(sent[0].auth, "Bearer re_test");
+      assert.deepEqual(sent[0].body.to, ["admin@example.com"]);
+      assert.equal(sent[0].body.subject, "New seller application: Test");
     });
 
     console.log(`\n${passed} checks passed.\n`);

@@ -6,7 +6,7 @@ import { enqueue } from "../lib/outbox";
 import { pool } from "../db";
 import { requireRole, requireStaff } from "../auth/session";
 import { audit } from "../lib/audit";
-import { decryptSecret, encryptSecret } from "../lib/secretBox";
+import { decryptBytes, decryptSecret, encryptSecret } from "../lib/secretBox";
 import { newTotpSecret, otpauthUrl, verifyTotp } from "../lib/totp";
 
 // Restricted support console (spec FR-21, UC-17, UI-13).
@@ -117,12 +117,14 @@ supportRouter.get("/overview", requireStaff(), async (req, res) => {
 supportRouter.get("/applications", requireStaff("approvals"), async (_req, res) => {
   // Open ones first, then the 20 most recent decisions for reference.
   const r = await pool.query(
-    `(SELECT c.*, u.display_name, u.phone, r.display_name AS resolved_by_name
+    `(SELECT c.*, u.display_name, u.phone, r.display_name AS resolved_by_name,
+             EXISTS (SELECT 1 FROM verification_documents d WHERE d.case_id = c.id) AS has_id_document
         FROM support_cases c JOIN users u ON u.id = c.requester_id LEFT JOIN users r ON r.id = c.resolved_by
        WHERE c.status = 'open' AND c.case_type IN ('seller_application', 'courier_application')
        ORDER BY c.created_at)
      UNION ALL
-     (SELECT c.*, u.display_name, u.phone, r.display_name AS resolved_by_name
+     (SELECT c.*, u.display_name, u.phone, r.display_name AS resolved_by_name,
+             EXISTS (SELECT 1 FROM verification_documents d WHERE d.case_id = c.id) AS has_id_document
         FROM support_cases c JOIN users u ON u.id = c.requester_id LEFT JOIN users r ON r.id = c.resolved_by
        WHERE c.status = 'closed' AND c.case_type IN ('seller_application', 'courier_application')
        ORDER BY c.closed_at DESC LIMIT 20)`
@@ -134,6 +136,7 @@ supportRouter.get("/applications", requireStaff("approvals"), async (_req, res) 
       status: c.status,
       applicant: { name: c.display_name, phone: c.phone },
       details: c.details,
+      hasIdDocument: c.has_id_document,
       resolution: c.resolution,
       reason: c.resolution_reason,
       resolvedBy: c.resolved_by_name,
@@ -141,6 +144,25 @@ supportRouter.get("/applications", requireStaff("approvals"), async (_req, res) 
       closedAt: c.closed_at,
     }))
   );
+});
+
+// GET /api/support/applications/:id/id-document - the applicant's ID document, decrypted, to check it
+// against their name. Only approvers can open it, and every opening is in the audit log.
+supportRouter.get("/applications/:id/id-document", requireStaff("approvals"), async (req, res) => {
+  const d = await pool.query(
+    "SELECT content_type, data_enc FROM verification_documents WHERE case_id = $1 AND kind = 'id_document'",
+    [Number(req.params.id) || 0]
+  );
+  if (d.rowCount === 0) return res.status(404).json({ error: "No ID document for this application." });
+  await audit(pool, {
+    actorId: req.user!.id,
+    action: "application.view_id_document",
+    resourceType: "support_case",
+    resourceId: Number(req.params.id),
+    outcome: "success",
+  });
+  res.set({ "Content-Type": d.rows[0].content_type, "Content-Disposition": "inline", "Cache-Control": "no-store" });
+  res.send(decryptBytes(d.rows[0].data_enc));
 });
 
 // Loads an OPEN application with it and its applicant locked, or answers 404/409 itself.

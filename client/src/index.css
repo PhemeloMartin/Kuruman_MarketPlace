@@ -2537,3 +2537,25 @@ label.busy {
   color: var(--primary-dark);
   font-weight: 600;
 }
+
+/* A small heading inside a form, e.g. "Verify who you are" on the Apply to sell form. */
+.form-subhead {
+  font-size: 1rem;
+  margin: 18px 0 4px;
+}
+
+/* A tick box with a longer sentence (agreeing to the seller terms or the privacy notice): the box on the
+   left, the sentence beside it - never squeezed together. */
+.field label.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.consent input {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
