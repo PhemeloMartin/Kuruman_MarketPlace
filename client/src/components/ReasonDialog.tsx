@@ -16,6 +16,9 @@ interface Props {
   // One optional extra input, e.g. the refund amount or Payfast's refund reference.
   field?: ExtraField
   askReason?: boolean // default true
+  // The text box's label and size, e.g. for writing an email instead of a reason.
+  reasonLabel?: string
+  maxLength?: number
   // Runs the action. Throwing an ApiError shows its message here.
   onConfirm: (reason: string, fieldValue: string) => Promise<void>
   onClose: () => void
@@ -23,7 +26,18 @@ interface Props {
 
 // Every support decision needs a written reason (spec FR-21: "auditable reasons").
 // The reason is saved with the decision and in the audit log.
-export function ReasonDialog({ title, description, confirmLabel, danger, field, askReason = true, onConfirm, onClose }: Props) {
+export function ReasonDialog({
+  title,
+  description,
+  confirmLabel,
+  danger,
+  field,
+  askReason = true,
+  reasonLabel = 'Reason (saved in the audit log)',
+  maxLength = 500,
+  onConfirm,
+  onClose,
+}: Props) {
   const [reason, setReason] = useState('')
   const [value, setValue] = useState(field?.initial ?? '')
   const [error, setError] = useState<string | null>(null)
@@ -77,13 +91,13 @@ export function ReasonDialog({ title, description, confirmLabel, danger, field, 
         )}
         {askReason && (
           <div className="field" data-invalid={Boolean(error)} style={{ marginBottom: 12 }}>
-            <label htmlFor="reason">Reason (saved in the audit log)</label>
+            <label htmlFor="reason">{reasonLabel}</label>
             <div className="input-wrap">
               <textarea
                 id="reason"
                 ref={field ? undefined : firstRef}
-                rows={3}
-                maxLength={500}
+                rows={maxLength > 500 ? 6 : 3}
+                maxLength={maxLength}
                 value={reason}
                 onChange={(e) => {
                   setReason(e.target.value)

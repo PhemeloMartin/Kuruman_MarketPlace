@@ -3,6 +3,15 @@ import { ReasonDialog } from '../../components/ReasonDialog'
 import { api } from '../../lib/api'
 import { VEHICLE_LABEL, dateTime, localPhone } from '../../lib/labels'
 
+interface TrailItem {
+  kind: 'email' | 'note'
+  subject: string | null
+  body: string
+  status: 'sent' | 'failed' | null
+  by: string | null
+  at: string
+}
+
 interface Application {
   id: number
   type: 'seller' | 'courier'
@@ -10,6 +19,7 @@ interface Application {
   applicant: { name: string; phone: string }
   details: Record<string, string>
   hasIdDocument: boolean
+  trail: TrailItem[]
   resolution: 'approved' | 'rejected' | null
   reason: string | null
   resolvedBy: string | null
@@ -23,6 +33,7 @@ export function ApplicationsTab() {
   const [apps, setApps] = useState<Application[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [deciding, setDeciding] = useState<{ app: Application; action: 'approve' | 'reject' } | null>(null)
+  const [emailing, setEmailing] = useState<Application | null>(null)
 
   const load = useCallback(() => {
     api<Application[]>('/support/applications')
@@ -118,6 +129,12 @@ export function ApplicationsTab() {
               Reject
             </button>
           </div>
+          {a.details.email && (
+            <button type="button" className="btn btn-outline btn-block" style={{ marginTop: 10 }} onClick={() => setEmailing(a)}>
+              Email the applicant
+            </button>
+          )}
+          <Trail items={a.trail} />
         </article>
       ))}
 
@@ -137,9 +154,26 @@ export function ApplicationsTab() {
               <p className="fine-print" style={{ margin: 0 }}>
                 “{a.reason}” — {a.resolvedBy}, {a.closedAt && dateTime(a.closedAt)}
               </p>
+              <Trail items={a.trail} />
             </article>
           ))}
         </>
+      )}
+
+      {emailing && (
+        <ReasonDialog
+          title="Email the applicant"
+          description={`Goes to ${emailing.details.email}. Their reply comes to the admin's own inbox, and this email is kept with the application. Never ask for an ID document by email: ask them to upload a new one under Profile.`}
+          reasonLabel="Your message"
+          maxLength={2000}
+          confirmLabel="Send email"
+          onClose={() => setEmailing(null)}
+          onConfirm={async (message) => {
+            await api(`/support/applications/${emailing.id}/email`, { method: 'POST', body: { message } })
+            setEmailing(null)
+            load()
+          }}
+        />
       )}
 
       {deciding && (
@@ -163,5 +197,30 @@ export function ApplicationsTab() {
         />
       )}
     </>
+  )
+}
+
+// What was said to the applicant and what they changed, oldest first - so anyone in support can see
+// the whole conversation before deciding. (Their email replies are in the admin's inbox.)
+function Trail({ items }: { items: TrailItem[] }) {
+  if (items.length === 0) return null
+  return (
+    <details className="trail">
+      <summary>Emails and changes ({items.length})</summary>
+      <ul>
+        {items.map((t, i) => (
+          <li key={i}>
+            <span className="product-meta">
+              {dateTime(t.at)} ·{' '}
+              {t.kind === 'email'
+                ? `Email from ${t.by ?? 'the site'}${t.status === 'failed' ? ' (NOT delivered - check the address)' : ''}`
+                : t.by ?? 'Applicant'}
+            </span>
+            {t.subject && <strong>{t.subject}</strong>}
+            <p>{t.body}</p>
+          </li>
+        ))}
+      </ul>
+    </details>
   )
 }

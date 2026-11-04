@@ -40,6 +40,11 @@ export async function runRetention() {
     `DELETE FROM verification_documents d USING support_cases c
       WHERE c.id = d.case_id AND c.status = 'closed' AND c.closed_at < now() - interval '30 days'`
   );
+  // The emails and notes about a closed case (e.g. an application): 90 days, like its details.
+  await pool.query(
+    `DELETE FROM case_messages m USING support_cases c
+      WHERE c.id = m.case_id AND c.status = 'closed' AND c.closed_at < now() - interval '90 days'`
+  );
   // Closed cases: keep the decision, erase what people wrote, after 90 days.
   const cases = await pool.query(
     `UPDATE support_cases SET details = '{"erased": true}'

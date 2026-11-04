@@ -71,6 +71,7 @@ export function ApplySection() {
           {dateTime(application.createdAt)}. Support will check your details
           {application.type === 'seller' ? ' and ID document' : ''}, and may phone or email you.
         </p>
+        {application.type === 'seller' && <ReplaceIdDocument maxBytes={policy.maxIdDocumentBytes} />}
       </section>
     )
   }
@@ -319,5 +320,40 @@ function ApplyForm({ type, policy, onCancel, onDone }: { type: 'seller' | 'couri
         </div>
       </form>
     </section>
+  )
+}
+
+// "Sent the wrong ID document, or was it unclear?" - a new one replaces it while support is still
+// checking. ID documents never go by email.
+function ReplaceIdDocument({ maxBytes }: { maxBytes: number }) {
+  const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle')
+  const [error, setError] = useState<string | null>(null)
+
+  async function choose(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setState('busy')
+    setError(null)
+    try {
+      const doc = await readIdDocument(file, maxBytes)
+      await api('/applications/mine/id-document', { method: 'PUT', body: { idDocument: doc.base64 } })
+      setState('done')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      setState('idle')
+    }
+  }
+
+  return (
+    <div className="field" style={{ marginTop: 12 }}>
+      <label htmlFor="newIdDocument">Sent the wrong ID document, or was it unclear?</label>
+      <p className="fine-print" style={{ marginTop: 0 }}>
+        Upload a new one here: it replaces the old one. Please don’t send your ID by email.
+      </p>
+      <input id="newIdDocument" type="file" accept="image/*,application/pdf" onChange={choose} disabled={state === 'busy'} />
+      {state === 'busy' && <p className="fine-print">Sending…</p>}
+      {state === 'done' && <p className="fine-print">✓ We received your new ID document. Support will check it.</p>}
+      {error && <p className="field-error">{error}</p>}
+    </div>
   )
 }

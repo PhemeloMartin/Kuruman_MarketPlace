@@ -18,7 +18,14 @@ export async function sendEmail(to: string, subject: string, text: string): Prom
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify({ from: process.env.EMAIL_FROM || DEFAULT_FROM, to: [to], subject, text }),
+    // The sender (noreply@...) has no mailbox: a reply goes to the admin's own inbox instead.
+    body: JSON.stringify({
+      from: process.env.EMAIL_FROM || DEFAULT_FROM,
+      to: [to],
+      subject,
+      text,
+      ...(process.env.ADMIN_EMAIL ? { reply_to: process.env.ADMIN_EMAIL } : {}),
+    }),
     signal: AbortSignal.timeout(10_000),
   });
   if (!res.ok) throw new Error(`Email service refused the message (status ${res.status})`);

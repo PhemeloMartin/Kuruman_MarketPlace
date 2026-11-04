@@ -5,6 +5,7 @@ import { audit } from "../lib/audit";
 import { normaliseSaPhone } from "../lib/phone";
 import { POLICY } from "../lib/policy";
 import { emailAdmin } from "../lib/email";
+import { applicantEmails, emailApplicant, noteOnCase } from "../lib/caseMail";
 import { encryptBytes } from "../lib/secretBox";
 import { canonicalSiteUrl } from "../lib/seo";
 
@@ -165,4 +166,44 @@ applicationsRouter.post("/", requireRole("consumer"), async (req, res) => {
       "For privacy, the ID document and phone numbers are not in this email.",
     ].join("\n")
   );
+  // And the seller gets a copy for their records, with what happens next.
+  if (seller) {
+    const e = applicantEmails.received(details.businessName);
+    await emailApplicant(caseId, e.subject, e.message, null);
+  }
+});
+
+// PUT /api/applications/mine/id-document { idDocument } - the applicant sent the wrong or an unclear ID
+// document: they replace it while their application waits (never by email). Recorded in the trail.
+applicationsRouter.put("/mine/id-document", requireAuth, async (req, res) => {
+  const a = await pool.query(
+    "SELECT id FROM support_cases WHERE requester_id = $1 AND case_type = 'seller_application' AND status = 'open'",
+    [req.user!.id]
+  );
+  if (a.rowCount === 0) return res.status(404).json({ error: "You have no seller application waiting." });
+  const caseId = Number(a.rows[0].id);
+  const file = Buffer.from(text(req.body?.idDocument).replace(/^data:[^,]*,/, ""), "base64");
+  const type = idDocumentType(file);
+  const problem =
+    file.length === 0 ? "Add a photo or PDF of your ID document."
+    : file.length > POLICY.maxIdDocumentBytes ? "That file is too big: 5 MB at most."
+    : !type ? "Use a photo (JPG or PNG) or a PDF of your ID document."
+    : null;
+  if (problem) return res.status(422).json({ error: problem, fields: { idDocument: problem } });
+  await pool.query(
+    `INSERT INTO verification_documents (case_id, user_id, kind, content_type, data_enc, bytes)
+     VALUES ($1, $2, 'id_document', $3, $4, $5)
+     ON CONFLICT (case_id, kind) DO UPDATE
+       SET content_type = EXCLUDED.content_type, data_enc = EXCLUDED.data_enc, bytes = EXCLUDED.bytes, created_at = now()`,
+    [caseId, req.user!.id, type, encryptBytes(file), file.length]
+  );
+  await noteOnCase(caseId, "The applicant uploaded a new ID document.", req.user!.id);
+  await audit(pool, {
+    actorId: req.user!.id,
+    action: "application.replace_id_document",
+    resourceType: "support_case",
+    resourceId: caseId,
+    outcome: "success",
+  });
+  res.json({ ok: true });
 });

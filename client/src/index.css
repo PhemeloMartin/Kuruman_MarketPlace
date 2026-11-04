@@ -2559,3 +2559,34 @@ label.busy {
   flex: 0 0 auto;
   margin-top: 2px;
 }
+
+/* Support: the emails and changes on an application, folded away until opened. */
+.trail {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.trail summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.trail ul {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.trail li {
+  display: grid;
+  gap: 2px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.trail li p {
+  margin: 0;
+  white-space: pre-line;
+  font-size: 0.9rem;
+}

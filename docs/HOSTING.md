@@ -196,6 +196,10 @@ every look at an ID document is recorded in the audit log.
 3. Render → `kurumanmarketplace` → **Environment**: `RESEND_API_KEY` = the key, `ADMIN_EMAIL` = the address you
    signed up with → Save.
 
+Emails to sellers who apply ("we received your application", support's questions, the decision) go out the same way.
+Their **replies come to `ADMIN_EMAIL`** (the emails carry it as the Reply-To address), and every email the site
+sends is also kept with the application in the support console.
+
 Until the site's own domain is verified in Resend, emails come from Resend's test sender (`onboarding@resend.dev`),
 which may only send to the Resend account's own address - which is exactly `ADMIN_EMAIL`. To send from
 `noreply@kurumanmarketplace.co.za` later: Resend → **Domains → Add domain**, add the DNS records it shows at

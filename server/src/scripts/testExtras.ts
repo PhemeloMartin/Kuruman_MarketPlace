@@ -264,6 +264,7 @@ async function main() {
       assert.equal(sent[0].auth, "Bearer re_test");
       assert.deepEqual(sent[0].body.to, ["admin@example.com"]);
       assert.equal(sent[0].body.subject, "New seller application: Test");
+      assert.equal(sent[0].body.reply_to, "admin@example.com", "replies go to the admin's own inbox");
     });
 
     console.log(`\n${passed} checks passed.\n`);

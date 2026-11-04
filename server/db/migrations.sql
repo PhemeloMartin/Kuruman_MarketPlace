@@ -189,3 +189,19 @@ CREATE TABLE IF NOT EXISTS verification_documents (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (case_id, kind)
 );
+
+-- 2026-11-04: the trail of contact with someone who applied: every email the site sent them (received,
+-- a question from support, the decision) and changes they made (a new ID document). Their replies go to
+-- the admin's own inbox (Reply-To). Deleted 90 days after the application is closed, like case details.
+CREATE TABLE IF NOT EXISTS case_messages (
+  id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  case_id    BIGINT       NOT NULL REFERENCES support_cases(id) ON DELETE CASCADE,
+  kind       VARCHAR(10)  NOT NULL CHECK (kind IN ('email', 'note')),
+  sent_by    BIGINT       REFERENCES users(id),     -- NULL: sent by the site itself
+  to_email   VARCHAR(120),
+  subject    VARCHAR(200),
+  body       TEXT         NOT NULL,
+  status     VARCHAR(10)  CHECK (status IN ('sent', 'failed')),
+  created_at TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_case_messages_case ON case_messages(case_id, id);

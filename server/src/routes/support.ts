@@ -7,6 +7,7 @@ import { pool } from "../db";
 import { requireRole, requireStaff } from "../auth/session";
 import { audit } from "../lib/audit";
 import { decryptBytes, decryptSecret, encryptSecret } from "../lib/secretBox";
+import { applicantEmails, emailApplicant } from "../lib/caseMail";
 import { newTotpSecret, otpauthUrl, verifyTotp } from "../lib/totp";
 
 // Restricted support console (spec FR-21, UC-17, UI-13).
@@ -114,17 +115,24 @@ supportRouter.get("/overview", requireStaff(), async (req, res) => {
 // Seller and courier applications (spec FR-02, UC-02, TC-02) - scope "approvals"
 // ---------------------------------------------------------------------------
 
+// Each application's trail: emails sent to the applicant and changes they made, oldest first.
+const TRAIL = `(SELECT json_agg(json_build_object('kind', m.kind, 'subject', m.subject, 'body', m.body, 'status', m.status,
+                                          'by', s.display_name, 'at', m.created_at) ORDER BY m.id)
+                FROM case_messages m LEFT JOIN users s ON s.id = m.sent_by WHERE m.case_id = c.id)`;
+
 supportRouter.get("/applications", requireStaff("approvals"), async (_req, res) => {
   // Open ones first, then the 20 most recent decisions for reference.
   const r = await pool.query(
     `(SELECT c.*, u.display_name, u.phone, r.display_name AS resolved_by_name,
-             EXISTS (SELECT 1 FROM verification_documents d WHERE d.case_id = c.id) AS has_id_document
+             EXISTS (SELECT 1 FROM verification_documents d WHERE d.case_id = c.id) AS has_id_document,
+             ${TRAIL} AS trail
         FROM support_cases c JOIN users u ON u.id = c.requester_id LEFT JOIN users r ON r.id = c.resolved_by
        WHERE c.status = 'open' AND c.case_type IN ('seller_application', 'courier_application')
        ORDER BY c.created_at)
      UNION ALL
      (SELECT c.*, u.display_name, u.phone, r.display_name AS resolved_by_name,
-             EXISTS (SELECT 1 FROM verification_documents d WHERE d.case_id = c.id) AS has_id_document
+             EXISTS (SELECT 1 FROM verification_documents d WHERE d.case_id = c.id) AS has_id_document,
+             ${TRAIL} AS trail
         FROM support_cases c JOIN users u ON u.id = c.requester_id LEFT JOIN users r ON r.id = c.resolved_by
        WHERE c.status = 'closed' AND c.case_type IN ('seller_application', 'courier_application')
        ORDER BY c.closed_at DESC LIMIT 20)`
@@ -137,6 +145,7 @@ supportRouter.get("/applications", requireStaff("approvals"), async (_req, res) 
       applicant: { name: c.display_name, phone: c.phone },
       details: c.details,
       hasIdDocument: c.has_id_document,
+      trail: c.trail ?? [],
       resolution: c.resolution,
       reason: c.resolution_reason,
       resolvedBy: c.resolved_by_name,
@@ -164,6 +173,39 @@ supportRouter.get("/applications/:id/id-document", requireStaff("approvals"), as
   res.set({ "Content-Type": d.rows[0].content_type, "Content-Disposition": "inline", "Cache-Control": "no-store" });
   res.send(decryptBytes(d.rows[0].data_enc));
 });
+
+// POST /api/support/applications/:id/email { message } - support writes to the applicant, e.g. "your ID
+// photo is unclear, please upload a new one under Profile". Saved in the trail; the reply comes to the
+// admin's inbox.
+supportRouter.post("/applications/:id/email", requireStaff("approvals"), async (req, res) => {
+  const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
+  if (message.length < 5 || message.length > 2000) {
+    return res.status(422).json({ error: "Write your message (5 to 2000 characters).", fields: { message: "5 to 2000 characters." } });
+  }
+  const c = await pool.query(
+    "SELECT id FROM support_cases WHERE id = $1 AND case_type = 'seller_application' AND details ? 'email'",
+    [Number(req.params.id) || 0]
+  );
+  if (c.rowCount === 0) return res.status(404).json({ error: "No application with an email address." });
+  const sent = await emailApplicant(Number(c.rows[0].id), "About your application to sell on KurumanMarketPlace", message, req.user!.id);
+  await audit(pool, {
+    actorId: req.user!.id,
+    action: "application.email_applicant",
+    resourceType: "support_case",
+    resourceId: Number(c.rows[0].id),
+    outcome: sent ? "success" : "failed",
+  });
+  res.json({ sent });
+});
+
+// After a decision, the seller hears it by email too (as well as on their Profile).
+async function emailDecision(caseId: number, approved: boolean, reason: string) {
+  const c = await pool.query("SELECT case_type, details FROM support_cases WHERE id = $1 AND status = 'closed'", [caseId]);
+  const app = c.rows[0];
+  if (!app || app.case_type !== "seller_application" || !app.details?.email) return;
+  const e = approved ? applicantEmails.approved(app.details.businessName) : applicantEmails.rejected(app.details.businessName, reason);
+  await emailApplicant(caseId, e.subject, e.message, null);
+}
 
 // Loads an OPEN application with it and its applicant locked, or answers 404/409 itself.
 async function lockOpenApplication(client: PoolClient, req: Request, res: Response) {
@@ -240,6 +282,8 @@ supportRouter.post("/applications/:id/approve", requireStaff("approvals"), async
     });
     res.json({ status: "approved" });
   });
+  // Once it's saved (not when someone else had already decided it): tell the seller by email too.
+  if (res.statusCode === 200) await emailDecision(Number(req.params.id), true, reason);
 });
 
 // POST /api/support/applications/:id/reject { reason } - the applicant sees the reason.
@@ -266,6 +310,7 @@ supportRouter.post("/applications/:id/reject", requireStaff("approvals"), async 
     });
     res.json({ status: "rejected" });
   });
+  if (res.statusCode === 200) await emailDecision(Number(req.params.id), false, reason);
 });
 
 // ---------------------------------------------------------------------------

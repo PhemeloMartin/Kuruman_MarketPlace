@@ -207,6 +207,44 @@ async function main() {
       assert.equal(log.rowCount, 1);
     });
 
+    const trailOf = async (id: number) => (await call(support, "GET", "/api/support/applications")).data.find((a: any) => a.id === id).trail;
+
+    await check("a trail of contact: the seller gets a 'received' email, and support can write to them", async () => {
+      const first = (await trailOf(lesegoCase))[0];
+      assert.equal(first.kind, "email");
+      assert.match(first.subject, /We received your application/);
+      assert.match(first.body, /Please don't send ID documents by email/);
+      assert.equal((await call(customer, "POST", `/api/support/applications/${lesegoCase}/email`, { message: "Hello there" })).status, 403);
+      assert.equal((await call(support, "POST", `/api/support/applications/${lesegoCase}/email`, { message: "Hi" })).status, 422);
+      const r = await call(support, "POST", `/api/support/applications/${lesegoCase}/email`, {
+        message: "Your ID photo is blurry. Please upload a clearer one under Profile.",
+      });
+      assert.equal(r.status, 200);
+      const sent = (await trailOf(lesegoCase))[1];
+      assert.match(sent.body, /blurry/);
+      assert.equal(sent.by, "Support (demo)");
+    });
+
+    await check("a seller who sent the wrong ID document replaces it themselves - never by email", async () => {
+      const lesego = await login("0710000011");
+      const wrong = await call(lesego, "PUT", "/api/applications/mine/id-document", { idDocument: Buffer.from("not a file").toString("base64") });
+      assert.equal(wrong.status, 422);
+      const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), crypto.randomBytes(100)]).toString("base64");
+      assert.equal((await call(lesego, "PUT", "/api/applications/mine/id-document", { idDocument: png })).status, 200);
+      const doc = await fetch(`${base}/api/support/applications/${lesegoCase}/id-document`, { headers: { Cookie: support } });
+      assert.equal(doc.headers.get("content-type"), "image/png", "the new document replaced the old one");
+      const trail = await trailOf(lesegoCase);
+      assert.match(trail[trail.length - 1].body, /uploaded a new ID document/);
+    });
+
+    await check("the decision is emailed to the seller too, and kept in the trail", async () => {
+      const r = await call(support, "POST", `/api/support/applications/${lesegoCase}/reject`, { reason: "Please apply with your business's own phone number." });
+      assert.equal(r.status, 200);
+      const last = (await trailOf(lesegoCase)).at(-1);
+      assert.match(last.subject, /About your application/);
+      assert.match(last.body, /business's own phone number/);
+    });
+
     await check("a suspended shop disappears from the catalogue and can't list products", async () => {
       const before = (await call("", "GET", "/api/products")).data.filter((p: any) => p.business.id === 1).length;
       assert.ok(before > 0);
