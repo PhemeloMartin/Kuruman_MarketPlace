@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { MokalaSmall } from '../components/Art'
 import { Stars, StarPicker } from '../components/Stars'
-import { QrCode } from '../components/QrCode'
+import { HandoverCode } from '../components/HandoverCode'
 import { CallButton } from '../components/CallButton'
 import { api, ApiError } from '../lib/api'
 import { formatRand } from '../lib/money'
@@ -63,7 +63,6 @@ export function OrdersPage() {
   const [orders, setOrders] = useState<OrderSummary[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<number | null>(null)
-  const [codes, setCodes] = useState<Record<number, { code: string; expiresAt: string }>>({})
 
   const load = useCallback(() => {
     api<OrderSummary[]>('/orders/mine')
@@ -125,20 +124,6 @@ export function OrdersPage() {
     } finally {
       setBusyId(null)
       load()
-    }
-  }
-
-  // Collection code for a ready pickup order. Asking again gives a new code (the old one stops working).
-  async function showCode(id: number) {
-    setBusyId(id)
-    setError(null)
-    try {
-      const c = await api<{ code: string; expiresAt: string }>(`/orders/${id}/handover-code`, { method: 'POST' })
-      setCodes((all) => ({ ...all, [id]: c }))
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not get a code. Please try again.')
-    } finally {
-      setBusyId(null)
     }
   }
 
@@ -238,6 +223,11 @@ export function OrdersPage() {
                 <p className="fine-print">{o.statusReason}</p>
               )}
               {o.problemReported && <p className="fine-print">Problem reported. Our support team will contact you.</p>}
+              {o.fulfilment !== 'pickup' && ['pending_acceptance', 'awaiting_payment', 'confirmed', 'ready', 'out_for_delivery'].includes(o.status) && (
+                <Link to={`/orders/${o.id}/track`} className={`btn btn-block ${o.status === 'out_for_delivery' ? 'btn-primary' : 'btn-outline'}`} style={{ marginTop: 10 }}>
+                  {o.status === 'out_for_delivery' ? '📍 Track your delivery' : 'Track order'}
+                </Link>
+              )}
               {['pending_acceptance', 'awaiting_payment', 'confirmed', 'ready', 'out_for_delivery'].includes(o.status) && (
                 <CallButton target={{ orderId: o.id, with: 'seller' }} label="Call the seller free" />
               )}
@@ -312,27 +302,7 @@ export function OrdersPage() {
                       </>
                     )}
                   </p>
-                  {codes[o.id] ? (
-                    <>
-                      <span className="code" translate="no" aria-label={`Collection code ${codes[o.id].code.split('').join(' ')}`}>
-                        {codes[o.id].code}
-                      </span>
-                      <QrCode text={codes[o.id].code} label="The same code as a QR code, for scanning" />
-                      <span className="fine-print">
-                        Show this to the {o.status === 'out_for_delivery' ? 'courier' : 'seller'} when you get your
-                        order. Valid until{' '}
-                        {new Date(codes[o.id].expiresAt).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}.
-                      </span>
-                    </>
-                  ) : (
-                    <button type="button" className="btn btn-primary btn-block" onClick={() => showCode(o.id)} disabled={busyId === o.id}>
-                      {busyId === o.id
-                        ? 'Getting code…'
-                        : o.status === 'out_for_delivery'
-                          ? 'Show delivery code'
-                          : 'Show collection code'}
-                    </button>
-                  )}
+                  <HandoverCode orderId={o.id} showTo={o.status === 'out_for_delivery' ? 'courier' : 'seller'} />
                 </div>
               )}
             </article>

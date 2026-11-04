@@ -12,7 +12,7 @@ import { DOCUMENT_LABEL, readDocument, saveDocument } from "./applications";
 import { emailAdmin } from "../lib/email";
 import { noteOnCase } from "../lib/caseMail";
 import { canonicalSiteUrl } from "../lib/seo";
-import { addressInKuruman, directionsUrl } from "../lib/geo";
+import { addressInKuruman, directionsUrl, parsePoint } from "../lib/geo";
 
 // Courier flow (spec FR-14, FR-15, TX-03). Only approved couriers get here.
 export const courierRouter = Router();
@@ -168,6 +168,7 @@ courierRouter.get("/my-jobs", async (req, res) => {
       return {
         id: Number(j.id),
         orderId: Number(j.order_id),
+        vehicleType: j.vehicle_type,
         status: j.status,
         orderNumber: j.order_number,
         feeCents: j.fee_cents,
@@ -310,6 +311,7 @@ courierRouter.post("/jobs/:id/deliver", (req, res) =>
       );
     }
     await recordStatusChange(client, job.order.id, "out_for_delivery", "completed", req.user!.id, "Delivered by courier");
+    await stopSharingIfDone(client, req.user!.id);
     res.json({ status: "delivered" });
   })
 );
@@ -353,9 +355,40 @@ courierRouter.post("/jobs/:id/fail", (req, res) =>
       details: { why: "delivery_failed", reason },
       actorId: req.user!.id,
     });
+    await stopSharingIfDone(client, req.user!.id);
     res.json({ status: "failed" });
   })
 );
+
+// The courier's position is shared only while they have a delivery on the go: with none left, it's deleted.
+async function stopSharingIfDone(db: PoolClient | typeof pool, courierId: number): Promise<boolean> {
+  const r = await db.query(
+    `DELETE FROM courier_locations WHERE courier_id = $1
+        AND NOT EXISTS (SELECT 1 FROM deliveries WHERE courier_id = $1 AND status IN ('claimed', 'collected'))`,
+    [courierId]
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+// POST /api/courier/location { lat, lng, accuracy } - my phone's position while I deliver (every few
+// seconds from the Deliveries page). Only the latest one is kept. With no delivery on the go it's refused,
+// so the phone stops sending.
+courierRouter.post("/location", async (req, res) => {
+  const p = parsePoint(req.body);
+  if (!p) return res.status(422).json({ error: "That isn't a position." });
+  const active = await pool.query("SELECT 1 FROM deliveries WHERE courier_id = $1 AND status IN ('claimed', 'collected') LIMIT 1", [req.user!.id]);
+  if (active.rowCount === 0) {
+    await stopSharingIfDone(pool, req.user!.id);
+    return res.status(409).json({ error: "You have no delivery on the go, so your location isn't shared.", sharing: false });
+  }
+  const accuracy = Number.isFinite(req.body?.accuracy) ? Math.min(Math.max(Math.round(req.body.accuracy), 0), 100_000) : null;
+  await pool.query(
+    `INSERT INTO courier_locations (courier_id, lat, lng, accuracy_m, updated_at) VALUES ($1, $2, $3, $4, now())
+     ON CONFLICT (courier_id) DO UPDATE SET lat = EXCLUDED.lat, lng = EXCLUDED.lng, accuracy_m = EXCLUDED.accuracy_m, updated_at = now()`,
+    [req.user!.id, p.lat, p.lng, accuracy]
+  );
+  res.json({ sharing: true });
+});
 
 // GET /api/courier/cash - cash I've collected that a seller hasn't confirmed receiving yet.
 courierRouter.get("/cash", async (req, res) => {

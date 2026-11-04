@@ -9,6 +9,7 @@ interface Notification {
   id: number
   template: string
   args: Record<string, unknown>
+  orderId: number | null
   createdAt: string
   read: boolean
 }
@@ -44,7 +45,7 @@ export function NotificationsPage() {
         <ul className="notification-list">
           {items.map((n) => (
             <li key={n.id}>
-              <Link to={notificationLink(n.template, n.args)} className={`notification${newIds.has(n.id) ? ' unread' : ''}`}>
+              <Link to={notificationLink(n.template, n.args, n.orderId)} className={`notification${newIds.has(n.id) ? ' unread' : ''}`}>
                 {newIds.has(n.id) && <span className="unread-dot" aria-label="New" />}
                 <span>
                   {notificationText(n.template, n.args)}

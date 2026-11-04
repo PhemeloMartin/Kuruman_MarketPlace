@@ -275,3 +275,14 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_lat DOUBLE PRECISION;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_lng DOUBLE PRECISION;
 ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_delivery_pin_check;
 ALTER TABLE orders ADD CONSTRAINT orders_delivery_pin_check CHECK ((delivery_lat IS NULL) = (delivery_lng IS NULL));
+
+-- 2026-11-04: live tracking. While a courier has a delivery on the go, their phone sends its position every
+-- few seconds and the customer of that order sees it on a map. Only the LATEST position is kept (no trail
+-- of where they went); it's deleted as soon as they have no delivery left, and stale ones by lib/retention.ts.
+CREATE TABLE IF NOT EXISTS courier_locations (
+  courier_id  BIGINT           PRIMARY KEY REFERENCES users(id),
+  lat         DOUBLE PRECISION NOT NULL,
+  lng         DOUBLE PRECISION NOT NULL,
+  accuracy_m  INTEGER,                              -- how sure the phone is, in metres
+  updated_at  TIMESTAMPTZ      NOT NULL DEFAULT now()
+);

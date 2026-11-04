@@ -14,6 +14,7 @@ import { directoryRouter } from "./routes/directory";
 import { whatsappPostRouter } from "./routes/whatsappPost";
 import { callsRouter } from "./routes/calls";
 import { ordersRouter } from "./routes/orders";
+import { trackingRouter } from "./routes/tracking";
 import { sellerRouter } from "./routes/seller";
 import { courierRouter } from "./routes/courier";
 import { paymentsRouter } from "./routes/payments";
@@ -87,6 +88,7 @@ app.get("/api/config", (_req, res) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/orders", trackingRouter);
 app.use("/api/orders", ordersRouter);
 app.use("/api/seller", sellerRouter);
 app.use("/api/courier", courierRouter);

@@ -25,6 +25,13 @@ export async function runRetention() {
         AND (s.expires_at < now() - interval '1 day'
              OR s.last_seen_at < now() - CASE WHEN u.role = 'support' THEN interval '1 day' ELSE interval '15 days' END)`
   );
+  // A courier's live position: only while they deliver (courier.ts deletes it when they finish). This also
+  // catches one left behind, e.g. a job support cancelled, or a phone that stopped sending an hour ago.
+  await pool.query(
+    `DELETE FROM courier_locations l
+      WHERE l.updated_at < now() - interval '1 hour'
+         OR NOT EXISTS (SELECT 1 FROM deliveries d WHERE d.courier_id = l.courier_id AND d.status IN ('claimed', 'collected'))`
+  );
   // Who called whom (and the number dialled): 30 days.
   await pool.query(`DELETE FROM calls WHERE created_at < now() - interval '30 days'`);
   // Order SMS (names and items): 30 days, like notifications.

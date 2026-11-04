@@ -319,4 +319,9 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       within 40 km of Kuruman). The courier who takes the job, or a shop delivering itself while it's on its way,
       gets a map and Google Maps directions (to the pin, else the address). Leaflet + OpenStreetMap (no key, no
       cost), loaded only on pages with a map. The pin is erased with the address after 30 days. `test:tracking`
+- [x] Live tracking: while a courier has a delivery on the go their phone shares its position (location must
+      be on to take a job; only the latest position is kept, deleted when they finish). The customer's
+      /orders/:id/track page shows the steps, a map with them and the courier, "8.3 km away · about 22 min"
+      (straight line x 1.3 at the vehicle's town speed), the delivery code, and "Share where I am" if they had
+      no pin. Notifications and the "on the way" SMS link to it. `test:tracking` (16 checks)
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

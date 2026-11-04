@@ -40,7 +40,11 @@ export function notificationText(template: string, args: Args): string {
 }
 
 // Where tapping the notification takes you.
-export function notificationLink(template: string, args: Args = {}): string {
+// Delivery news opens the order's tracking page; other order news, the orders list.
+const TRACKABLE = ['customer.ready_delivery', 'customer.ready_seller_delivery', 'customer.on_the_way', 'customer.on_the_way_seller', 'customer.delivery_retry']
+
+export function notificationLink(template: string, args: Args = {}, orderId: number | null = null): string {
+  if (orderId !== null && TRACKABLE.includes(template)) return `/orders/${orderId}/track`
   if (template.startsWith('ticket.')) return `/help/${args.ticketId}`
   if (template.startsWith('courier.')) return '/courier'
   if (template.startsWith('seller.')) return '/seller'

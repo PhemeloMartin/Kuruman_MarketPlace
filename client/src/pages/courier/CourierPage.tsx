@@ -4,6 +4,9 @@ import { CodeScanButton } from '../../components/CodeScanButton'
 import { DOCUMENT_LABEL, readDocument } from '../../lib/documents'
 import { formatRand } from '../../lib/money'
 import { MapView } from '../../components/MapView'
+import type { MapPin } from '../../components/DeliveryMap'
+import { VEHICLE_EMOJI, currentPosition, type Point } from '../../lib/geo'
+import { useLiveLocation, type Sharing } from '../../lib/useLiveLocation'
 
 interface OpenJob {
   id: number
@@ -18,6 +21,7 @@ interface OpenJob {
 interface MyJob {
   id: number
   orderId: number
+  vehicleType: string
   status: 'claimed' | 'collected' | 'delivered' | 'failed'
   orderNumber: string
   feeCents: number
@@ -75,6 +79,9 @@ export function CourierPage() {
   const [error, setError] = useState<string | null>(null)
   const [suspended, setSuspended] = useState<string | null>(null)
   const [busy, setBusy] = useState<number | null>(null)
+  // While a delivery is on the go, the customer follows this phone's position on a map.
+  const hasActiveJob = (myJobs ?? []).some((j) => j.status === 'claimed' || j.status === 'collected')
+  const sharing = useLiveLocation(hasActiveJob)
 
   const load = useCallback(() => {
     // Open jobs are loaded on their own: a suspended courier gets 403 there (no NEW jobs),
@@ -110,6 +117,16 @@ export function CourierPage() {
     setBusy(id)
     setError(null)
     try {
+      // Customers follow their delivery on a map, so taking a job needs the phone's location on.
+      if (sharing.state !== 'on') {
+        try {
+          await currentPosition()
+        } catch (err) {
+          setError(`Turn on your location to take jobs: customers follow their delivery on a map. ${(err as Error).message}`)
+          return
+        }
+        sharing.turnOn()
+      }
       await api(`/courier/jobs/${id}/claim`, { method: 'POST' })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not take the job. Please try again.')
@@ -169,8 +186,9 @@ export function CourierPage() {
           <div className="section-head">
             <h2 id="mine-heading">Your jobs</h2>
           </div>
+          <LocationBanner state={sharing.state} onTurnOn={sharing.turnOn} />
           {active.map((j) => (
-            <ActiveJob key={j.id} job={j} onChanged={load} />
+            <ActiveJob key={j.id} job={j} me={sharing.position} onChanged={load} />
           ))}
         </section>
       )}
@@ -367,7 +385,38 @@ function DocumentsNeeded() {
   )
 }
 
-function ActiveJob({ job: j, onChanged }: { job: MyJob; onChanged: () => void }) {
+// Is the customer seeing where I am? Shown above the courier's jobs.
+function LocationBanner({ state, onTurnOn }: { state: Sharing; onTurnOn: () => void }) {
+  if (state === 'on') {
+    return (
+      <p className="notice success" role="status" style={{ marginBottom: 12 }}>
+        📍 Your customer can see where you are while you deliver. Keep this page open – the screen stays on.
+      </p>
+    )
+  }
+  if (state === 'blocked' || state === 'unavailable') {
+    return (
+      <p className="notice error" role="alert" style={{ marginBottom: 12 }}>
+        📍{' '}
+        {state === 'blocked'
+          ? 'Location is blocked, so your customer can’t see you coming. Allow location for this site (the lock icon next to the address), then reload the page.'
+          : 'Your phone can’t find its location. Check that location (GPS) is on.'}
+      </p>
+    )
+  }
+  return (
+    <div className="notice" style={{ marginBottom: 12 }}>
+      <p style={{ margin: '0 0 8px' }}>📍 {state === 'starting' ? 'Finding your location…' : 'Share your location so your customer can follow the delivery.'}</p>
+      {state === 'off' && (
+        <button type="button" className="btn btn-primary" onClick={onTurnOn}>
+          Share my location
+        </button>
+      )}
+    </div>
+  )
+}
+
+function ActiveJob({ job: j, me, onChanged }: { job: MyJob; me: Point | null; onChanged: () => void }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [code, setCode] = useState('')
@@ -431,10 +480,13 @@ function ActiveJob({ job: j, onChanged }: { job: MyJob; onChanged: () => void })
           </div>
           {j.customer.location ? (
             <MapView
-              label={`Map with the place ${j.customer.name} pinned for the delivery`}
+              label={`Map with the place ${j.customer.name} pinned for the delivery, and you`}
               centre={j.customer.location}
-              height={200}
-              pins={[{ id: 'home', ...j.customer.location, emoji: '🏠', label: `${j.customer.name}: deliver here` }]}
+              height={220}
+              pins={[
+                { id: 'home', ...j.customer.location, emoji: '🏠', label: `${j.customer.name}: deliver here` },
+                ...(me ? [{ id: 'me', lat: me.lat, lng: me.lng, emoji: VEHICLE_EMOJI[j.vehicleType] ?? '🛵', label: 'You' } satisfies MapPin] : []),
+              ]}
             />
           ) : (
             <p className="fine-print">No map pin for this order: use the address, and call if you can’t find it.</p>

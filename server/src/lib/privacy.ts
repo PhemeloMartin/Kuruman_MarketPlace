@@ -60,6 +60,8 @@ export async function closeAccount(client: PoolClient, userId: number, staffId: 
   await client.query("DELETE FROM notifications WHERE user_id = $1", [userId]);
   // Their help tickets: what they wrote, and support's answers to them.
   await client.query("DELETE FROM tickets WHERE user_id = $1", [userId]);
+  // A courier's live position (normally gone already: it's kept only during a delivery).
+  await client.query("DELETE FROM courier_locations WHERE courier_id = $1", [userId]);
   // 2. Login details and name: erased; the row stays as a neutral surrogate for old records.
   await client.query("DELETE FROM phone_codes WHERE phone = (SELECT phone FROM users WHERE id = $1)", [userId]);
   await client.query(

@@ -2708,3 +2708,73 @@ label.busy {
 .location-picker[data-invalid='true'] {
   border-color: var(--danger, #b3261e);
 }
+
+/* ---------- Tracking an order (like a delivery app) ---------- */
+.track-title {
+  margin: 4px 0 2px;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.track-distance {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* The steps, as a line of dots: done ones filled, the current one ringed. */
+.track-steps {
+  list-style: none;
+  margin: 16px 0;
+  padding: 0;
+}
+
+.track-steps li {
+  position: relative;
+  padding: 0 0 14px 28px;
+  color: var(--text-muted, #6b6b6b);
+}
+
+.track-steps li::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--surface, #fff);
+}
+
+.track-steps li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 20px;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+
+.track-steps li.done {
+  color: inherit;
+}
+
+.track-steps li.done::before {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.track-steps li.done:not(.current)::after {
+  background: var(--primary);
+}
+
+.track-steps li.current {
+  font-weight: 700;
+}
+
+.track-steps li.current::before {
+  box-shadow: 0 0 0 4px var(--primary-tint);
+}

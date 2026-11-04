@@ -52,7 +52,7 @@ export async function customerOrderSms(
     case "out_for_delivery":
       return {
         phone: o.phone,
-        text: `${head} ${change.from === "delivery_failed" ? "we're delivering again" : "on the way to you"}. Have your code ready: ${orders}`,
+        text: `${head} ${change.from === "delivery_failed" ? "we're delivering again" : "on the way to you"}. Track it, and have your code ready: ${orders}/${orderId}/track`,
       };
     case "declined": {
       const why = change.reason ? ` (${String(change.reason).slice(0, 30).trim()})` : "";

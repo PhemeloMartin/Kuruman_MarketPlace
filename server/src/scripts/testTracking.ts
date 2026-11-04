@@ -1,5 +1,5 @@
 // Tests for delivering to a map pin and following a delivery (like Uber Eats): the customer's pin at
-// checkout, directions for whoever delivers, and who may see it.
+// checkout, directions for whoever delivers, the courier's live position, and who may see what.
 //
 //   npm run test:tracking
 //
@@ -11,6 +11,7 @@ import { AddressInfo } from "net";
 import { app } from "../app";
 import { pool } from "../db";
 import { runRetention } from "../lib/retention";
+import { processOutbox } from "../lib/notificationWorker";
 
 const ORIGIN = "http://localhost:5173";
 let base = "";
@@ -72,6 +73,7 @@ async function main() {
     courier = await login("0710000003");
 
     let orderId = 0;
+    let noPinOrder = 0;
     await check("a courier delivery can carry the customer's map pin", async () => {
       const r = await order({ fulfilment: "delivery", deliveryAddress: "House 1234, near the clinic", deliveryLocation: HOME });
       assert.equal(r.status, 201);
@@ -90,6 +92,7 @@ async function main() {
     await check("the pin is optional, and a pickup order never stores one", async () => {
       const noPin = await order({ fulfilment: "delivery", deliveryAddress: "Stand 55, Seoding" });
       assert.equal(noPin.status, 201);
+      noPinOrder = noPin.data.id;
       assert.equal((await pinOf(noPin.data.id)).lat, null);
       const pickup = await order({ fulfilment: "pickup", deliveryLocation: HOME });
       assert.equal(pickup.status, 201);
@@ -118,13 +121,85 @@ async function main() {
       assert.match(mine.customer.directionsUrl, /travelmode=driving/, "Pieter rides a motorbike");
     });
 
-    await check("after the delivery, the courier no longer sees the customer's address or pin", async () => {
+    const tracking = async (cookie = customer, id = orderId) => call(cookie, "GET", `/api/orders/${id}/tracking`);
+
+    await check("a courier with no delivery on the go can't share a location (so nothing is kept)", async () => {
+      const lerato = await login("0710000006");
+      const r = await call(lerato, "POST", "/api/courier/location", { lat: -27.45, lng: 23.43 });
+      assert.equal(r.status, 409);
+      assert.equal(r.data.sharing, false);
+      assert.equal((await pool.query("SELECT count(*)::int AS n FROM courier_locations")).rows[0].n, 0);
+    });
+
+    await check("while collecting, the customer sees the courier on the map (no distance until they have the order)", async () => {
+      assert.equal((await call(courier, "POST", "/api/courier/location", { lat: -27.4524, lng: 23.4325, accuracy: 12 })).status, 200);
+      const t = (await tracking()).data;
+      assert.equal(t.status, "ready");
+      assert.equal(t.delivery.status, "claimed");
+      assert.deepEqual(t.delivery.courier, { name: "Pieter", vehicleType: "motorbike" }, "first name only");
+      assert.equal(t.delivery.courierLocation.lat, -27.4524);
+      assert.ok(t.delivery.courierLocation.secondsAgo < 5);
+      assert.equal(t.delivery.distanceKm, null);
+      assert.deepEqual(t.destination.location, HOME);
+    });
+
+    await check("on the way: how far away the courier is, and about how long they'll be", async () => {
       await call(seller, "POST", `/api/seller/orders/${orderId}/release`);
       assert.equal((await call(courier, "POST", `/api/courier/jobs/${jobId}/collect`)).status, 200);
+      // Kuruman town to Mothibistad is about 7.6 km as the crow flies.
+      const t = (await tracking()).data;
+      assert.equal(t.status, "out_for_delivery");
+      assert.ok(t.delivery.distanceKm > 7 && t.delivery.distanceKm < 8.5, `distance ${t.delivery.distanceKm}`);
+      assert.ok(t.delivery.etaMinutes >= 15 && t.delivery.etaMinutes <= 25, `about ${t.delivery.etaMinutes} min by motorbike`);
+      // Moving closer updates it.
+      await call(courier, "POST", "/api/courier/location", { lat: -27.3880, lng: 23.4700 });
+      const nearer = (await tracking()).data.delivery;
+      assert.ok(nearer.distanceKm < 0.5, `nearly there: ${nearer.distanceKm} km`);
+    });
+
+    await check("nobody else can follow the order: another customer, or even the courier, gets 'not found'", async () => {
+      const lesego = await login("0710000011");
+      assert.equal((await tracking(lesego)).status, 404);
+      assert.equal((await tracking(courier)).status, 404);
+      assert.equal((await call("", "GET", `/api/orders/${orderId}/tracking`)).status, 401);
+    });
+
+    await check("the \"on the way\" SMS links straight to the tracking page (and still fits in one SMS)", async () => {
+      await processOutbox();
+      const sms = await pool.query("SELECT body FROM sms_messages WHERE order_id = $1 AND body LIKE '%on the way%'", [orderId]);
+      assert.equal(sms.rowCount, 1);
+      assert.match(sms.rows[0].body, new RegExp(`/orders/${orderId}/track$`));
+      assert.ok(sms.rows[0].body.length <= 160, `${sms.rows[0].body.length} characters`);
+    });
+
+    await check("a customer without a pin can share where they are from the tracking page", async () => {
+      assert.equal((await call(customer, "POST", `/api/orders/${noPinOrder}/location`, { lat: -26.2, lng: 28.04 })).status, 422);
+      const lesego = await login("0710000011");
+      assert.equal((await call(lesego, "POST", `/api/orders/${noPinOrder}/location`, HOME)).status, 404, "not someone else's order");
+      assert.equal((await call(customer, "POST", `/api/orders/${noPinOrder}/location`, HOME)).status, 200);
+      assert.deepEqual(await pinOf(noPinOrder), HOME);
+    });
+
+    await check("after the delivery, the courier no longer sees the customer's address or pin", async () => {
       const code = (await call(customer, "POST", `/api/orders/${orderId}/handover-code`)).data.code;
       assert.equal((await call(courier, "POST", `/api/courier/jobs/${jobId}/deliver`, { code })).status, 200);
       const done = (await call(courier, "GET", "/api/courier/my-jobs")).data.find((j: any) => j.id === jobId);
       assert.equal(done.customer, null);
+    });
+
+    await check("...and stops sharing: their position is deleted, and the customer no longer sees it", async () => {
+      assert.equal((await pool.query("SELECT count(*)::int AS n FROM courier_locations")).rows[0].n, 0);
+      const t = (await tracking()).data;
+      assert.equal(t.status, "completed");
+      assert.equal(t.delivery.courierLocation, null);
+      assert.equal((await call(courier, "POST", "/api/courier/location", HOME)).status, 409);
+    });
+
+    await check("a position left behind (e.g. a phone that stopped sending) is deleted by the clean-up", async () => {
+      const lerato = Number((await pool.query("SELECT id FROM users WHERE phone = '+27710000006'")).rows[0].id);
+      await pool.query("INSERT INTO courier_locations (courier_id, lat, lng, updated_at) VALUES ($1, -27.45, 23.43, now() - interval '2 hours')", [lerato]);
+      await runRetention();
+      assert.equal((await pool.query("SELECT count(*)::int AS n FROM courier_locations")).rows[0].n, 0);
     });
 
     await check("a shop that delivers itself sees the address, pin and directions - only while delivering", async () => {

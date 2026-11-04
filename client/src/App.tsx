@@ -12,6 +12,7 @@ import { DirectoryPage } from './pages/DirectoryPage'
 import { SellerShopPage } from './pages/seller/SellerShopPage'
 import { SellerReviewsPage } from './pages/seller/SellerReviewsPage'
 import { OrdersPage } from './pages/OrdersPage'
+import { TrackOrderPage } from './pages/TrackOrderPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SellerDashboardPage } from './pages/seller/SellerDashboardPage'
 import { SellerProductFormPage, SellerProductsPage } from './pages/seller/SellerProductsPage'
@@ -42,6 +43,7 @@ export default function App() {
                 <Route path="directory" element={<DirectoryPage />} />
                 <Route path="cart" element={<CartPage />} />
                 <Route path="orders" element={<OrdersPage />} />
+                <Route path="orders/:id/track" element={<TrackOrderPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="signin" element={<SignInPage />} />
                 <Route path="register" element={<RegisterPage />} />
