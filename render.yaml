@@ -77,9 +77,11 @@ services:
       # with made-up accounts, because then anyone could sign in as any number.
       - key: SMS_DEMO_SHOW_CODES
         value: "false"
-      # Real money: live Payfast account (merchant ID, key and passphrase below). "true" = Payfast's sandbox.
+      # "true" = Payfast's sandbox (test money), "false" = the live account (real money). Sandbox for now: the live
+      # merchant account is "pending verification" at Payfast. Once Payfast verifies it, set "false" here AND put
+      # the live merchant ID, key and passphrase back in the Render dashboard.
       - key: PAYFAST_SANDBOX
-        value: "false"
+        value: "true"
       - key: PAYFAST_MERCHANT_ID
         sync: false
       - key: PAYFAST_MERCHANT_KEY
