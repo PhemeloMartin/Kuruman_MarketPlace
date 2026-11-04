@@ -100,13 +100,33 @@ export function buildCheckout(
   return { action: cfg.processUrl, fields: Object.fromEntries(fields) };
 }
 
-// Payfast's servers (documented host names). The ITN must come from one of their addresses.
+// Payfast's servers: their documented host names (the check in Payfast's own sample code) and the IP
+// ranges Payfast publishes for its notifications. The ITN must come from one of these addresses.
 const PAYFAST_HOSTS = ["www.payfast.co.za", "sandbox.payfast.co.za", "w1w.payfast.co.za", "w2w.payfast.co.za"];
+const PAYFAST_RANGES = ["197.97.145.144/28", "41.74.179.192/27", "102.216.36.0/28", "102.216.36.128/28", "144.126.193.139/32"];
+
+// Is this IPv4 address inside a range like 197.97.145.144/28 (the first 28 bits must match)?
+function inRange(ip: string, cidr: string): boolean {
+  const asNumber = (a: string) => a.split(".").reduce((n, part) => n * 256 + Number(part), 0);
+  if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) return false;
+  const [base, bits] = cidr.split("/");
+  const block = 2 ** (32 - Number(bits));
+  return Math.floor(asNumber(ip) / block) === Math.floor(asNumber(base) / block);
+}
 
 export async function isPayfastIp(ip: string): Promise<boolean> {
-  const clean = ip.replace(/^::ffff:/, "");
+  const clean = ip.trim().replace(/^::ffff:/, "");
+  if (PAYFAST_RANGES.some((r) => inRange(clean, r))) return true;
   const lists = await Promise.all(PAYFAST_HOSTS.map((h) => dns.resolve4(h).catch(() => [] as string[])));
   return lists.flat().includes(clean);
+}
+
+// Did a request come from Payfast? Behind a hosting proxy (Render, Cloudflare) the sender's address can be
+// any entry of the X-Forwarded-For list, so all of them are checked. Those entries could be typed in by
+// anyone, which is why the signature and Payfast's own confirmation are always checked as well.
+export async function fromPayfast(addresses: string[]): Promise<boolean> {
+  for (const a of addresses.filter(Boolean)) if (await isPayfastIp(a)) return true;
+  return false;
 }
 
 // Server-to-server confirmation: we post the same data back and Payfast answers "VALID".

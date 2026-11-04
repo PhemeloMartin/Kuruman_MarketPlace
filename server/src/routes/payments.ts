@@ -6,7 +6,7 @@ import {
   amountToCents,
   buildCheckout,
   confirmWithPayfast,
-  isPayfastIp,
+  fromPayfast,
   itnSignature,
   parseFormInOrder,
   payfastConfig,
@@ -128,8 +128,14 @@ paymentsRouter.post(
     }
     // Check 2: it's for OUR merchant account.
     if (data.merchant_id !== cfg.merchantId) return reject("rejected_merchant");
-    // Check 3: it really came from Payfast's servers.
-    if (cfg.verifySourceIp && !(await isPayfastIp(req.ip ?? ""))) return reject("rejected_source_ip");
+    // Check 3: it came from Payfast's servers. If the address can't be seen behind the hosting proxies, the
+    // server-to-server confirmation (check 5, the strongest) decides - and the event log says so.
+    if (cfg.verifySourceIp) {
+      const forwarded = String(req.get("x-forwarded-for") ?? "").split(",").map((s) => s.trim());
+      const seen = await fromPayfast([req.ip ?? "", req.socket.remoteAddress ?? "", ...forwarded]);
+      if (!seen && !cfg.verifyWithServer) return reject("rejected_source_ip");
+      if (!seen) await logEvent({ ...meta, outcome: "source_ip_unverified" });
+    }
     // Check 4: it matches a payment attempt we created, for exactly the right amount.
     const a = await pool.query("SELECT id, order_id, amount_cents FROM payments WHERE attempt_reference = $1", [
       data.m_payment_id ?? "",

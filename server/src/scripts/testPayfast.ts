@@ -24,7 +24,7 @@ import { AddressInfo } from "net";
 import { app } from "../app";
 import { pool } from "../db";
 import { expireOverdueOrders } from "../lib/expiry";
-import { buildCheckout, itnSignature, payfastConfig, payfastEncode } from "../lib/payfast";
+import { buildCheckout, fromPayfast, isPayfastIp, itnSignature, payfastConfig, payfastEncode } from "../lib/payfast";
 
 const ORIGIN = "http://localhost:5173";
 let base = "";
@@ -148,6 +148,16 @@ async function main() {
         if (saved.app === undefined) delete process.env.PUBLIC_APP_URL;
         if (saved.origin === undefined) delete process.env.CLIENT_ORIGIN;
       }
+    });
+
+    await check("Payfast's notification addresses are recognised, also when hidden in the proxy's forwarded list", async () => {
+      assert.equal(await isPayfastIp("197.97.145.150"), true, "Payfast range 197.97.145.144/28");
+      assert.equal(await isPayfastIp("::ffff:41.74.179.200"), true, "Payfast range 41.74.179.192/27");
+      assert.equal(await isPayfastIp("197.97.145.160"), false, "just outside the range");
+      assert.equal(await isPayfastIp("8.8.8.8"), false);
+      // Render's proxy first, then Payfast further along the X-Forwarded-For list.
+      assert.equal(await fromPayfast(["10.201.3.4", "", "102.216.36.130"]), true);
+      assert.equal(await fromPayfast(["10.201.3.4", "172.70.1.1"]), false);
     });
 
     await check("asking again re-uses the same unfinished attempt (no second charge)", async () => {
