@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
 import { TERMS_DATE } from '../lib/legal'
 
-const READING_PAGES = ['/terms', '/returns', '/privacy', '/seller-terms']
+const READING_PAGES = ['/terms', '/returns', '/privacy', '/seller-terms', '/courier-terms']
 
 interface TermsStatus {
   version: string
@@ -83,6 +83,14 @@ export function TermsGate() {
                 Seller terms
               </Link>{' '}
               – what you agreed to as a seller (also updated).
+            </li>
+          )}
+          {user?.role === 'courier' && (
+            <li>
+              <Link to="/courier-terms" target="_blank">
+                Courier terms
+              </Link>{' '}
+              – what you agree to as a courier: documents, cash, safety and customers’ information.
             </li>
           )}
         </ul>

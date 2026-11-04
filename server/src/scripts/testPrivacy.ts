@@ -139,7 +139,12 @@ async function main() {
     });
 
     // A waiting application is not a hold - it's simply withdrawn when the account closes.
-    assert.equal((await call(tester, "POST", "/api/applications", { type: "courier", vehicleType: "bicycle", area: "Seoding" })).status, 201);
+    assert.equal((await call(tester, "POST", "/api/applications", {
+      type: "courier", vehicleType: "bicycle", area: "Seoding", email: "tester@example.com",
+      idDocument: Buffer.concat([Buffer.from("%PDF-1.4\n"), Buffer.alloc(50)]).toString("base64"),
+      policeClearance: Buffer.concat([Buffer.from("%PDF-1.4\n"), Buffer.alloc(50)]).toString("base64"),
+      agreeTerms: true, agreePrivacy: true,
+    })).status, 201);
 
     await check("closing your account needs a fresh SMS code", async () => {
       assert.equal((await call(tester, "POST", "/api/privacy/requests", { type: "deletion", code: "000000x" })).status, 401);

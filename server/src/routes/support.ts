@@ -7,7 +7,8 @@ import { pool } from "../db";
 import { requireRole, requireStaff } from "../auth/session";
 import { audit } from "../lib/audit";
 import { decryptBytes, decryptSecret, encryptSecret } from "../lib/secretBox";
-import { applicantEmails, emailApplicant } from "../lib/caseMail";
+import { applicantEmails, applicationWhat, emailApplicant } from "../lib/caseMail";
+import { DOCUMENT_LABEL } from "./applications";
 import { newTotpSecret, otpauthUrl, verifyTotp } from "../lib/totp";
 
 // Restricted support console (spec FR-21, UC-17, UI-13).
@@ -124,14 +125,14 @@ supportRouter.get("/applications", requireStaff("approvals"), async (_req, res) 
   // Open ones first, then the 20 most recent decisions for reference.
   const r = await pool.query(
     `(SELECT c.*, u.display_name, u.phone, r.display_name AS resolved_by_name,
-             EXISTS (SELECT 1 FROM verification_documents d WHERE d.case_id = c.id) AS has_id_document,
+             (SELECT json_agg(d.kind ORDER BY d.id) FROM verification_documents d WHERE d.case_id = c.id) AS documents,
              ${TRAIL} AS trail
         FROM support_cases c JOIN users u ON u.id = c.requester_id LEFT JOIN users r ON r.id = c.resolved_by
        WHERE c.status = 'open' AND c.case_type IN ('seller_application', 'courier_application')
        ORDER BY c.created_at)
      UNION ALL
      (SELECT c.*, u.display_name, u.phone, r.display_name AS resolved_by_name,
-             EXISTS (SELECT 1 FROM verification_documents d WHERE d.case_id = c.id) AS has_id_document,
+             (SELECT json_agg(d.kind ORDER BY d.id) FROM verification_documents d WHERE d.case_id = c.id) AS documents,
              ${TRAIL} AS trail
         FROM support_cases c JOIN users u ON u.id = c.requester_id LEFT JOIN users r ON r.id = c.resolved_by
        WHERE c.status = 'closed' AND c.case_type IN ('seller_application', 'courier_application')
@@ -144,7 +145,7 @@ supportRouter.get("/applications", requireStaff("approvals"), async (_req, res) 
       status: c.status,
       applicant: { name: c.display_name, phone: c.phone },
       details: c.details,
-      hasIdDocument: c.has_id_document,
+      documents: c.documents ?? [], // which documents were uploaded (open each one separately)
       trail: c.trail ?? [],
       resolution: c.resolution,
       reason: c.resolution_reason,
@@ -155,20 +156,24 @@ supportRouter.get("/applications", requireStaff("approvals"), async (_req, res) 
   );
 });
 
-// GET /api/support/applications/:id/id-document - the applicant's ID document, decrypted, to check it
-// against their name. Only approvers can open it, and every opening is in the audit log.
-supportRouter.get("/applications/:id/id-document", requireStaff("approvals"), async (req, res) => {
+// GET /api/support/applications/:id/documents/:kind - one of the applicant's documents (ID document,
+// driver's licence, police clearance), decrypted, to check it. Only approvers can open it, and every
+// opening is in the audit log.
+supportRouter.get("/applications/:id/documents/:kind", requireStaff("approvals"), async (req, res) => {
+  const kind = String(req.params.kind);
+  if (!DOCUMENT_LABEL[kind]) return res.status(404).json({ error: "No such document." });
   const d = await pool.query(
-    "SELECT content_type, data_enc FROM verification_documents WHERE case_id = $1 AND kind = 'id_document'",
-    [Number(req.params.id) || 0]
+    "SELECT content_type, data_enc FROM verification_documents WHERE case_id = $1 AND kind = $2",
+    [Number(req.params.id) || 0, kind]
   );
-  if (d.rowCount === 0) return res.status(404).json({ error: "No ID document for this application." });
+  if (d.rowCount === 0) return res.status(404).json({ error: `No ${DOCUMENT_LABEL[kind]} for this application.` });
   await audit(pool, {
     actorId: req.user!.id,
-    action: "application.view_id_document",
+    action: "application.view_document",
     resourceType: "support_case",
     resourceId: Number(req.params.id),
     outcome: "success",
+    changes: { kind },
   });
   res.set({ "Content-Type": d.rows[0].content_type, "Content-Disposition": "inline", "Cache-Control": "no-store" });
   res.send(decryptBytes(d.rows[0].data_enc));
@@ -183,11 +188,11 @@ supportRouter.post("/applications/:id/email", requireStaff("approvals"), async (
     return res.status(422).json({ error: "Write your message (5 to 2000 characters).", fields: { message: "5 to 2000 characters." } });
   }
   const c = await pool.query(
-    "SELECT id FROM support_cases WHERE id = $1 AND case_type = 'seller_application' AND details ? 'email'",
+    "SELECT id FROM support_cases WHERE id = $1 AND case_type IN ('seller_application', 'courier_application') AND details ? 'email'",
     [Number(req.params.id) || 0]
   );
   if (c.rowCount === 0) return res.status(404).json({ error: "No application with an email address." });
-  const sent = await emailApplicant(Number(c.rows[0].id), "About your application to sell on KurumanMarketPlace", message, req.user!.id);
+  const sent = await emailApplicant(Number(c.rows[0].id), "About your application on KurumanMarketPlace", message, req.user!.id);
   await audit(pool, {
     actorId: req.user!.id,
     action: "application.email_applicant",
@@ -198,12 +203,13 @@ supportRouter.post("/applications/:id/email", requireStaff("approvals"), async (
   res.json({ sent });
 });
 
-// After a decision, the seller hears it by email too (as well as on their Profile).
+// After a decision, the applicant hears it by email too (as well as on their Profile).
 async function emailDecision(caseId: number, approved: boolean, reason: string) {
   const c = await pool.query("SELECT case_type, details FROM support_cases WHERE id = $1 AND status = 'closed'", [caseId]);
   const app = c.rows[0];
-  if (!app || app.case_type !== "seller_application" || !app.details?.email) return;
-  const e = approved ? applicantEmails.approved(app.details.businessName) : applicantEmails.rejected(app.details.businessName, reason);
+  if (!app?.details?.email) return;
+  const what = applicationWhat(app.case_type, app.details);
+  const e = approved ? applicantEmails.approved(what, app.case_type === "seller_application") : applicantEmails.rejected(what, reason);
   await emailApplicant(caseId, e.subject, e.message, null);
 }
 

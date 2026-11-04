@@ -18,6 +18,23 @@ import { pool } from "../db";
 import { currentStep, totpCode } from "../lib/totp";
 import { processOutbox } from "../lib/notificationWorker";
 
+
+// A made-up "document" for the tests: a few bytes that start like a PDF (no real ID is ever used).
+const fakePdf = () => Buffer.concat([Buffer.from("%PDF-1.4\n"), crypto.randomBytes(200)]).toString("base64");
+// A complete courier application: email, ID document, police clearance, a driver's licence when they
+// drive, and both agreements.
+const courierApplication = (vehicleType: string, area: string) => ({
+  type: "courier",
+  vehicleType,
+  area,
+  email: "rider@example.com",
+  idDocument: fakePdf(),
+  policeClearance: fakePdf(),
+  ...(["motorbike", "car", "bakkie"].includes(vehicleType) ? { driversLicence: fakePdf() } : {}),
+  agreeTerms: true,
+  agreePrivacy: true,
+});
+
 const ORIGIN = "http://localhost:5173";
 const PASSPHRASE = "Kuruman Oasis 2026";
 let base = "";
@@ -130,14 +147,14 @@ async function main() {
     });
 
     await check("sellers and couriers can't apply again; applications are validated", async () => {
-      assert.equal((await call(seller, "POST", "/api/applications", { type: "courier", vehicleType: "car", area: "Wrenchville" })).status, 403);
+      assert.equal((await call(seller, "POST", "/api/applications", courierApplication("car", "Wrenchville"))).status, 403);
       const bad = await call(customer, "POST", "/api/applications", { type: "seller", businessName: "", area: "Atlantis" });
       assert.equal(bad.status, 422);
       assert.ok(bad.data.fields.businessName && bad.data.fields.area);
     });
 
     await check("only one application can wait at a time", async () => {
-      const r = await call(applicant, "POST", "/api/applications", { type: "courier", vehicleType: "car", area: "Seoding" });
+      const r = await call(applicant, "POST", "/api/applications", courierApplication("car", "Seoding"));
       assert.equal(r.status, 409);
     });
 
@@ -165,7 +182,7 @@ async function main() {
     });
 
     await check("a rejected applicant sees the reason", async () => {
-      const applied = await call(customer, "POST", "/api/applications", { type: "courier", vehicleType: "bicycle", area: "Wrenchville" });
+      const applied = await call(customer, "POST", "/api/applications", courierApplication("bicycle", "Wrenchville"));
       assert.equal(applied.status, 201);
       await call(support, "POST", `/api/support/applications/${applied.data.id}/reject`, { reason: "We have enough couriers in Wrenchville for now." });
       const mine = await call(customer, "GET", "/api/applications/mine");
@@ -175,8 +192,9 @@ async function main() {
     });
 
     let lesegoCase = 0;
+    let lesego = "";
     await check("a seller is verified like Payfast does it: email, ID document, seller terms and privacy notice", async () => {
-      const lesego = await login("0710000011");
+      lesego = await login("0710000011");
       const shop = { type: "seller", businessName: "Lesego's Sewing", area: "Seoding", pickupAddress: "12 Church Street, Seoding", phone: "0821234567" };
       const missing = await call(lesego, "POST", "/api/applications", shop);
       assert.equal(missing.status, 422);
@@ -191,20 +209,20 @@ async function main() {
       const stored = (await pool.query("SELECT data_enc FROM verification_documents WHERE case_id = $1", [lesegoCase])).rows[0];
       assert.ok(!stored.data_enc.includes(Buffer.from("%PDF").toString("base64url")), "stored encrypted, not as the file itself");
       const app = (await call(support, "GET", "/api/support/applications")).data.find((a: any) => a.id === lesegoCase);
-      assert.equal(app.hasIdDocument, true);
+      assert.deepEqual(app.documents, ["id_document"]);
       assert.equal(app.details.email, "lesego@example.com");
       assert.equal(app.details.termsVersion, "2026-11-04");
       assert.equal(app.details.privacyVersion, "2026-11-04");
     });
 
     await check("only approvers can open the ID document, and every opening is in the audit log", async () => {
-      const open = (cookie: string) => fetch(`${base}/api/support/applications/${lesegoCase}/id-document`, { headers: { Cookie: cookie } });
+      const open = (cookie: string) => fetch(`${base}/api/support/applications/${lesegoCase}/documents/id_document`, { headers: { Cookie: cookie } });
       assert.equal((await open(customer)).status, 403);
       const r = await open(support);
       assert.equal(r.status, 200);
       assert.equal(r.headers.get("content-type"), "application/pdf");
       assert.equal(Buffer.from(await r.arrayBuffer()).subarray(0, 5).toString(), "%PDF-");
-      const log = await pool.query("SELECT 1 FROM audit_events WHERE action = 'application.view_id_document' AND resource_id = $1", [String(lesegoCase)]);
+      const log = await pool.query("SELECT 1 FROM audit_events WHERE action = 'application.view_document' AND resource_id = $1", [String(lesegoCase)]);
       assert.equal(log.rowCount, 1);
     });
 
@@ -214,7 +232,7 @@ async function main() {
       const first = (await trailOf(lesegoCase))[0];
       assert.equal(first.kind, "email");
       assert.match(first.subject, /We received your application/);
-      assert.match(first.body, /Please don't send ID documents by email/);
+      assert.match(first.body, /Please don't send documents by email/);
       assert.equal((await call(customer, "POST", `/api/support/applications/${lesegoCase}/email`, { message: "Hello there" })).status, 403);
       assert.equal((await call(support, "POST", `/api/support/applications/${lesegoCase}/email`, { message: "Hi" })).status, 422);
       const r = await call(support, "POST", `/api/support/applications/${lesegoCase}/email`, {
@@ -227,12 +245,13 @@ async function main() {
     });
 
     await check("a seller who sent the wrong ID document replaces it themselves - never by email", async () => {
-      const lesego = await login("0710000011");
-      const wrong = await call(lesego, "PUT", "/api/applications/mine/id-document", { idDocument: Buffer.from("not a file").toString("base64") });
+      // (Lesego is still signed in from above: the site allows only a few sign-ins per 15 minutes.)
+      const wrong = await call(lesego, "PUT", "/api/applications/mine/documents/id_document", { file: Buffer.from("not a file").toString("base64") });
       assert.equal(wrong.status, 422);
       const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), crypto.randomBytes(100)]).toString("base64");
-      assert.equal((await call(lesego, "PUT", "/api/applications/mine/id-document", { idDocument: png })).status, 200);
-      const doc = await fetch(`${base}/api/support/applications/${lesegoCase}/id-document`, { headers: { Cookie: support } });
+      assert.equal((await call(lesego, "PUT", "/api/applications/mine/documents/drivers_licence", { file: png })).status, 404, "not a document sellers need");
+      assert.equal((await call(lesego, "PUT", "/api/applications/mine/documents/id_document", { file: png })).status, 200);
+      const doc = await fetch(`${base}/api/support/applications/${lesegoCase}/documents/id_document`, { headers: { Cookie: support } });
       assert.equal(doc.headers.get("content-type"), "image/png", "the new document replaced the old one");
       const trail = await trailOf(lesegoCase);
       assert.match(trail[trail.length - 1].body, /uploaded a new ID document/);
@@ -244,6 +263,25 @@ async function main() {
       const last = (await trailOf(lesegoCase)).at(-1);
       assert.match(last.subject, /About your application/);
       assert.match(last.body, /business's own phone number/);
+    });
+
+    await check("couriers are verified too: ID and police clearance always, a driver's licence when they drive", async () => {
+      const anna = await login("0710000012");
+      const missing = await call(anna, "POST", "/api/applications", { type: "courier", vehicleType: "car", area: "Seoding" });
+      assert.equal(missing.status, 422);
+      for (const f of ["email", "idDocument", "driversLicence", "policeClearance", "agreeTerms", "agreePrivacy"]) assert.ok(missing.data.fields[f], `${f} required`);
+      const onBicycle = await call(anna, "POST", "/api/applications", { type: "courier", vehicleType: "bicycle", area: "Seoding" });
+      assert.ok(!onBicycle.data.fields.driversLicence, "no licence needed on a bicycle");
+      const r = await call(anna, "POST", "/api/applications", courierApplication("car", "Seoding"));
+      assert.equal(r.status, 201);
+      const app = (await call(support, "GET", "/api/support/applications")).data.find((a: any) => a.id === r.data.id);
+      assert.deepEqual(app.documents, ["id_document", "drivers_licence", "police_clearance"]);
+      const pcc = await fetch(`${base}/api/support/applications/${r.data.id}/documents/police_clearance`, { headers: { Cookie: support } });
+      assert.equal(pcc.status, 200);
+      assert.equal(pcc.headers.get("content-type"), "application/pdf");
+      assert.match((await trailOf(r.data.id))[0].subject, /application to deliver/);
+      const log = await pool.query("SELECT changes FROM audit_events WHERE action = 'application.view_document' ORDER BY id DESC LIMIT 1");
+      assert.equal(log.rows[0].changes.kind, "police_clearance");
     });
 
     let ticketId = 0;
@@ -259,7 +297,7 @@ async function main() {
       const mine = (await call(customer, "GET", "/api/tickets")).data;
       assert.equal(mine[0].id, ticketId);
       assert.equal(mine[0].status, "open");
-      const someoneElse = await login("0710000012");
+      const someoneElse = seller; // any other signed-in person
       assert.equal((await call(someoneElse, "GET", `/api/tickets/${ticketId}`)).status, 404);
     });
 

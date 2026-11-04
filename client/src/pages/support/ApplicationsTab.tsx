@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useState } from 'react'
 import { ReasonDialog } from '../../components/ReasonDialog'
 import { api } from '../../lib/api'
 import { VEHICLE_LABEL, dateTime, localPhone } from '../../lib/labels'
@@ -12,13 +12,27 @@ interface TrailItem {
   at: string
 }
 
+// What support sees for each kind of document (the server's names).
+const DOCUMENT_LABEL: Record<string, string> = {
+  id_document: 'ID document',
+  drivers_licence: 'Driver’s licence',
+  police_clearance: 'Police clearance',
+}
+const MOTORISED = ['motorbike', 'car', 'bakkie']
+
+// The documents this application should have (the same rule as the server's).
+function expectedDocuments(a: { type: 'seller' | 'courier'; details: Record<string, string> }): string[] {
+  if (a.type === 'seller') return ['id_document']
+  return MOTORISED.includes(a.details.vehicleType) ? ['id_document', 'drivers_licence', 'police_clearance'] : ['id_document', 'police_clearance']
+}
+
 interface Application {
   id: number
   type: 'seller' | 'courier'
   status: 'open' | 'closed'
   applicant: { name: string; phone: string }
   details: Record<string, string>
-  hasIdDocument: boolean
+  documents: string[] // e.g. ['id_document', 'drivers_licence', 'police_clearance']
   trail: TrailItem[]
   resolution: 'approved' | 'rejected' | null
   reason: string | null
@@ -78,32 +92,6 @@ export function ApplicationsTab() {
                     <dd>{a.details.description}</dd>
                   </>
                 )}
-                {a.details.email && (
-                  <>
-                    <dt>Email</dt>
-                    <dd translate="no">{a.details.email}</dd>
-                  </>
-                )}
-                <dt>ID document</dt>
-                <dd>
-                  {a.hasIdDocument ? (
-                    // Opens in a new tab; the server records every opening in the audit log.
-                    <a href={`/api/support/applications/${a.id}/id-document`} target="_blank" rel="noopener noreferrer">
-                      Open the ID document
-                    </a>
-                  ) : (
-                    'None (applied before ID checks started)'
-                  )}
-                </dd>
-                {a.details.agreedAt && (
-                  <>
-                    <dt>Agreed to</dt>
-                    <dd>
-                      Seller terms ({a.details.termsVersion}) and privacy notice ({a.details.privacyVersion}),{' '}
-                      {dateTime(a.details.agreedAt)}
-                    </dd>
-                  </>
-                )}
               </>
             ) : (
               <>
@@ -113,13 +101,44 @@ export function ApplicationsTab() {
                 <dd>{VEHICLE_LABEL[a.details.vehicleType]}</dd>
               </>
             )}
+            {a.details.email && (
+              <>
+                <dt>Email</dt>
+                <dd translate="no">{a.details.email}</dd>
+              </>
+            )}
+            {expectedDocuments(a).map((kind) => (
+              <Fragment key={kind}>
+                <dt>{DOCUMENT_LABEL[kind]}</dt>
+                <dd>
+                  {a.documents.includes(kind) ? (
+                    // Opens in a new tab; the server records every opening in the audit log.
+                    <a href={`/api/support/applications/${a.id}/documents/${kind}`} target="_blank" rel="noopener noreferrer">
+                      Open
+                    </a>
+                  ) : (
+                    'Not uploaded (applied before document checks started)'
+                  )}
+                </dd>
+              </Fragment>
+            ))}
+            {a.details.agreedAt && (
+              <>
+                <dt>Agreed to</dt>
+                <dd>
+                  {a.type === 'seller' ? 'Seller' : 'Courier'} terms ({a.details.termsVersion}) and privacy notice (
+                  {a.details.privacyVersion}), {dateTime(a.details.agreedAt)}
+                </dd>
+              </>
+            )}
             <dt>Applied</dt>
             <dd>{dateTime(a.createdAt)}</dd>
           </dl>
           <p className="fine-print">
             {a.type === 'seller'
-              ? 'Check that the name on the ID document matches the applicant, and verify the details (for example by phone) before approving. Opening the ID document is recorded.'
-              : 'Verify the details (for example by phone) before approving.'}
+              ? 'Check that the name on the ID document matches the applicant, and verify the details (for example by phone) before approving.'
+              : 'Check that the ID, licence and police clearance are all in the applicant’s name, the licence is valid and covers their vehicle, and the clearance shows no record that puts customers at risk.'}{' '}
+            Opening a document is recorded.
           </p>
           <div className="btn-row">
             <button type="button" className="btn btn-primary" onClick={() => setDeciding({ app: a, action: 'approve' })}>

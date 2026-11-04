@@ -238,3 +238,9 @@ CREATE INDEX IF NOT EXISTS idx_ticket_messages ON ticket_messages(ticket_id, id)
 -- version changes, everyone is asked to accept again before they carry on.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_version VARCHAR(20);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ;
+
+-- 2026-11-04: couriers are verified too: their ID document, a police clearance certificate, and - if they
+-- deliver with a motorbike, car or bakkie - their driver's licence. Same protection as sellers' IDs.
+ALTER TABLE verification_documents DROP CONSTRAINT IF EXISTS verification_documents_kind_check;
+ALTER TABLE verification_documents ADD CONSTRAINT verification_documents_kind_check
+  CHECK (kind IN ('id_document', 'drivers_licence', 'police_clearance'));

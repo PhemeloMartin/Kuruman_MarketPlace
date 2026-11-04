@@ -20,6 +20,7 @@ import { CourierPage } from './pages/courier/CourierPage'
 import { SupportPage } from './pages/support/SupportPage'
 import { PrivacyPage } from './pages/PrivacyPage'
 import { SellerTermsPage } from './pages/SellerTermsPage'
+import { CourierTermsPage } from './pages/CourierTermsPage'
 import { HelpPage, TicketPage } from './pages/HelpPage'
 import { TermsPage } from './pages/TermsPage'
 import { ReturnsPage } from './pages/ReturnsPage'
@@ -46,6 +47,7 @@ export default function App() {
                 <Route path="register" element={<RegisterPage />} />
                 <Route path="privacy" element={<PrivacyPage />} />
                 <Route path="seller-terms" element={<SellerTermsPage />} />
+                <Route path="courier-terms" element={<CourierTermsPage />} />
                 <Route path="terms" element={<TermsPage />} />
                 <Route path="returns" element={<ReturnsPage />} />
                 <Route path="help" element={<HelpPage />} />

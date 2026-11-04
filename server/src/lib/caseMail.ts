@@ -2,11 +2,11 @@ import { pool } from "../db";
 import { sendEmail } from "./email";
 import { canonicalSiteUrl } from "./seo";
 
-// Contact with someone who applied to sell, kept with their application as a trail (case_messages):
+// Contact with someone who applied to sell or deliver, kept with their application as a trail (case_messages):
 // every email the site sends them - by itself or written by support - and changes they make, such as a
 // new ID document. They answer by replying: the reply goes to the admin's own inbox (Reply-To), so the
-// conversation carries on there. ID documents are never sent by email: a seller who sent the wrong one
-// uploads a new one on their Profile.
+// conversation carries on there. Documents are never sent by email: someone who sent a wrong one uploads
+// a new one on their Profile.
 
 const site = () => canonicalSiteUrl();
 
@@ -41,26 +41,33 @@ export async function noteOnCase(caseId: number, text: string, by: number | null
   await pool.query("INSERT INTO case_messages (case_id, kind, sent_by, body) VALUES ($1, 'note', $2, $3)", [caseId, by, text]);
 }
 
-// The three emails the site sends by itself.
+// What someone applied for, for the emails: `sell as "Lesego's Sewing"` or `deliver in Seoding`.
+export function applicationWhat(caseType: string, details: Record<string, string>): string {
+  return caseType === "seller_application" ? `sell as "${details.businessName}"` : `deliver in ${details.area}`;
+}
+
+// The three emails the site sends by itself, to sellers and couriers who applied.
 export const applicantEmails = {
-  received: (businessName: string) => ({
-    subject: "We received your application to sell on KurumanMarketPlace",
+  received: (what: string, seller: boolean) => ({
+    subject: `We received your application to ${seller ? "sell" : "deliver"} on KurumanMarketPlace`,
     message:
-      `Thank you for applying to sell as "${businessName}" on KurumanMarketPlace.\n\n` +
-      `We'll check your details and ID document, usually within 2 working days, and we may phone you. ` +
+      `Thank you for applying to ${what} on KurumanMarketPlace.\n\n` +
+      `We'll check your details and documents, usually within 2 working days, and we may phone you. ` +
       `You can see where your application is under Profile: ${site()}/profile\n\n` +
-      `Sent the wrong ID document? Upload a new one under Profile. Please don't send ID documents by email.`,
+      `Sent a wrong or unclear document? Upload a new one under Profile. Please don't send documents by email.`,
   }),
-  approved: (businessName: string) => ({
-    subject: "You can now sell on KurumanMarketPlace",
+  approved: (what: string, seller: boolean) => ({
+    subject: seller ? "You can now sell on KurumanMarketPlace" : "You can now deliver on KurumanMarketPlace",
     message:
-      `Good news: your application to sell as "${businessName}" was approved.\n\n` +
-      `Sign in with your phone number and open My shop to add your products: ${site()}/seller`,
+      `Good news: your application to ${what} was approved.\n\n` +
+      (seller
+        ? `Sign in with your phone number and open My shop to add your products: ${site()}/seller`
+        : `Sign in with your phone number and open Deliveries to see open jobs: ${site()}/courier`),
   }),
-  rejected: (businessName: string, reason: string) => ({
-    subject: "About your application to sell on KurumanMarketPlace",
+  rejected: (what: string, reason: string) => ({
+    subject: "About your application on KurumanMarketPlace",
     message:
-      `Your application to sell as "${businessName}" wasn't approved this time.\n\nThe reason: ${reason}\n\n` +
+      `Your application to ${what} wasn't approved this time.\n\nThe reason: ${reason}\n\n` +
       `You can apply again under Profile once it's sorted out: ${site()}/profile`,
   }),
 };

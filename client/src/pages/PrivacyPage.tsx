@@ -56,6 +56,11 @@ export function PrivacyPage() {
           you are before you can sell (so customers can trust the shops here), and to contact you about your
           application. You agree to this when you apply. The ID copy is stored encrypted, and used only for that check.
         </li>
+        <li>
+          <strong>Couriers applying to deliver: your email address, a copy of your ID document, your police clearance
+          certificate and – if you drive – your driver’s licence</strong> – because couriers go to customers’ homes and
+          carry their orders and money. Stored encrypted, used only to decide your application.
+        </li>
       </ul>
       <p>
         Apart from the ID document sellers give us, we don’t ask for ID numbers or dates of birth. We don’t send
@@ -71,8 +76,8 @@ export function PrivacyPage() {
           number it is recorded.
         </li>
         <li>
-          A seller’s ID document can be opened only by the support staff who approve sellers, and every time it is
-          opened is recorded. It is never emailed or shown to anyone else.
+          Sellers’ and couriers’ documents can be opened only by the support staff who approve applications, and
+          every time one is opened is recorded. They are never emailed or shown to anyone else.
         </li>
         <li>Payfast processes online payments under its own privacy terms.</li>
       </ul>
@@ -82,7 +87,7 @@ export function PrivacyPage() {
         <li>Delivery addresses: removed 30 days after the order is finished, unless a problem with it is still open.</li>
         <li>Order, payment and refund records: kept as business records for the approved period.</li>
         <li>Your account: until you ask us to close it.</li>
-        <li>Sellers’ ID documents: deleted 30 days after the application is decided (approved or not).</li>
+        <li>Sellers’ and couriers’ documents: deleted 30 days after the application is decided (approved or not).</li>
         <li>Help questions and answers: deleted 12 months after the question is closed.</li>
         <li>Records of support decisions: 90 days after the case closes, unless needed for a dispute.</li>
       </ul>

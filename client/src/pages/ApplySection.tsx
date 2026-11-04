@@ -20,15 +20,49 @@ interface Policy {
   maxIdDocumentBytes: number
 }
 
-interface IdDocument {
+interface ChosenFile {
   name: string
   base64: string
   bytes: number
 }
 
-// A photo of the ID is shrunk on the phone first (it uploads quicker on mobile data and loses hidden
-// details such as the location); a PDF goes as it is. Sent as base64 text inside the application.
-async function readIdDocument(file: File, maxBytes: number): Promise<IdDocument> {
+// The documents someone applying uploads (the server checks the same list):
+//   everyone: their ID document; couriers: also a police clearance certificate, and a driver's licence
+//   if they deliver with a motorbike, car or bakkie.
+interface DocumentSpec {
+  kind: string // as the server calls it, e.g. "drivers_licence"
+  field: string // the form field, e.g. "driversLicence"
+  label: string
+  hint: string
+}
+const ID_DOCUMENT: DocumentSpec = {
+  kind: 'id_document',
+  field: 'idDocument',
+  label: 'A copy of your ID document',
+  hint: 'A clear photo of your ID book page or smart ID card (the side with your photo and ID number), or a PDF.',
+}
+const DRIVERS_LICENCE: DocumentSpec = {
+  kind: 'drivers_licence',
+  field: 'driversLicence',
+  label: 'Your driver’s licence',
+  hint: 'A clear photo of the front of your driver’s licence card, or a PDF.',
+}
+const POLICE_CLEARANCE: DocumentSpec = {
+  kind: 'police_clearance',
+  field: 'policeClearance',
+  label: 'Your police clearance certificate',
+  hint: 'The certificate from SAPS (all pages), as a PDF or clear photos combined in one PDF.',
+}
+const MOTORISED = ['motorbike', 'car', 'bakkie']
+
+function documentsFor(type: 'seller' | 'courier', vehicleType: string): DocumentSpec[] {
+  if (type === 'seller') return [ID_DOCUMENT]
+  return MOTORISED.includes(vehicleType) ? [ID_DOCUMENT, DRIVERS_LICENCE, POLICE_CLEARANCE] : [ID_DOCUMENT, POLICE_CLEARANCE]
+}
+
+// A photo is shrunk on the phone first (it uploads quicker on mobile data and loses hidden details such
+// as the location); a PDF goes as it is. Sent as base64 text inside the application.
+async function readDocument(file: File, maxBytes: number): Promise<ChosenFile> {
   const blob = file.type === 'application/pdf' ? file : await shrinkPhoto(file, { maxSide: 2000, quality: 0.85 })
   if (blob.size > maxBytes) throw new Error('That file is too big: 5 MB at most.')
   const base64 = await new Promise<string>((resolve, reject) => {
@@ -68,10 +102,9 @@ export function ApplySection() {
         <strong>Your application is being reviewed</strong>
         <p className="product-meta" style={{ margin: '4px 0 0' }}>
           You applied to {application.type === 'seller' ? `sell as “${application.details.businessName}”` : 'deliver'} on{' '}
-          {dateTime(application.createdAt)}. Support will check your details
-          {application.type === 'seller' ? ' and ID document' : ''}, and may phone or email you.
+          {dateTime(application.createdAt)}. Support will check your details and documents, and may phone or email you.
         </p>
-        {application.type === 'seller' && <ReplaceIdDocument maxBytes={policy.maxIdDocumentBytes} />}
+        <ReplaceDocuments documents={documentsFor(application.type, application.details.vehicleType)} maxBytes={policy.maxIdDocumentBytes} />
       </section>
     )
   }
@@ -117,30 +150,32 @@ export function ApplySection() {
 function ApplyForm({ type, policy, onCancel, onDone }: { type: 'seller' | 'courier'; policy: Policy; onCancel: () => void; onDone: () => void }) {
   const [form, setForm] = useState<Form>({ area: '', vehicleType: '', businessName: '', pickupAddress: '', phone: '', description: '', kind: 'shop', email: '' })
   const stall = form.kind === 'market_stall'
-  const [idDocument, setIdDocument] = useState<IdDocument | null>(null)
-  const [reading, setReading] = useState(false)
+  const [files, setFiles] = useState<Record<string, ChosenFile>>({}) // by form field, e.g. idDocument
+  const [reading, setReading] = useState<string | null>(null)
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [agreePrivacy, setAgreePrivacy] = useState(false)
   const [fields, setFields] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const documents = documentsFor(type, form.vehicleType)
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }))
   const err = (k: string) => (fields[k] ? <p className="field-error">{fields[k]}</p> : null)
 
-  async function chooseIdDocument(e: React.ChangeEvent<HTMLInputElement>) {
+  async function choose(field: string, e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    setReading(true)
-    setFields(({ idDocument: _gone, ...rest }) => rest)
+    setReading(field)
+    setFields(({ [field]: _gone, ...rest }) => rest)
     try {
-      setIdDocument(await readIdDocument(file, policy.maxIdDocumentBytes))
+      const chosen = await readDocument(file, policy.maxIdDocumentBytes)
+      setFiles((f) => ({ ...f, [field]: chosen }))
     } catch (err) {
-      setIdDocument(null)
-      setFields((f) => ({ ...f, idDocument: err instanceof Error ? err.message : 'That file could not be read.' }))
+      setFiles(({ [field]: _gone, ...rest }) => rest)
+      setFields((f) => ({ ...f, [field]: err instanceof Error ? err.message : 'That file could not be read.' }))
     } finally {
-      setReading(false)
+      setReading(null)
     }
   }
 
@@ -150,8 +185,9 @@ function ApplyForm({ type, policy, onCancel, onDone }: { type: 'seller' | 'couri
     setError(null)
     setFields({})
     try {
-      const verification = type === 'seller' ? { idDocument: idDocument?.base64 ?? '', agreeTerms, agreePrivacy } : {}
-      await api('/applications', { method: 'POST', body: { type, ...form, ...verification } })
+      // Only the documents this application needs (a licence chosen before switching to a bicycle isn't sent).
+      const uploads = Object.fromEntries(documents.map((d) => [d.field, files[d.field]?.base64 ?? '']))
+      await api('/applications', { method: 'POST', body: { type, ...form, ...uploads, agreeTerms, agreePrivacy } })
       onDone()
     } catch (err) {
       if (err instanceof ApiError) {
@@ -238,61 +274,6 @@ function ApplyForm({ type, policy, onCancel, onDone }: { type: 'seller' | 'couri
               </div>
               {err('phone')}
             </div>
-
-            <h3 className="form-subhead">Verify who you are</h3>
-            <p className="fine-print" style={{ marginTop: 0 }}>
-              Like a payment service, we check every seller before they can sell, so customers can trust the shops here.
-            </p>
-            <div className="field" data-invalid={Boolean(fields.email)}>
-              <label htmlFor="email">Your email address</label>
-              <div className="input-wrap">
-                <input id="email" type="email" inputMode="email" autoComplete="email" value={form.email} onChange={set('email')} maxLength={120} placeholder="name@gmail.com" />
-              </div>
-              {err('email')}
-            </div>
-            <div className="field" data-invalid={Boolean(fields.idDocument)}>
-              <label htmlFor="idDocument">A copy of your ID document</label>
-              <p className="fine-print" style={{ marginTop: 0 }}>
-                A clear photo of your ID book page or smart ID card (the side with your photo and ID number), or a PDF.
-                It is stored encrypted, only the support team can open it, and it is deleted 30 days after your
-                application is decided.
-              </p>
-              <input id="idDocument" type="file" accept="image/*,application/pdf" onChange={chooseIdDocument} />
-              {reading && <p className="fine-print">Preparing your file…</p>}
-              {idDocument && !reading && (
-                <p className="fine-print">
-                  ✓ {idDocument.name} ({Math.max(1, Math.round(idDocument.bytes / 1024))} KB) is ready to send.
-                </p>
-              )}
-              {err('idDocument')}
-            </div>
-            <div className="field" data-invalid={Boolean(fields.agreeTerms)}>
-              <label className="choice consent">
-                <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} />
-                <span>
-                  I have read and accept the{' '}
-                  <Link to="/seller-terms" target="_blank">
-                    seller terms
-                  </Link>
-                  .
-                </span>
-              </label>
-              {err('agreeTerms')}
-            </div>
-            <div className="field" data-invalid={Boolean(fields.agreePrivacy)}>
-              <label className="choice consent">
-                <input type="checkbox" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)} />
-                <span>
-                  I have read the{' '}
-                  <Link to="/privacy" target="_blank">
-                    privacy notice
-                  </Link>{' '}
-                  and agree that KurumanMarketPlace uses my ID document and email to verify me and to contact me about my
-                  application (POPIA).
-                </span>
-              </label>
-              {err('agreePrivacy')}
-            </div>
           </>
         ) : (
           <div className="field" data-invalid={Boolean(fields.vehicleType)}>
@@ -310,8 +291,70 @@ function ApplyForm({ type, policy, onCancel, onDone }: { type: 'seller' | 'couri
             {err('vehicleType')}
           </div>
         )}
+
+        <h3 className="form-subhead">Verify who you are</h3>
+        <p className="fine-print" style={{ marginTop: 0 }}>
+          {type === 'seller'
+            ? 'Like a payment service, we check every seller before they can sell, so customers can trust the shops here.'
+            : 'Couriers go to people’s homes and carry their orders and cash, so we check every courier before they start.'}{' '}
+          Your documents are stored encrypted, only the support team can open them, and they are deleted 30 days after
+          your application is decided.
+        </p>
+        <div className="field" data-invalid={Boolean(fields.email)}>
+          <label htmlFor="email">Your email address</label>
+          <div className="input-wrap">
+            <input id="email" type="email" inputMode="email" autoComplete="email" value={form.email} onChange={set('email')} maxLength={120} placeholder="name@gmail.com" />
+          </div>
+          {err('email')}
+        </div>
+        {documents.map((d) => (
+          <div key={d.field} className="field" data-invalid={Boolean(fields[d.field])}>
+            <label htmlFor={d.field}>{d.label}</label>
+            <p className="fine-print" style={{ marginTop: 0 }}>
+              {d.hint}
+            </p>
+            <input id={d.field} type="file" accept="image/*,application/pdf" onChange={(e) => choose(d.field, e)} />
+            {reading === d.field && <p className="fine-print">Preparing your file…</p>}
+            {files[d.field] && reading !== d.field && (
+              <p className="fine-print">
+                ✓ {files[d.field].name} ({Math.max(1, Math.round(files[d.field].bytes / 1024))} KB) is ready to send.
+              </p>
+            )}
+            {err(d.field)}
+          </div>
+        ))}
+        {type === 'courier' && !form.vehicleType && (
+          <p className="fine-print">Delivering with a motorbike, car or bakkie? Then we also ask for your driver’s licence.</p>
+        )}
+        <div className="field" data-invalid={Boolean(fields.agreeTerms)}>
+          <label className="choice consent">
+            <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} />
+            <span>
+              I have read and accept the{' '}
+              <Link to={type === 'seller' ? '/seller-terms' : '/courier-terms'} target="_blank">
+                {type === 'seller' ? 'seller terms' : 'courier terms'}
+              </Link>
+              .
+            </span>
+          </label>
+          {err('agreeTerms')}
+        </div>
+        <div className="field" data-invalid={Boolean(fields.agreePrivacy)}>
+          <label className="choice consent">
+            <input type="checkbox" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)} />
+            <span>
+              I have read the{' '}
+              <Link to="/privacy" target="_blank">
+                privacy notice
+              </Link>{' '}
+              and agree that KurumanMarketPlace uses my documents and email to verify me and to contact me about my
+              application (POPIA).
+            </span>
+          </label>
+          {err('agreePrivacy')}
+        </div>
         <div className="btn-row">
-          <button type="submit" className="btn btn-primary" disabled={busy || reading}>
+          <button type="submit" className="btn btn-primary" disabled={busy || reading !== null}>
             {busy ? 'Sending…' : 'Send application'}
           </button>
           <button type="button" className="btn btn-outline" onClick={onCancel} disabled={busy}>
@@ -323,36 +366,43 @@ function ApplyForm({ type, policy, onCancel, onDone }: { type: 'seller' | 'couri
   )
 }
 
-// "Sent the wrong ID document, or was it unclear?" - a new one replaces it while support is still
-// checking. ID documents never go by email.
-function ReplaceIdDocument({ maxBytes }: { maxBytes: number }) {
-  const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle')
+// "Sent a wrong document, or was it unclear?" - a new one replaces it while support is still checking.
+// Documents never go by email.
+function ReplaceDocuments({ documents, maxBytes }: { documents: DocumentSpec[]; maxBytes: number }) {
+  const [busy, setBusy] = useState<string | null>(null)
+  const [done, setDone] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
 
-  async function choose(e: React.ChangeEvent<HTMLInputElement>) {
+  async function choose(d: DocumentSpec, e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    setState('busy')
+    setBusy(d.kind)
     setError(null)
     try {
-      const doc = await readIdDocument(file, maxBytes)
-      await api('/applications/mine/id-document', { method: 'PUT', body: { idDocument: doc.base64 } })
-      setState('done')
+      const chosen = await readDocument(file, maxBytes)
+      await api(`/applications/mine/documents/${d.kind}`, { method: 'PUT', body: { file: chosen.base64 } })
+      setDone((list) => [...list, d.kind])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
-      setState('idle')
+    } finally {
+      setBusy(null)
     }
   }
 
   return (
-    <div className="field" style={{ marginTop: 12 }}>
-      <label htmlFor="newIdDocument">Sent the wrong ID document, or was it unclear?</label>
-      <p className="fine-print" style={{ marginTop: 0 }}>
-        Upload a new one here: it replaces the old one. Please don’t send your ID by email.
+    <div style={{ marginTop: 12 }}>
+      <strong style={{ fontSize: '0.95rem' }}>Sent a wrong document, or was it unclear?</strong>
+      <p className="fine-print" style={{ marginTop: 2 }}>
+        Upload a new one here: it replaces the old one. Please don’t send documents by email.
       </p>
-      <input id="newIdDocument" type="file" accept="image/*,application/pdf" onChange={choose} disabled={state === 'busy'} />
-      {state === 'busy' && <p className="fine-print">Sending…</p>}
-      {state === 'done' && <p className="fine-print">✓ We received your new ID document. Support will check it.</p>}
+      {documents.map((d) => (
+        <div key={d.kind} className="field" style={{ marginTop: 8 }}>
+          <label htmlFor={`new-${d.kind}`}>{d.label.replace(/^A copy of your |^Your /, 'New ')}</label>
+          <input id={`new-${d.kind}`} type="file" accept="image/*,application/pdf" onChange={(e) => choose(d, e)} disabled={busy !== null} />
+          {busy === d.kind && <p className="fine-print">Sending…</p>}
+          {done.includes(d.kind) && <p className="fine-print">✓ Received. Support will check it.</p>}
+        </div>
+      ))}
       {error && <p className="field-error">{error}</p>}
     </div>
   )

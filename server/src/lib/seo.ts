@@ -19,7 +19,7 @@ export function robotsTxt(): string {
 }
 
 // Public page addresses that get a canonical tag (the rest are private or have no content of their own).
-const PUBLIC_PAGE = /^\/(directory|privacy|terms|returns|seller-terms|shop\/\d+|product\/\d+)?$/;
+const PUBLIC_PAGE = /^\/(directory|privacy|terms|returns|seller-terms|courier-terms|shop\/\d+|product\/\d+)?$/;
 
 export function canonicalTag(path: string): string {
   return PUBLIC_PAGE.test(path) ? `<link rel="canonical" href="${canonicalSiteUrl()}${path === "/" ? "/" : path}" />` : "";

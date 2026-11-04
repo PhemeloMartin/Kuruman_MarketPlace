@@ -307,4 +307,8 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       (client/src/lib/legal.ts). Every signed-in person accepts the current version once ("I agree to the above" ->
       Confirm); the version and time are saved on the account and in the audit log, and the box returns when the
       terms change (POLICY.termsVersion). Linked in the footer and at checkout. `test:extras` (15 checks)
+- [x] Courier verification, like sellers': email, ID document, police clearance certificate (SAPS) and - for a
+      motorbike, car or bakkie - a driver's licence; courier terms (/courier-terms) and the privacy notice ticked.
+      Same protection (encrypted, approvers only, every opening audited, deleted 30 days after the decision);
+      support opens each document separately; a wrong document is replaced on the Profile. `test:support` (28 checks)
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

@@ -20,6 +20,7 @@ export const POLICY = {
   // The seller terms and privacy notice a seller agrees to when applying: the date each last changed.
   // The agreed versions are saved with the application, so we can show what someone agreed to.
   sellerTermsVersion: "2026-11-04",
+  courierTermsVersion: "2026-11-04",
   privacyNoticeVersion: "2026-11-04",
   maxIdDocumentBytes: 5 * 1024 * 1024, // 5 MB: a phone photo (shrunk first on the phone) or a PDF
   // On when Payfast is configured in .env (a getter, so it reads the settings when asked).
