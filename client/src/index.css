@@ -2698,6 +2698,90 @@ label.busy {
   text-decoration: none;
 }
 
+/* "Directions in the app" (filled) next to "Maps app" (outlined). */
+.directions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+button.directions-link {
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 36px;
+}
+
+.directions-link.primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ---------- Directions in the app (courier to the customer's pin) ---------- */
+.in-app-directions {
+  margin-top: 10px;
+}
+
+/* The next turn: big enough to read at a glance on a phone in a holder. */
+.nav-next p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1.3;
+}
+
+.nav-arrow {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.nav-in {
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.nav-summary {
+  margin: 8px 0 0;
+  font-weight: 600;
+}
+
+.nav-steps {
+  margin-top: 6px;
+}
+
+.nav-steps summary {
+  cursor: pointer;
+  font-weight: 600;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+}
+
+.nav-steps ol {
+  margin: 4px 0 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 6px;
+}
+
+/* The road route on the map: a thick line in the app's green, under the pins. */
+.map-route {
+  stroke: var(--primary);
+  stroke-width: 6;
+  stroke-opacity: 0.85;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
 .location-picker {
   margin-top: 12px;
   padding: 12px;

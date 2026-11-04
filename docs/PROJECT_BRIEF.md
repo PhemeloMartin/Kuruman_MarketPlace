@@ -328,6 +328,13 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       if not seen yet; the courier loses it when the delivery ends, the customer can still read it; deleted after
       30 days). "I'm outside" = a chat message + an SMS to the customer (at most every 2 min). Free calls both
       ways once the order is on its way (Twilio, existing rules). Privacy notice and courier terms updated.
+- [x] Directions in the app (no maps app needed): "🧭 Directions in the app" draws the road route to the
+      customer's pin on the map, shows the next turn in big letters ("➡️ Turn right onto Tsenin Street (R31) –
+      in 300 m"), the km and minutes left, and "You've arrived" at the pin. The route is worked out again every
+      50 m (at most every 10 s) by our server through the free OpenStreetMap routing service (FOSSGIS OSRM: only
+      two map points are sent, never a name; one request per courier per 3 s; a straight line if it's down).
+      The "Maps app" buttons open Apple Maps on an iPhone and Google Maps on Android, so nothing needs
+      installing. `test:tracking` (22 checks)
       `test:tracking` (21 checks)
 - [x] SMS in English, Setswana or Afrikaans: each person gets SMS in their account's language (set by the
       language button; a new account takes the site's language), a stall's SMS in the owner's language. All

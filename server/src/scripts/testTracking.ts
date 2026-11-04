@@ -13,6 +13,11 @@ import { app } from "../app";
 import { pool } from "../db";
 import { runRetention } from "../lib/retention";
 import { processOutbox } from "../lib/notificationWorker";
+import { stepText } from "../lib/routing";
+
+// The tests don't depend on the internet: the road-routing service is pointed at an address where nothing
+// answers, so the app's fallback (a straight line with the distance) is what gets checked.
+process.env.ROUTING_URL = "http://127.0.0.1:9";
 
 const ORIGIN = "http://localhost:5173";
 let base = "";
@@ -196,6 +201,24 @@ async function main() {
       assert.ok(nearer.distanceKm < 0.5, `nearly there: ${nearer.distanceKm} km`);
     });
 
+    await check("directions in the app: only for the courier's own delivery, and a straight line if the map service is down", async () => {
+      const route = (cookie: string, q = "lat=-27.3880&lng=23.4700") => call(cookie, "GET", `/api/courier/jobs/${jobId}/route?${q}`);
+      assert.equal((await route(courier, "lat=here")).status, 422, "needs the phone's position");
+      const r = await route(courier);
+      assert.equal(r.status, 200);
+      assert.equal(r.data.source, "straight");
+      assert.deepEqual(r.data.line.at(-1), [HOME.lat, HOME.lng], "the line ends at the customer's pin");
+      assert.ok(r.data.distanceM > 100 && r.data.distanceM < 500, `${r.data.distanceM} m`);
+      assert.equal((await route(courier)).status, 429, "asking again straight away is too soon");
+      const lerato = await login("0710000006");
+      assert.equal((await route(lerato)).status, 404, "another courier can't get directions to this customer");
+      // How the road directions read (OSRM sends only codes).
+      assert.equal(stepText("turn", "right", "Tsenin Street (R31)"), "Turn right onto Tsenin Street (R31)");
+      assert.equal(stepText("roundabout", "right", "Main Road", 2), "At the roundabout, take exit 2 onto Main Road");
+      assert.equal(stepText("fork", "slight left", ""), "Keep left at the fork");
+      assert.equal(stepText("turn", "uturn", ""), "Make a U-turn");
+    });
+
     await check("nobody else can follow the order: another customer, or even the courier, gets 'not found'", async () => {
       const lesego = await login("0710000011");
       assert.equal((await tracking(lesego)).status, 404);
@@ -237,6 +260,7 @@ async function main() {
       assert.equal((await call(courier, "POST", `/api/courier/jobs/${jobId}/deliver`, { code })).status, 200);
       const done = (await call(courier, "GET", "/api/courier/my-jobs")).data.find((j: any) => j.id === jobId);
       assert.equal(done.customer, null);
+      assert.equal((await call(courier, "GET", `/api/courier/jobs/${jobId}/route?lat=-27.388&lng=23.47`)).status, 404, "no more directions");
     });
 
     await check("the chat closes when the delivery ends: the courier loses it, the customer can still read it", async () => {

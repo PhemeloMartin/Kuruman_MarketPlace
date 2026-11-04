@@ -14,6 +14,7 @@ import { noteOnCase } from "../lib/caseMail";
 import { canonicalSiteUrl } from "../lib/seo";
 import { addressInKuruman, directionsUrl, parsePoint } from "../lib/geo";
 import { sendDeliveryMessage } from "../lib/deliveryChat";
+import { roadRoute } from "../lib/routing";
 
 // Courier flow (spec FR-14, FR-15, TX-03). Only approved couriers get here.
 export const courierRouter = Router();
@@ -389,6 +390,34 @@ courierRouter.post("/jobs/:id/outside", async (req, res) => {
     outside: true,
   });
   res.status(201).json({ told: true });
+});
+
+// GET /api/courier/jobs/:id/route?lat=..&lng=.. - road directions from where I am now to the customer's
+// pin, drawn on the map in the app (no Google Maps app needed). Only for my own delivery on the go - the
+// same rule as seeing the pin. The phone asks again as the courier moves, at most every few seconds.
+const lastRouteAt = new Map<number, number>(); // courier id -> when they last asked (ms)
+courierRouter.get("/jobs/:id/route", async (req, res) => {
+  const id = Number(req.params.id);
+  const from = parsePoint({ lat: Number(req.query.lat), lng: Number(req.query.lng) });
+  if (!Number.isInteger(id)) return res.status(404).json({ error: "Job not found." });
+  if (!from) return res.status(422).json({ error: "Your phone’s location is needed for directions." });
+  const r = await pool.query(
+    `SELECT o.delivery_lat, o.delivery_lng, cp.vehicle_type
+       FROM deliveries d JOIN orders o ON o.id = d.order_id
+       LEFT JOIN courier_profiles cp ON cp.user_id = d.courier_id
+      WHERE d.id = $1 AND d.courier_id = $2 AND d.status IN ('claimed', 'collected')`,
+    [id, req.user!.id]
+  );
+  const job = r.rows[0];
+  if (!job) return res.status(404).json({ error: "This isn’t one of your deliveries on the go." });
+  if (job.delivery_lat === null) {
+    return res.status(409).json({ error: "The customer didn’t drop a pin, so there’s no map route. Use the address, or call them." });
+  }
+  // Fair use of the free routing service: one route per courier every 3 seconds is plenty.
+  const now = Date.now();
+  if (now - (lastRouteAt.get(req.user!.id) ?? 0) < 3000) return res.status(429).json({ error: "Directions are updating – a moment, please." });
+  lastRouteAt.set(req.user!.id, now);
+  res.json(await roadRoute(from, { lat: job.delivery_lat, lng: job.delivery_lng }, job.vehicle_type ?? "car"));
 });
 
 // The courier's position is shared only while they have a delivery on the go: with none left, it's deleted.

@@ -96,6 +96,11 @@ export function PrivacyPage() {
           every time one is opened is recorded. They are never emailed or shown to anyone else.
         </li>
         <li>Payfast processes online payments under its own privacy terms.</li>
+        <li>
+          When a courier opens directions in the app, two map points – the courier’s position and the delivery pin –
+          are sent to the OpenStreetMap routing service (FOSSGIS, in Germany) to work out the road route. No name,
+          phone number or address is sent, and it keeps nothing linked to you.
+        </li>
       </ul>
 
       <h2>How long we keep it</h2>

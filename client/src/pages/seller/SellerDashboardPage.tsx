@@ -11,6 +11,7 @@ import { formatRand, parseRandToCents } from '../../lib/money'
 import type { CashToConfirm, Kpis, Rating, Review, SellerOrder, SellerProduct } from '../../lib/types'
 import { FULFILMENT_LABEL } from '../../lib/types'
 import { MapView } from '../../components/MapView'
+import { mapsAppLink } from '../../lib/geo'
 
 interface Dashboard {
   business: { id: number; name: string; active: boolean }
@@ -497,7 +498,7 @@ function OrderCard({ order: o, onChanged }: { order: SellerOrder; onChanged: () 
         <div className="job-step">
           <strong>Deliver to {o.customerName}</strong>
           <span>{o.deliverTo.address}</span>
-          <a className="directions-link" href={o.deliverTo.directionsUrl} target="_blank" rel="noopener noreferrer">
+          <a className="directions-link" href={mapsAppLink(o.deliverTo.directionsUrl)} target="_blank" rel="noopener noreferrer">
             🧭 Directions
           </a>
           {o.deliverTo.location && (

@@ -7,7 +7,8 @@ import { MapView } from '../../components/MapView'
 import { CallButton } from '../../components/CallButton'
 import { DeliveryChat } from '../../components/DeliveryChat'
 import type { MapPin } from '../../components/DeliveryMap'
-import { VEHICLE_EMOJI, type Point } from '../../lib/geo'
+import { InAppDirections } from '../../components/InAppDirections'
+import { VEHICLE_EMOJI, mapsAppLink, type Point } from '../../lib/geo'
 import { useLiveLocation, type Sharing } from '../../lib/useLiveLocation'
 
 interface OpenJob {
@@ -55,12 +56,12 @@ const FAIL_REASONS: Record<string, string> = {
 
 const REFRESH_MS = 15_000
 
-// Opens turn-by-turn directions in Google Maps (the app, if the phone has it). The link comes from the
-// server: to the customer's pin if they dropped one, otherwise to the written address.
-function DirectionsLink({ url }: { url: string }) {
+// Opens directions in the phone's own maps app: Apple Maps on an iPhone, Google Maps on Android. The link
+// comes from the server: to the customer's pin if they dropped one, otherwise to the written address.
+function DirectionsLink({ url, label = '🧭 Directions' }: { url: string; label?: string }) {
   return (
-    <a className="directions-link" href={url} target="_blank" rel="noopener noreferrer">
-      🧭 Directions
+    <a className="directions-link" href={mapsAppLink(url)} target="_blank" rel="noopener noreferrer">
+      {label}
     </a>
   )
 }
@@ -420,7 +421,9 @@ function ActiveJob({ job: j, me, onChanged }: { job: MyJob; me: Point | null; on
   const [failing, setFailing] = useState(false)
   const [failReason, setFailReason] = useState('')
   const [toldOutside, setToldOutside] = useState(false)
+  const [navigating, setNavigating] = useState(false) // directions to the customer open in the app
   const customerFirstName = j.customer?.name.split(' ')[0] ?? 'the customer'
+  const vehicleEmoji = VEHICLE_EMOJI[j.vehicleType] ?? '🛵'
   const quickReplies = ['I’m on my way', 'I’m at the gate', 'I can’t find the house – please call me']
 
   // "I'm outside": a message in the chat and an SMS to the customer.
@@ -491,16 +494,36 @@ function ActiveJob({ job: j, me, onChanged }: { job: MyJob; me: Point | null; on
             <span>{j.customer.address}</span>
             <PhoneLink e164={j.customer.phone} />
             {j.customer.notes && <span className="fine-print">Note: {j.customer.notes}</span>}
-            <DirectionsLink url={j.customer.directionsUrl} />
+            {j.customer.location ? (
+              !navigating && (
+                <div className="directions-row">
+                  <button type="button" className="directions-link primary" onClick={() => setNavigating(true)}>
+                    🧭 Directions in the app
+                  </button>
+                  <DirectionsLink url={j.customer.directionsUrl} label="🗺️ Maps app" />
+                </div>
+              )
+            ) : (
+              <DirectionsLink url={j.customer.directionsUrl} />
+            )}
           </div>
-          {j.customer.location ? (
+          {j.customer.location && navigating ? (
+            <InAppDirections
+              jobId={j.id}
+              me={me}
+              destination={j.customer.location}
+              customerName={customerFirstName}
+              vehicleEmoji={vehicleEmoji}
+              onClose={() => setNavigating(false)}
+            />
+          ) : j.customer.location ? (
             <MapView
               label={`Map with the place ${j.customer.name} pinned for the delivery, and you`}
               centre={j.customer.location}
               height={220}
               pins={[
                 { id: 'home', ...j.customer.location, emoji: '🏠', label: `${j.customer.name}: deliver here` },
-                ...(me ? [{ id: 'me', lat: me.lat, lng: me.lng, emoji: VEHICLE_EMOJI[j.vehicleType] ?? '🛵', label: 'You' } satisfies MapPin] : []),
+                ...(me ? [{ id: 'me', lat: me.lat, lng: me.lng, emoji: vehicleEmoji, label: 'You' } satisfies MapPin] : []),
               ]}
             />
           ) : (

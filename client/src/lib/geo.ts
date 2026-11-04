@@ -33,5 +33,21 @@ export function currentPosition(): Promise<Point & { accuracy: number }> {
   })
 }
 
+// Directions in the maps app the phone already has: Apple Maps on an iPhone or iPad (it's always there),
+// Google Maps everywhere else (Android phones come with it). The server sends a Google Maps link; on an
+// iPhone the same destination is opened in Apple Maps instead, so nobody has to install an app.
+export function mapsAppLink(googleUrl: string): string {
+  const iPhone = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  if (!iPhone) return googleUrl
+  const q = new URL(googleUrl).searchParams
+  const flag = q.get('travelmode') === 'walking' ? 'w' : 'd'
+  return `https://maps.apple.com/?daddr=${encodeURIComponent(q.get('destination') ?? '')}&dirflg=${flag}`
+}
+
+// "350 m" or "1.2 km".
+export function formatDistance(metres: number): string {
+  return metres < 1000 ? `${Math.max(10, Math.round(metres / 10) * 10)} m` : `${(metres / 1000).toFixed(1)} km`
+}
+
 // How a courier travels, as a map marker.
 export const VEHICLE_EMOJI: Record<string, string> = { on_foot: '🚶', bicycle: '🚲', motorbike: '🛵', car: '🚗', bakkie: '🛻' }
