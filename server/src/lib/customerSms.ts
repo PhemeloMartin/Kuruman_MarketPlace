@@ -75,3 +75,18 @@ export async function customerOrderSms(
       return null;
   }
 }
+
+// Support answered someone's help ticket: a short SMS with the link, so they hear it even when the site is
+// closed (the answer itself stays on the site). Fits in one SMS: the subject is shortened.
+export async function ticketAnsweredSms(
+  client: PoolClient,
+  p: { userId: number; ticketId: number; subject: string }
+): Promise<{ phone: string; text: string } | null> {
+  const u = await client.query("SELECT phone FROM users WHERE id = $1", [p.userId]);
+  if (!u.rows[0]?.phone) return null;
+  const subject = String(p.subject).slice(0, 35).trim();
+  return {
+    phone: u.rows[0].phone,
+    text: `KurumanMarketPlace: support answered your question #${p.ticketId} (${subject}). Read it: ${canonicalSiteUrl()}/help/${p.ticketId}`,
+  };
+}

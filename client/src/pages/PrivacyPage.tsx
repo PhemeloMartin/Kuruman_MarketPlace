@@ -46,6 +46,10 @@ export function PrivacyPage() {
           and collect. <strong>Couriers:</strong> how you deliver and your area.
         </li>
         <li>
+          <strong>Your help questions</strong> – what you write to support under Help, and our answers, so we can help
+          you and see what happened before.
+        </li>
+        <li>
           <strong>Sellers applying to sell: your email address and a copy of your ID document</strong> – to check who
           you are before you can sell (so customers can trust the shops here), and to contact you about your
           application. You agree to this when you apply. The ID copy is stored encrypted, and used only for that check.
@@ -77,6 +81,7 @@ export function PrivacyPage() {
         <li>Order, payment and refund records: kept as business records for the approved period.</li>
         <li>Your account: until you ask us to close it.</li>
         <li>Sellers’ ID documents: deleted 30 days after the application is decided (approved or not).</li>
+        <li>Help questions and answers: deleted 12 months after the question is closed.</li>
         <li>Records of support decisions: 90 days after the case closes, unless needed for a dispute.</li>
       </ul>
 

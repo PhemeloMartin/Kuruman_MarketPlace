@@ -16,6 +16,7 @@ import { AddressInfo } from "net";
 import { app } from "../app";
 import { pool } from "../db";
 import { currentStep, totpCode } from "../lib/totp";
+import { processOutbox } from "../lib/notificationWorker";
 
 const ORIGIN = "http://localhost:5173";
 const PASSPHRASE = "Kuruman Oasis 2026";
@@ -243,6 +244,50 @@ async function main() {
       const last = (await trailOf(lesegoCase)).at(-1);
       assert.match(last.subject, /About your application/);
       assert.match(last.body, /business's own phone number/);
+    });
+
+    let ticketId = 0;
+    await check("anyone signed in opens a help ticket and follows it on the site; nobody else can read it", async () => {
+      const ticket = { topic: "order", subject: "Wrong items in my bag", message: "I ordered spinach but got onions. Order KMP-000123." };
+      assert.equal((await call("", "POST", "/api/tickets", ticket)).status, 401);
+      const bad = await call(customer, "POST", "/api/tickets", { topic: "x", subject: "", message: "" });
+      assert.equal(bad.status, 422);
+      assert.ok(bad.data.fields.topic && bad.data.fields.subject && bad.data.fields.message);
+      const r = await call(customer, "POST", "/api/tickets", ticket);
+      assert.equal(r.status, 201);
+      ticketId = r.data.id;
+      const mine = (await call(customer, "GET", "/api/tickets")).data;
+      assert.equal(mine[0].id, ticketId);
+      assert.equal(mine[0].status, "open");
+      const someoneElse = await login("0710000012");
+      assert.equal((await call(someoneElse, "GET", `/api/tickets/${ticketId}`)).status, 404);
+    });
+
+    await check("support answers in the ticket; the person gets a notification and an SMS with the link", async () => {
+      assert.equal((await call(customer, "GET", "/api/support/tickets")).status, 403);
+      const list = (await call(support, "GET", "/api/support/tickets")).data;
+      const t = list.find((x: any) => x.id === ticketId);
+      assert.equal(t.status, "open");
+      assert.match(t.person.name, /Thato/);
+      assert.ok(!JSON.stringify(list).includes("+2771"), "support's ticket list shows no phone numbers");
+      assert.equal((await call(support, "POST", `/api/support/tickets/${ticketId}/messages`, { message: "Sorry! The seller will swap them today." })).status, 201);
+      await processOutbox();
+      const mine = (await call(customer, "GET", `/api/tickets/${ticketId}`)).data;
+      assert.equal(mine.status, "answered");
+      assert.equal(mine.messages[1].author, "KurumanMarketPlace support");
+      const notes = (await call(customer, "GET", "/api/notifications")).data;
+      assert.ok(notes.some((n: any) => n.template === "ticket.answered" && n.args.ticketId === ticketId));
+      const sms = await pool.query("SELECT body FROM sms_messages WHERE phone = '+27710000001' ORDER BY id DESC LIMIT 1");
+      assert.match(sms.rows[0].body, new RegExp(`question #${ticketId} .*/help/${ticketId}$`));
+      assert.ok(sms.rows[0].body.length <= 160, "fits in one SMS");
+    });
+
+    await check("the person replies or closes it; a closed ticket takes no more messages", async () => {
+      assert.equal((await call(customer, "POST", `/api/tickets/${ticketId}/messages`, { message: "Thank you, all sorted." })).status, 201);
+      assert.equal((await call(customer, "GET", `/api/tickets/${ticketId}`)).data.status, "open");
+      assert.equal((await call(customer, "POST", `/api/tickets/${ticketId}/close`)).status, 200);
+      assert.equal((await call(customer, "POST", `/api/tickets/${ticketId}/messages`, { message: "One more thing" })).status, 409);
+      assert.equal((await call(support, "POST", `/api/support/tickets/${ticketId}/messages`, { message: "Anything else?" })).status, 409);
     });
 
     await check("a suspended shop disappears from the catalogue and can't list products", async () => {

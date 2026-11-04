@@ -12,7 +12,7 @@ export function canonicalSiteUrl(): string {
   return (first || process.env.PUBLIC_APP_URL || "http://localhost:5173").trim().replace(/\/$/, "");
 }
 
-const PRIVATE = ["/api/", "/seller", "/support", "/courier", "/cart", "/orders", "/profile", "/notifications", "/signin", "/register", "/demo/"];
+const PRIVATE = ["/api/", "/seller", "/support", "/courier", "/cart", "/orders", "/profile", "/notifications", "/help", "/signin", "/register", "/demo/"];
 
 export function robotsTxt(): string {
   return ["User-agent: *", ...PRIVATE.map((p) => `Disallow: ${p}`), "", `Sitemap: ${canonicalSiteUrl()}/sitemap.xml`, ""].join("\n");

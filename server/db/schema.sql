@@ -3,6 +3,8 @@
 -- WARNING: running this file drops and re-creates all tables (development only).
 
 -- Tables added later in migrations.sql are dropped here too, so a reset starts clean.
+DROP TABLE IF EXISTS ticket_messages CASCADE;
+DROP TABLE IF EXISTS tickets CASCADE;
 DROP TABLE IF EXISTS case_messages CASCADE;
 DROP TABLE IF EXISTS verification_documents CASCADE;
 DROP TABLE IF EXISTS calls CASCADE;

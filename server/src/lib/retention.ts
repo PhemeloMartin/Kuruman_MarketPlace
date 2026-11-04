@@ -45,6 +45,8 @@ export async function runRetention() {
     `DELETE FROM case_messages m USING support_cases c
       WHERE c.id = m.case_id AND c.status = 'closed' AND c.closed_at < now() - interval '90 days'`
   );
+  // Help tickets: 12 months after they were closed (with their messages).
+  await pool.query(`DELETE FROM tickets WHERE status = 'closed' AND closed_at < now() - interval '12 months'`);
   // Closed cases: keep the decision, erase what people wrote, after 90 days.
   const cases = await pool.query(
     `UPDATE support_cases SET details = '{"erased": true}'

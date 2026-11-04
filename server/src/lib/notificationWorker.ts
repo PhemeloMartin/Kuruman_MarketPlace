@@ -1,6 +1,6 @@
 import { PoolClient } from "pg";
 import { pool } from "../db";
-import { customerOrderSms } from "./customerSms";
+import { customerOrderSms, ticketAnsweredSms } from "./customerSms";
 import { sendSms } from "./sms";
 import { alertNewOrder } from "./smsOrders";
 
@@ -101,6 +101,8 @@ async function notesFor(client: PoolClient, e: { event_type: string; aggregate_i
       return [{ userId: e.payload.userId, template: e.payload.approved ? "applicant.approved" : "applicant.rejected", args: { kind: e.payload.kind, reason: e.payload.reason } }];
     case "privacy.held":
       return [{ userId: e.payload.userId, template: "privacy.held", args: {} }];
+    case "ticket.answered":
+      return [{ userId: e.payload.userId, template: "ticket.answered", args: { ticketId: e.payload.ticketId, subject: e.payload.subject } }];
     default:
       throw new Error(`Unknown event type ${e.event_type}`);
   }
@@ -133,15 +135,18 @@ export async function processOutbox(options: { failWith?: string } = {}): Promis
             `INSERT INTO notifications (user_id, order_id, event_key, template_key, arguments)
              VALUES ($1, $2, $3, $4, $5)
              ON CONFLICT (user_id, event_key) DO NOTHING`,
-            [n.userId, e.event_type.startsWith("application") || e.event_type.startsWith("privacy") ? null : e.aggregate_id, e.dedupe_key, n.template, n.args ?? {}]
+            [n.userId, ["application", "privacy", "ticket"].some((p) => e.event_type.startsWith(p)) ? null : e.aggregate_id, e.dedupe_key, n.template, n.args ?? {}]
           );
         }
-        const sms = e.event_type === "order.status_changed" ? await customerOrderSms(client, Number(e.aggregate_id), e.payload) : null;
+        const sms =
+          e.event_type === "order.status_changed" ? await customerOrderSms(client, Number(e.aggregate_id), e.payload)
+          : e.event_type === "ticket.answered" ? await ticketAnsweredSms(client, e.payload)
+          : null;
         if (sms) {
           await client.query("INSERT INTO sms_messages (phone, direction, body, order_id) VALUES ($1, 'out', $2, $3)", [
             sms.phone,
             sms.text,
-            Number(e.aggregate_id),
+            e.event_type === "order.status_changed" ? Number(e.aggregate_id) : null,
           ]);
         }
         await client.query("UPDATE outbox_events SET status = 'sent', sent_at = now(), last_error = NULL WHERE id = $1", [e.id]);

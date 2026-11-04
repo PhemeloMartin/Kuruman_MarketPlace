@@ -20,6 +20,7 @@ import { CourierPage } from './pages/courier/CourierPage'
 import { SupportPage } from './pages/support/SupportPage'
 import { PrivacyPage } from './pages/PrivacyPage'
 import { SellerTermsPage } from './pages/SellerTermsPage'
+import { HelpPage, TicketPage } from './pages/HelpPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { UnreadProvider } from './notifications/UnreadContext'
 
@@ -43,6 +44,8 @@ export default function App() {
                 <Route path="register" element={<RegisterPage />} />
                 <Route path="privacy" element={<PrivacyPage />} />
                 <Route path="seller-terms" element={<SellerTermsPage />} />
+                <Route path="help" element={<HelpPage />} />
+                <Route path="help/:id" element={<TicketPage />} />
                 <Route path="notifications" element={<NotificationsPage />} />
                 <Route element={<RequireRole role="entrepreneur" />}>
                   <Route path="seller" element={<SellerDashboardPage />} />

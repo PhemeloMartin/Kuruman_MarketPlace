@@ -58,6 +58,8 @@ export async function closeAccount(client: PoolClient, userId: number, staffId: 
   // 1. Sign them out everywhere, and remove their notifications (they're only for them).
   await client.query("DELETE FROM sessions WHERE user_id = $1", [userId]);
   await client.query("DELETE FROM notifications WHERE user_id = $1", [userId]);
+  // Their help tickets: what they wrote, and support's answers to them.
+  await client.query("DELETE FROM tickets WHERE user_id = $1", [userId]);
   // 2. Login details and name: erased; the row stays as a neutral surrogate for old records.
   await client.query("DELETE FROM phone_codes WHERE phone = (SELECT phone FROM users WHERE id = $1)", [userId]);
   await client.query(
@@ -164,6 +166,13 @@ export async function exportFor(db: Db, userId: number) {
     "SELECT created_at, last_seen_at, expires_at FROM sessions WHERE user_id = $1 ORDER BY id",
     [userId]
   );
+  const tickets = await db.query(
+    `SELECT t.id, t.topic, t.subject, t.status, t.created_at, t.closed_at,
+            (SELECT json_agg(json_build_object('fromSupport', m.from_support, 'message', m.body, 'at', m.created_at) ORDER BY m.id)
+               FROM ticket_messages m WHERE m.ticket_id = t.id) AS messages
+       FROM tickets t WHERE t.user_id = $1 ORDER BY t.id`,
+    [userId]
+  );
   return {
     about: "Personal information KurumanMarketPlace holds about you, as at the time of this download.",
     generatedAt: new Date().toISOString(),
@@ -186,5 +195,6 @@ export async function exportFor(db: Db, userId: number) {
     deliveriesYouMade: deliveries.rows,
     requestsAndApplications: requests.rows,
     notifications: notifications.rows,
+    helpTickets: tickets.rows,
   };
 }

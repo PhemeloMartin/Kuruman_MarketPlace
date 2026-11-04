@@ -205,3 +205,30 @@ CREATE TABLE IF NOT EXISTS case_messages (
   created_at TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_case_messages_case ON case_messages(case_id, id);
+
+-- 2026-11-04: help tickets, like Twilio's support centre. Anyone signed in opens a ticket on the site and
+-- follows it there (no email needed): its number, status and the conversation with support.
+--   open     = waiting for support        answered = support replied, waiting for the person
+--   closed   = done (either side closed it)
+-- Deleted 12 months after closing (lib/retention.ts).
+CREATE TABLE IF NOT EXISTS tickets (
+  id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id    BIGINT       NOT NULL REFERENCES users(id),
+  topic      VARCHAR(20)  NOT NULL CHECK (topic IN ('order', 'selling', 'payment', 'account', 'other')),
+  subject    VARCHAR(120) NOT NULL,
+  status     VARCHAR(10)  NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'answered', 'closed')),
+  created_at TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  closed_at  TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_tickets_user ON tickets(user_id, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status, updated_at);
+CREATE TABLE IF NOT EXISTS ticket_messages (
+  id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  ticket_id    BIGINT      NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+  author_id    BIGINT      NOT NULL REFERENCES users(id),
+  from_support BOOLEAN     NOT NULL,
+  body         TEXT        NOT NULL CHECK (char_length(body) <= 2000),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_ticket_messages ON ticket_messages(ticket_id, id);

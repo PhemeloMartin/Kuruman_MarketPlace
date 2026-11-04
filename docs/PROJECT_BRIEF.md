@@ -295,4 +295,10 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       the versions agreed to are saved. The ID copy is stored encrypted (AES-256-GCM), only approvers can open it,
       every opening is audited, and it is deleted 30 days after the decision. The admin gets an email (Resend) with
       a link to the console - never the ID itself. `test:support` (21 checks), `test:extras` (14)
+- [x] Help tickets (/help), like a support centre: anyone signed in opens a ticket (topic, title, message) and
+      follows it on the site - number, status (waiting for support / support replied / closed), the conversation.
+      Support answers in the console's Tickets tab (every staff member); the person gets an in-app notification and
+      an SMS with the link. Only their own tickets; support sees name and role, not the phone number. Max 5 open per
+      person; deleted 12 months after closing; included in "download my data". Applicants also get emails (received,
+      support's questions, decision) with replies to the admin's inbox, kept as a trail. `test:support` (27 checks)
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

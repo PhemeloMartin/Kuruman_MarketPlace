@@ -461,6 +461,7 @@ function HomeFooter() {
         <Link to="/profile#sell">Sell with us</Link>
         <Link to="/directory">Business Directory</Link>
         <Link to="/orders">My orders</Link>
+        <Link to="/help">Help</Link>
         <Link to="/privacy">Privacy</Link>
       </nav>
     </footer>

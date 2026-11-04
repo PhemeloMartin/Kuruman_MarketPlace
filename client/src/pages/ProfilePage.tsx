@@ -81,6 +81,11 @@ export function ProfilePage() {
           Notifications
         </Link>
       )}
+      {user.role !== 'support' && (
+        <Link to="/help" className="btn btn-outline btn-block" style={{ marginBottom: 10 }}>
+          Help: ask support a question
+        </Link>
+      )}
       {user.role === 'consumer' && (
         <div id="sell">
           <ApplySection />

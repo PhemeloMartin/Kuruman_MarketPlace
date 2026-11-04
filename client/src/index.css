@@ -2590,3 +2590,51 @@ label.busy {
   white-space: pre-line;
   font-size: 0.9rem;
 }
+
+/* Help tickets: the list, and the conversation (support's answers on the left, yours on the right). */
+.ticket-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ticket-row {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  text-decoration: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.conversation {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.conversation li {
+  max-width: 88%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.conversation li p {
+  margin: 4px 0 0;
+  white-space: pre-line;
+}
+
+.conversation .from-support {
+  background: var(--primary-tint);
+  justify-self: start;
+}
+
+.conversation .from-person {
+  background: var(--surface);
+  justify-self: end;
+}

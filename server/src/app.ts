@@ -18,6 +18,7 @@ import { sellerRouter } from "./routes/seller";
 import { courierRouter } from "./routes/courier";
 import { paymentsRouter } from "./routes/payments";
 import { applicationsRouter } from "./routes/applications";
+import { ticketsRouter } from "./routes/tickets";
 import { supportRouter } from "./routes/support";
 import { supportMoneyRouter } from "./routes/supportMoney";
 import { supportOpsRouter } from "./routes/supportOps";
@@ -100,6 +101,7 @@ app.use("/api", smsRouter);
 app.use("/api", directoryRouter);
 app.use("/api", whatsappPostRouter);
 app.use("/api", callsRouter);
+app.use("/api", ticketsRouter);
 app.use("/api", catalogueRouter);
 
 // Hosted (production): this same server also serves the built website from client/dist, so the

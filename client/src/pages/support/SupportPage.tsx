@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { api, ApiError } from '../../lib/api'
 import type { StaffScope } from '../../lib/types'
 import { AccountsTab } from './AccountsTab'
+import { TicketsTab } from './TicketsTab'
 import { ApplicationsTab } from './ApplicationsTab'
 import { AuditTab } from './AuditTab'
 import { MoneyTab } from './MoneyTab'
@@ -154,7 +155,9 @@ function MfaStep() {
 // The console: one tab per kind of work this staff member is allowed to do
 // ---------------------------------------------------------------------------
 
-const TABS: { key: string; label: string; scope: StaffScope }[] = [
+// scope: the work area a staff member needs for the tab (none: every support member, e.g. help tickets).
+const TABS: { key: string; label: string; scope?: StaffScope }[] = [
+  { key: 'tickets', label: 'Tickets' },
   { key: 'applications', label: 'Applications', scope: 'approvals' },
   { key: 'accounts', label: 'Accounts', scope: 'approvals' },
   { key: 'directory', label: 'Directory', scope: 'approvals' },
@@ -167,7 +170,7 @@ const TABS: { key: string; label: string; scope: StaffScope }[] = [
 ]
 
 function Console({ scopes }: { scopes: StaffScope[] }) {
-  const tabs = TABS.filter((t) => scopes.includes(t.scope))
+  const tabs = TABS.filter((t) => !t.scope || scopes.includes(t.scope))
   const [tab, setTab] = useState(tabs[0]?.key)
 
   if (tabs.length === 0) return <p className="notice">Your support account has no work areas assigned yet.</p>
@@ -181,6 +184,7 @@ function Console({ scopes }: { scopes: StaffScope[] }) {
           </button>
         ))}
       </div>
+      {tab === 'tickets' && <TicketsTab />}
       {tab === 'applications' && <ApplicationsTab />}
       {tab === 'accounts' && <AccountsTab />}
       {tab === 'directory' && <DirectoryTab />}
