@@ -244,3 +244,26 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ;
 ALTER TABLE verification_documents DROP CONSTRAINT IF EXISTS verification_documents_kind_check;
 ALTER TABLE verification_documents ADD CONSTRAINT verification_documents_kind_check
   CHECK (kind IN ('id_document', 'drivers_licence', 'police_clearance'));
+
+-- 2026-11-04: couriers' documents after approval.
+--   documents_outstanding: the documents a courier still has to give us ('{}' = all on file and checked);
+--   documents_due:         after this date they can't take new jobs until those documents are checked.
+-- A courier approved with only PROOF that they applied for police clearance gets 30 days to send the
+-- certificate. Couriers approved before document checks started are asked for all their documents, with
+-- 14 days (the UPDATE below touches only rows never assessed, so running this again changes nothing).
+ALTER TABLE courier_profiles ADD COLUMN IF NOT EXISTS documents_outstanding TEXT[];
+ALTER TABLE courier_profiles ADD COLUMN IF NOT EXISTS documents_due DATE;
+ALTER TABLE support_cases DROP CONSTRAINT IF EXISTS support_cases_case_type_check;
+ALTER TABLE support_cases ADD CONSTRAINT support_cases_case_type_check CHECK (case_type IN (
+  'seller_application', 'courier_application', 'refund', 'cash_dispute', 'fulfilment', 'order_problem',
+  'privacy_access', 'privacy_correction', 'privacy_deletion',
+  'courier_documents'   -- documents a courier sends after approval, for support to check
+));
+CREATE UNIQUE INDEX IF NOT EXISTS one_open_documents_case_per_user ON support_cases(requester_id)
+  WHERE status = 'open' AND case_type = 'courier_documents';
+UPDATE courier_profiles
+   SET documents_outstanding = CASE WHEN vehicle_type IN ('motorbike', 'car', 'bakkie')
+                                    THEN '{id_document,drivers_licence,police_clearance}'::text[]
+                                    ELSE '{id_document,police_clearance}'::text[] END,
+       documents_due = current_date + 14
+ WHERE documents_outstanding IS NULL;

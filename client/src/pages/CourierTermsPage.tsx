@@ -20,7 +20,10 @@ export function CourierTermsPage() {
       <h2>1. Who can deliver</h2>
       <ul>
         <li>You are 18 or older and have a South African ID (or a valid permit).</li>
-        <li>You have a police clearance certificate from SAPS.</li>
+        <li>
+          You have a police clearance certificate from SAPS, or you have applied for one. SAPS can take weeks, so you
+          may apply with proof that you applied; you then send the certificate within 30 days of being approved.
+        </li>
         <li>
           If you deliver with a motorbike, car or bakkie: you have a valid driver’s licence for that vehicle, and the
           vehicle is licensed and roadworthy. On foot or by bicycle, no licence is needed.
@@ -34,6 +37,11 @@ export function CourierTermsPage() {
           drive) your driver’s licence. Our support team checks them and may phone you before you can deliver.
         </li>
         <li>We may refuse an application, and we tell you why.</li>
+        <li>
+          Couriers approved before these checks began send the same documents within 14 days. Documents still missing
+          after their due date mean you can finish the deliveries you have but can’t take new ones until we have
+          checked them. You send them on your Deliveries page.
+        </li>
         <li>
           Your documents are stored encrypted, only the support team can open them, and they are deleted 30 days after
           we decide (<Link to="/privacy">privacy notice</Link>).

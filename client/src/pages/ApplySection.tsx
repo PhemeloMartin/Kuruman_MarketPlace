@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, ApiError } from '../lib/api'
 import { VEHICLE_LABEL, dateTime } from '../lib/labels'
-import { shrinkPhoto } from '../lib/photos'
+import { readDocument, type ChosenFile } from '../lib/documents'
 
 interface Application {
   id: number
@@ -18,12 +18,6 @@ interface Policy {
   serviceAreas: string[]
   vehicleTypes: string[]
   maxIdDocumentBytes: number
-}
-
-interface ChosenFile {
-  name: string
-  base64: string
-  bytes: number
 }
 
 // The documents someone applying uploads (the server checks the same list):
@@ -58,20 +52,6 @@ const MOTORISED = ['motorbike', 'car', 'bakkie']
 function documentsFor(type: 'seller' | 'courier', vehicleType: string): DocumentSpec[] {
   if (type === 'seller') return [ID_DOCUMENT]
   return MOTORISED.includes(vehicleType) ? [ID_DOCUMENT, DRIVERS_LICENCE, POLICE_CLEARANCE] : [ID_DOCUMENT, POLICE_CLEARANCE]
-}
-
-// A photo is shrunk on the phone first (it uploads quicker on mobile data and loses hidden details such
-// as the location); a PDF goes as it is. Sent as base64 text inside the application.
-async function readDocument(file: File, maxBytes: number): Promise<ChosenFile> {
-  const blob = file.type === 'application/pdf' ? file : await shrinkPhoto(file, { maxSide: 2000, quality: 0.85 })
-  if (blob.size > maxBytes) throw new Error('That file is too big: 5 MB at most.')
-  const base64 = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result).replace(/^data:[^,]*,/, ''))
-    reader.onerror = () => reject(new Error('That file could not be read. Please try another one.'))
-    reader.readAsDataURL(blob)
-  })
-  return { name: file.name, base64, bytes: blob.size }
 }
 
 type Form = Record<string, string>
@@ -148,7 +128,7 @@ export function ApplySection() {
 }
 
 function ApplyForm({ type, policy, onCancel, onDone }: { type: 'seller' | 'courier'; policy: Policy; onCancel: () => void; onDone: () => void }) {
-  const [form, setForm] = useState<Form>({ area: '', vehicleType: '', businessName: '', pickupAddress: '', phone: '', description: '', kind: 'shop', email: '' })
+  const [form, setForm] = useState<Form>({ area: '', vehicleType: '', businessName: '', pickupAddress: '', phone: '', description: '', kind: 'shop', email: '', policeClearanceStatus: 'certificate' })
   const stall = form.kind === 'market_stall'
   const [files, setFiles] = useState<Record<string, ChosenFile>>({}) // by form field, e.g. idDocument
   const [reading, setReading] = useState<string | null>(null)
@@ -307,11 +287,36 @@ function ApplyForm({ type, policy, onCancel, onDone }: { type: 'seller' | 'couri
           </div>
           {err('email')}
         </div>
+        {type === 'courier' && (
+          <fieldset className="choice-group">
+            <legend>Your police clearance</legend>
+            <div className="choices">
+              <label className="choice">
+                <input type="radio" name="pcc" checked={form.policeClearanceStatus === 'certificate'} onChange={() => setForm((f) => ({ ...f, policeClearanceStatus: 'certificate' }))} />
+                I have my certificate
+              </label>
+              <label className="choice">
+                <input type="radio" name="pcc" checked={form.policeClearanceStatus === 'applied'} onChange={() => setForm((f) => ({ ...f, policeClearanceStatus: 'applied' }))} />
+                I applied and I’m waiting
+              </label>
+            </div>
+            {form.policeClearanceStatus === 'applied' && (
+              <p className="fine-print">
+                Fine – upload proof that you applied (the SAPS receipt). If you’re approved, send the certificate within 30
+                days from your Deliveries page; after that you can’t take new jobs until it’s checked.
+              </p>
+            )}
+          </fieldset>
+        )}
         {documents.map((d) => (
           <div key={d.field} className="field" data-invalid={Boolean(fields[d.field])}>
-            <label htmlFor={d.field}>{d.label}</label>
+            <label htmlFor={d.field}>
+              {d.kind === 'police_clearance' && form.policeClearanceStatus === 'applied' ? 'Proof that you applied for police clearance' : d.label}
+            </label>
             <p className="fine-print" style={{ marginTop: 0 }}>
-              {d.hint}
+              {d.kind === 'police_clearance' && form.policeClearanceStatus === 'applied'
+                ? 'The receipt or reference SAPS gave you when you applied, as a photo or PDF.'
+                : d.hint}
             </p>
             <input id={d.field} type="file" accept="image/*,application/pdf" onChange={(e) => choose(d.field, e)} />
             {reading === d.field && <p className="fine-print">Preparing your file…</p>}

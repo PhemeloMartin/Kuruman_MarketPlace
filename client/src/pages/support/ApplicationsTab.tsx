@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useEffect, useState } from 'react'
 import { ReasonDialog } from '../../components/ReasonDialog'
 import { api } from '../../lib/api'
+import { DOCUMENT_LABEL } from '../../lib/documents'
 import { VEHICLE_LABEL, dateTime, localPhone } from '../../lib/labels'
 
 interface TrailItem {
@@ -12,23 +13,24 @@ interface TrailItem {
   at: string
 }
 
-// What support sees for each kind of document (the server's names).
-const DOCUMENT_LABEL: Record<string, string> = {
-  id_document: 'ID document',
-  drivers_licence: 'Driver’s licence',
-  police_clearance: 'Police clearance',
-}
 const MOTORISED = ['motorbike', 'car', 'bakkie']
 
 // The documents this application should have (the same rule as the server's).
-function expectedDocuments(a: { type: 'seller' | 'courier'; details: Record<string, string> }): string[] {
+function expectedDocuments(a: { type: 'seller' | 'courier' | 'documents'; details: Record<string, string>; documents: string[] }): string[] {
+  if (a.type === 'documents') return a.documents
   if (a.type === 'seller') return ['id_document']
   return MOTORISED.includes(a.details.vehicleType) ? ['id_document', 'drivers_licence', 'police_clearance'] : ['id_document', 'police_clearance']
 }
 
+// The card's heading: the business, the courier, or whose documents these are.
+function title(a: Application): string {
+  if (a.type === 'seller') return a.details.businessName
+  return a.type === 'courier' ? `Courier: ${a.applicant.name}` : `Courier documents: ${a.applicant.name}`
+}
+
 interface Application {
   id: number
-  type: 'seller' | 'courier'
+  type: 'seller' | 'courier' | 'documents' // documents: a courier's documents sent after approval
   status: 'open' | 'closed'
   applicant: { name: string; phone: string }
   details: Record<string, string>
@@ -70,11 +72,11 @@ export function ApplicationsTab() {
       {open.map((a) => (
         <article key={a.id} className="card">
           <div className="order-card-head">
-            <strong>{a.type === 'seller' ? a.details.businessName : `Courier: ${a.applicant.name}`}</strong>
-            <span className="status-pill">{a.type === 'seller' ? 'Wants to sell' : 'Wants to deliver'}</span>
+            <strong>{title(a)}</strong>
+            <span className="status-pill">{a.type === 'seller' ? 'Wants to sell' : a.type === 'courier' ? 'Wants to deliver' : 'Documents to check'}</span>
           </div>
           <dl className="details">
-            <dt>Applicant</dt>
+            <dt>{a.type === 'documents' ? 'Courier' : 'Applicant'}</dt>
             <dd>
               {a.applicant.name} · <span translate="no">{localPhone(a.applicant.phone)}</span>
             </dd>
@@ -95,8 +97,12 @@ export function ApplicationsTab() {
               </>
             ) : (
               <>
-                <dt>Area</dt>
-                <dd>{a.details.area}</dd>
+                {a.details.area && (
+                  <>
+                    <dt>Area</dt>
+                    <dd>{a.details.area}</dd>
+                  </>
+                )}
                 <dt>Delivers by</dt>
                 <dd>{VEHICLE_LABEL[a.details.vehicleType]}</dd>
               </>
@@ -111,6 +117,9 @@ export function ApplicationsTab() {
               <Fragment key={kind}>
                 <dt>{DOCUMENT_LABEL[kind]}</dt>
                 <dd>
+                  {kind === 'police_clearance' && a.details.policeClearance === 'applied' && (
+                    <span className="product-meta">Proof of applying – certificate due 30 days after approval. </span>
+                  )}
                   {a.documents.includes(kind) ? (
                     // Opens in a new tab; the server records every opening in the audit log.
                     <a href={`/api/support/applications/${a.id}/documents/${kind}`} target="_blank" rel="noopener noreferrer">
@@ -131,18 +140,20 @@ export function ApplicationsTab() {
                 </dd>
               </>
             )}
-            <dt>Applied</dt>
+            <dt>{a.type === 'documents' ? 'Sent' : 'Applied'}</dt>
             <dd>{dateTime(a.createdAt)}</dd>
           </dl>
           <p className="fine-print">
             {a.type === 'seller'
               ? 'Check that the name on the ID document matches the applicant, and verify the details (for example by phone) before approving.'
-              : 'Check that the ID, licence and police clearance are all in the applicant’s name, the licence is valid and covers their vehicle, and the clearance shows no record that puts customers at risk.'}{' '}
+              : a.type === 'documents'
+                ? 'An approved courier sent these. Check that each one is in their name and still valid, and that a police clearance shows no record that puts customers at risk.'
+                : 'Check that the ID, licence and police clearance are all in the applicant’s name, the licence is valid and covers their vehicle, and the clearance shows no record that puts customers at risk.'}{' '}
             Opening a document is recorded.
           </p>
           <div className="btn-row">
             <button type="button" className="btn btn-primary" onClick={() => setDeciding({ app: a, action: 'approve' })}>
-              Approve
+              {a.type === 'documents' ? 'Verified' : 'Approve'}
             </button>
             <button type="button" className="btn btn-outline" onClick={() => setDeciding({ app: a, action: 'reject' })}>
               Reject
@@ -165,7 +176,7 @@ export function ApplicationsTab() {
           {closed.map((a) => (
             <article key={a.id} className="card">
               <div className="order-card-head">
-                <strong>{a.type === 'seller' ? a.details.businessName : `Courier: ${a.applicant.name}`}</strong>
+                <strong>{title(a)}</strong>
                 <span className={`status-pill ${a.resolution === 'approved' ? 'good' : 'bad'}`}>
                   {a.resolution === 'approved' ? 'Approved' : 'Rejected'}
                 </span>
@@ -197,19 +208,35 @@ export function ApplicationsTab() {
 
       {deciding && (
         <ReasonDialog
-          title={deciding.action === 'approve' ? 'Approve this application?' : 'Reject this application?'}
-          description={
-            deciding.action === 'approve'
-              ? deciding.app.type === 'seller'
-                ? `${deciding.app.applicant.name} becomes a seller and “${deciding.app.details.businessName}” is created.`
-                : `${deciding.app.applicant.name} becomes a courier and can take delivery jobs.`
-              : `${deciding.app.applicant.name} will see your reason and can apply again later.`
+          title={
+            deciding.app.type === 'documents'
+              ? deciding.action === 'approve'
+                ? 'Documents checked and valid?'
+                : 'Reject these documents?'
+              : deciding.action === 'approve'
+                ? 'Approve this application?'
+                : 'Reject this application?'
           }
-          confirmLabel={deciding.action === 'approve' ? 'Approve' : 'Reject'}
+          description={
+            deciding.app.type === 'documents'
+              ? deciding.action === 'approve'
+                ? `They are no longer outstanding for ${deciding.app.applicant.name}, who can take jobs again if they were overdue.`
+                : `${deciding.app.applicant.name} sees your reason and sends them again.`
+              : deciding.action === 'approve'
+                ? deciding.app.type === 'seller'
+                  ? `${deciding.app.applicant.name} becomes a seller and “${deciding.app.details.businessName}” is created.`
+                  : `${deciding.app.applicant.name} becomes a courier and can take delivery jobs.`
+                : `${deciding.app.applicant.name} will see your reason and can apply again later.`
+          }
+          confirmLabel={deciding.action === 'approve' ? (deciding.app.type === 'documents' ? 'Verified' : 'Approve') : 'Reject'}
           danger={deciding.action === 'reject'}
           onClose={() => setDeciding(null)}
           onConfirm={async (reason) => {
-            await api(`/support/applications/${deciding.app.id}/${deciding.action}`, { method: 'POST', body: { reason } })
+            const path =
+              deciding.app.type === 'documents'
+                ? `/support/courier-documents/${deciding.app.id}/${deciding.action === 'approve' ? 'verify' : 'reject'}`
+                : `/support/applications/${deciding.app.id}/${deciding.action}`
+            await api(path, { method: 'POST', body: { reason } })
             setDeciding(null)
             load()
           }}

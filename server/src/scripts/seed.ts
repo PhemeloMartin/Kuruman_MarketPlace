@@ -78,9 +78,17 @@ async function main() {
     await client.query("UPDATE users SET staff_scopes = $2 WHERE id = $1", [userIds.support2, ["approvals"]]);
 
     // The demo couriers are already approved.
-    for (const [key, vehicle, area] of [["courier", "motorbike", "Wrenchville"], ["courier2", "bicycle", "Mothibistad"]]) {
-      await client.query("INSERT INTO courier_profiles (user_id, vehicle_type, area) VALUES ($1, $2, $3)", [userIds[key], vehicle, area]);
-    }
+    // Pieter has all his documents on file; Lerato was approved with proof that she applied for police
+    // clearance, and still has to send the certificate (her Deliveries page reminds her).
+    await client.query(
+      "INSERT INTO courier_profiles (user_id, vehicle_type, area, documents_outstanding) VALUES ($1, 'motorbike', 'Wrenchville', '{}')",
+      [userIds.courier]
+    );
+    await client.query(
+      `INSERT INTO courier_profiles (user_id, vehicle_type, area, documents_outstanding, documents_due)
+       VALUES ($1, 'bicycle', 'Mothibistad', '{police_clearance}', current_date + 10)`,
+      [userIds.courier2]
+    );
 
     // One application waiting for support, so the approvals queue isn't empty in the demo.
     await client.query(

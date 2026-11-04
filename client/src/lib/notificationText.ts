@@ -31,6 +31,8 @@ const TEMPLATES: Record<string, (a: Args) => string> = {
   'applicant.rejected': (a) => `Your application to ${a.kind === 'seller' ? 'sell' : 'deliver'} wasn’t approved: ${a.reason}`,
   'privacy.held': () => 'Your request to close your account is on hold. See your Profile for the reason.',
   'ticket.answered': (a) => `Support answered your question #${a.ticketId}: “${a.subject}”.`,
+  'courier.documents_verified': () => 'Your documents were checked. Thank you – everything is on file.',
+  'courier.documents_rejected': (a) => `Your documents couldn’t be accepted: ${a.reason} Please send them again under Deliveries.`,
 }
 
 export function notificationText(template: string, args: Args): string {
@@ -40,6 +42,7 @@ export function notificationText(template: string, args: Args): string {
 // Where tapping the notification takes you.
 export function notificationLink(template: string, args: Args = {}): string {
   if (template.startsWith('ticket.')) return `/help/${args.ticketId}`
+  if (template.startsWith('courier.')) return '/courier'
   if (template.startsWith('seller.')) return '/seller'
   if (template.startsWith('customer.')) return '/orders'
   return '/profile'

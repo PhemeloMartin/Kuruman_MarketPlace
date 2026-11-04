@@ -101,6 +101,8 @@ async function notesFor(client: PoolClient, e: { event_type: string; aggregate_i
       return [{ userId: e.payload.userId, template: e.payload.approved ? "applicant.approved" : "applicant.rejected", args: { kind: e.payload.kind, reason: e.payload.reason } }];
     case "privacy.held":
       return [{ userId: e.payload.userId, template: "privacy.held", args: {} }];
+    case "courier.documents":
+      return [{ userId: e.payload.userId, template: e.payload.verified ? "courier.documents_verified" : "courier.documents_rejected", args: { reason: e.payload.reason } }];
     case "ticket.answered":
       return [{ userId: e.payload.userId, template: "ticket.answered", args: { ticketId: e.payload.ticketId, subject: e.payload.subject } }];
     default:
@@ -135,7 +137,7 @@ export async function processOutbox(options: { failWith?: string } = {}): Promis
             `INSERT INTO notifications (user_id, order_id, event_key, template_key, arguments)
              VALUES ($1, $2, $3, $4, $5)
              ON CONFLICT (user_id, event_key) DO NOTHING`,
-            [n.userId, ["application", "privacy", "ticket"].some((p) => e.event_type.startsWith(p)) ? null : e.aggregate_id, e.dedupe_key, n.template, n.args ?? {}]
+            [n.userId, ["application", "privacy", "ticket", "courier"].some((p) => e.event_type.startsWith(p)) ? null : e.aggregate_id, e.dedupe_key, n.template, n.args ?? {}]
           );
         }
         const sms =

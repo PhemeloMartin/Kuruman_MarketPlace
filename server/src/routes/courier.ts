@@ -7,6 +7,11 @@ import { consumeReservation, recordStatusChange } from "../lib/stock";
 import { holdResponse } from "../lib/holdResponse";
 import { openOrderCase } from "../lib/cases";
 import { POLICY } from "../lib/policy";
+import { audit } from "../lib/audit";
+import { DOCUMENT_LABEL, readDocument, saveDocument } from "./applications";
+import { emailAdmin } from "../lib/email";
+import { noteOnCase } from "../lib/caseMail";
+import { canonicalSiteUrl } from "../lib/seo";
 
 // Courier flow (spec FR-14, FR-15, TX-03). Only approved couriers get here.
 export const courierRouter = Router();
@@ -15,12 +20,89 @@ courierRouter.use(requireRole("courier"));
 // Spec UC-02: a suspended courier "cannot claim jobs". Jobs they already hold can still be
 // finished, so the customer still gets their order.
 async function requireActiveCourier(req: Request, res: Response, next: NextFunction) {
-  const r = await pool.query("SELECT is_active FROM courier_profiles WHERE user_id = $1", [req.user!.id]);
+  const r = await pool.query(
+    `SELECT is_active,
+            documents_due < current_date AND cardinality(COALESCE(documents_outstanding, '{}')) > 0 AS documents_overdue
+       FROM courier_profiles WHERE user_id = $1`,
+    [req.user!.id]
+  );
   if (!r.rows[0]?.is_active) {
     return res.status(403).json({ error: "Your courier access is suspended, so you can't take new jobs. Contact support." });
   }
+  // Documents still missing after their due date: no NEW jobs until support has checked them (jobs already
+  // taken can still be finished).
+  if (r.rows[0].documents_overdue) {
+    return res.status(403).json({
+      error: "Your documents are overdue, so you can't take new jobs. Upload them above; you can deliver again once support has checked them.",
+      code: "documents",
+    });
+  }
   next();
 }
+
+// GET /api/courier/documents - which documents I still have to send, by when, and what's waiting for support.
+courierRouter.get("/documents", async (req, res) => {
+  const p = await pool.query(
+    `SELECT COALESCE(documents_outstanding, '{}') AS outstanding, to_char(documents_due, 'YYYY-MM-DD') AS due,
+            COALESCE(documents_due < current_date, false) AS overdue
+       FROM courier_profiles WHERE user_id = $1`,
+    [req.user!.id]
+  );
+  const open = await pool.query(
+    `SELECT d.kind FROM support_cases c JOIN verification_documents d ON d.case_id = c.id
+      WHERE c.requester_id = $1 AND c.case_type = 'courier_documents' AND c.status = 'open'`,
+    [req.user!.id]
+  );
+  const last = await pool.query(
+    `SELECT resolution, resolution_reason FROM support_cases
+      WHERE requester_id = $1 AND case_type = 'courier_documents' AND status = 'closed' ORDER BY closed_at DESC LIMIT 1`,
+    [req.user!.id]
+  );
+  res.json({
+    outstanding: p.rows[0]?.outstanding ?? [],
+    due: p.rows[0]?.due ?? null,
+    overdue: p.rows[0]?.overdue ?? false, // the same rule that stops new jobs
+    waitingForSupport: open.rows.map((r) => r.kind),
+    lastRejectedReason: last.rows[0]?.resolution === "rejected" ? last.rows[0].resolution_reason : null,
+  });
+});
+
+// POST /api/courier/documents/:kind { file } - send one of my outstanding documents. They go together in
+// one case for support to check (encrypted, like an application's), and the admin is told by email.
+courierRouter.post("/documents/:kind", async (req, res) => {
+  const kind = String(req.params.kind);
+  const p = await pool.query("SELECT vehicle_type, COALESCE(documents_outstanding, '{}') AS outstanding FROM courier_profiles WHERE user_id = $1", [req.user!.id]);
+  if (!p.rows[0]?.outstanding.includes(kind)) return res.status(404).json({ error: "We don't need this document from you." });
+  const d = readDocument(req.body?.file, DOCUMENT_LABEL[kind]);
+  if ("problem" in d) return res.status(422).json({ error: d.problem, fields: { file: d.problem } });
+  let caseId: number;
+  let isNew = false;
+  const open = await pool.query(
+    "SELECT id FROM support_cases WHERE requester_id = $1 AND case_type = 'courier_documents' AND status = 'open'",
+    [req.user!.id]
+  );
+  if (open.rowCount) caseId = Number(open.rows[0].id);
+  else {
+    const c = await pool.query(
+      `INSERT INTO support_cases (case_type, requester_id, details) VALUES ('courier_documents', $1, $2)
+       ON CONFLICT DO NOTHING RETURNING id`,
+      [req.user!.id, { vehicleType: p.rows[0].vehicle_type }]
+    );
+    if (c.rowCount === 0) return res.status(409).json({ error: "Please try again." });
+    caseId = Number(c.rows[0].id);
+    isNew = true;
+  }
+  await saveDocument(pool, caseId, req.user!.id, kind, d);
+  await noteOnCase(caseId, `The courier sent their ${DOCUMENT_LABEL[kind]}.`, req.user!.id);
+  await audit(pool, { actorId: req.user!.id, action: "courier.documents_send", resourceType: "support_case", resourceId: caseId, outcome: "success", changes: { kind } });
+  res.status(201).json({ ok: true });
+  if (isNew) {
+    await emailAdmin(
+      "Courier documents to check",
+      `${req.user!.displayName.split(" ")[0]} (courier) sent documents to check.\n\nCheck them in the support console (Applications): ${canonicalSiteUrl()}/support\n\nFor privacy, the documents are not in this email.`
+    );
+  }
+});
 
 // GET /api/courier/jobs - open jobs anyone can claim.
 // Minimum disclosure (BR-13): before claiming, a courier sees the seller's area, the fee

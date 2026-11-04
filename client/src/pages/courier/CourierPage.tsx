@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, ApiError } from '../../lib/api'
 import { CodeScanButton } from '../../components/CodeScanButton'
+import { DOCUMENT_LABEL, readDocument } from '../../lib/documents'
 import { formatRand } from '../../lib/money'
 
 interface OpenJob {
@@ -115,6 +116,8 @@ export function CourierPage() {
   return (
     <main className="page">
       <h1 className="page-title">Deliveries</h1>
+
+      <DocumentsNeeded />
 
       <section className="kpi-grid" aria-label="Your numbers" style={{ marginBottom: 16 }}>
         <div className="kpi">
@@ -253,6 +256,95 @@ export function CourierPage() {
         </section>
       )}
     </main>
+  )
+}
+
+interface CourierDocuments {
+  outstanding: string[] // e.g. ["police_clearance"]
+  due: string | null // YYYY-MM-DD
+  overdue: boolean
+  waitingForSupport: string[] // sent, not checked yet
+  lastRejectedReason: string | null
+}
+
+// "Documents needed": what an approved courier still has to send - the police clearance certificate if
+// they applied with proof of applying (30 days), or everything if they were approved before checks began
+// (14 days). After the due date they can't take NEW jobs until support has checked what they sent.
+function DocumentsNeeded() {
+  const [docs, setDocs] = useState<CourierDocuments | null>(null)
+  const [maxBytes, setMaxBytes] = useState(5 * 1024 * 1024)
+  const [busy, setBusy] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = useCallback(() => {
+    api<CourierDocuments>('/courier/documents')
+      .then(setDocs)
+      .catch(() => setDocs(null))
+  }, [])
+
+  useEffect(() => {
+    load()
+    api<{ maxIdDocumentBytes: number }>('/config')
+      .then((c) => setMaxBytes(c.maxIdDocumentBytes))
+      .catch(() => {})
+  }, [load])
+
+  async function send(kind: string, e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setBusy(kind)
+    setError(null)
+    try {
+      const chosen = await readDocument(file, maxBytes)
+      await api(`/courier/documents/${kind}`, { method: 'POST', body: { file: chosen.base64 } })
+      load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+    } finally {
+      setBusy(null)
+      e.target.value = ''
+    }
+  }
+
+  if (!docs || docs.outstanding.length === 0) return null
+
+  const dueText = docs.due ? new Date(`${docs.due}T12:00:00`).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }) : null
+  const allSent = docs.outstanding.every((k) => docs.waitingForSupport.includes(k))
+
+  return (
+    <section className="card" aria-labelledby="documents-heading" style={{ marginBottom: 16 }}>
+      <h2 id="documents-heading" style={{ marginTop: 0 }}>
+        Documents needed
+      </h2>
+      {allSent ? (
+        <p className="product-meta">Thank you – support is checking what you sent. We’ll let you know here.</p>
+      ) : (
+        <p className={docs.overdue ? 'notice error' : 'product-meta'}>
+          {docs.overdue
+            ? `These were due on ${dueText}. You can finish the jobs you have, but you can’t take new ones until support has checked them.`
+            : `Please send ${docs.outstanding.length === 1 ? 'this' : 'these'} by ${dueText}. After that you can’t take new jobs until support has checked ${docs.outstanding.length === 1 ? 'it' : 'them'}.`}
+        </p>
+      )}
+      {docs.lastRejectedReason && !allSent && (
+        <p className="notice error" style={{ marginTop: 8 }}>
+          The last ones couldn’t be accepted: “{docs.lastRejectedReason}” Please send them again.
+        </p>
+      )}
+      {docs.outstanding.map((kind) => (
+        <div key={kind} className="field" style={{ marginTop: 8 }}>
+          <label htmlFor={`doc-${kind}`}>
+            {kind === 'police_clearance' ? 'Police clearance certificate (from SAPS)' : DOCUMENT_LABEL[kind]}
+          </label>
+          {docs.waitingForSupport.includes(kind) && <p className="fine-print">✓ Sent – support is checking it. Choose a file again to replace it.</p>}
+          <input id={`doc-${kind}`} type="file" accept="image/*,application/pdf" onChange={(e) => send(kind, e)} disabled={busy !== null} />
+          {busy === kind && <p className="fine-print">Sending…</p>}
+        </div>
+      ))}
+      {error && <p className="field-error">{error}</p>}
+      <p className="fine-print" style={{ marginTop: 8 }}>
+        A clear photo or a PDF, 5 MB at most. Kept encrypted, seen only by support, and deleted 30 days after they’re checked. Please don’t send documents by email.
+      </p>
+    </section>
   )
 }
 

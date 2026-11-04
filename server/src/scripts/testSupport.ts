@@ -265,16 +265,21 @@ async function main() {
       assert.match(last.body, /business's own phone number/);
     });
 
+    let anna = "";
+    let annaCase = 0;
     await check("couriers are verified too: ID and police clearance always, a driver's licence when they drive", async () => {
-      const anna = await login("0710000012");
+      anna = await login("0710000012");
       const missing = await call(anna, "POST", "/api/applications", { type: "courier", vehicleType: "car", area: "Seoding" });
       assert.equal(missing.status, 422);
       for (const f of ["email", "idDocument", "driversLicence", "policeClearance", "agreeTerms", "agreePrivacy"]) assert.ok(missing.data.fields[f], `${f} required`);
       const onBicycle = await call(anna, "POST", "/api/applications", { type: "courier", vehicleType: "bicycle", area: "Seoding" });
       assert.ok(!onBicycle.data.fields.driversLicence, "no licence needed on a bicycle");
-      const r = await call(anna, "POST", "/api/applications", courierApplication("car", "Seoding"));
+      // SAPS can take weeks: she applies with proof that she applied for police clearance.
+      const r = await call(anna, "POST", "/api/applications", { ...courierApplication("car", "Seoding"), policeClearanceStatus: "applied" });
       assert.equal(r.status, 201);
+      annaCase = r.data.id;
       const app = (await call(support, "GET", "/api/support/applications")).data.find((a: any) => a.id === r.data.id);
+      assert.equal(app.details.policeClearance, "applied");
       assert.deepEqual(app.documents, ["id_document", "drivers_licence", "police_clearance"]);
       const pcc = await fetch(`${base}/api/support/applications/${r.data.id}/documents/police_clearance`, { headers: { Cookie: support } });
       assert.equal(pcc.status, 200);
@@ -282,6 +287,33 @@ async function main() {
       assert.match((await trailOf(r.data.id))[0].subject, /application to deliver/);
       const log = await pool.query("SELECT changes FROM audit_events WHERE action = 'application.view_document' ORDER BY id DESC LIMIT 1");
       assert.equal(log.rows[0].changes.kind, "police_clearance");
+    });
+
+    await check("approved with proof of applying: the certificate is due in 30 days; overdue means no new jobs", async () => {
+      assert.equal((await call(support, "POST", `/api/support/applications/${annaCase}/approve`, { reason: "ID and licence checked; police clearance applied for." })).status, 200);
+      const docs = (await call(anna, "GET", "/api/courier/documents")).data;
+      assert.deepEqual(docs.outstanding, ["police_clearance"]);
+      const days = Math.round((new Date(docs.due).getTime() - Date.now()) / 86_400_000);
+      assert.ok(days >= 29 && days <= 30, `due in 30 days (got ${days})`);
+      assert.equal((await call(anna, "GET", "/api/courier/jobs")).status, 200, "within the 30 days she can take jobs");
+      await pool.query("UPDATE courier_profiles SET documents_due = current_date - 1 WHERE user_id = (SELECT id FROM users WHERE phone = '+27710000012')");
+      const blocked = await call(anna, "GET", "/api/courier/jobs");
+      assert.equal(blocked.status, 403);
+      assert.equal(blocked.data.code, "documents");
+      assert.equal((await call(anna, "GET", "/api/courier/documents")).data.overdue, true, "her Deliveries page says so too");
+    });
+
+    await check("the courier sends the certificate; once support verifies it they can take jobs again", async () => {
+      assert.equal((await call(anna, "POST", "/api/courier/documents/drivers_licence", { file: fakePdf() })).status, 404, "only what's outstanding");
+      assert.equal((await call(anna, "POST", "/api/courier/documents/police_clearance", { file: fakePdf() })).status, 201);
+      assert.deepEqual((await call(anna, "GET", "/api/courier/documents")).data.waitingForSupport, ["police_clearance"]);
+      const toCheck = (await call(support, "GET", "/api/support/applications")).data.find((a: any) => a.type === "documents" && a.status === "open");
+      assert.deepEqual(toCheck.documents, ["police_clearance"]);
+      assert.equal((await call(support, "POST", `/api/support/courier-documents/${toCheck.id}/verify`, { reason: "Certificate checked: clear." })).status, 200);
+      const docs = (await call(anna, "GET", "/api/courier/documents")).data;
+      assert.deepEqual(docs.outstanding, []);
+      assert.equal(docs.due, null);
+      assert.equal((await call(anna, "GET", "/api/courier/jobs")).status, 200, "she can take jobs again");
     });
 
     let ticketId = 0;
@@ -358,9 +390,10 @@ async function main() {
       for (const a of ["application.approve", "application.reject", "business.suspend", "business.reinstate", "courier.suspend", "mfa.enrol"]) {
         assert.ok(actions.includes(a), `missing ${a}`);
       }
-      const approve = r.data.find((a: any) => a.action === "application.approve");
+      // Boitumelo's approval from earlier, with who decided and why.
+      const approve = r.data.find((a: any) => a.action === "application.approve" && /Checked business details/.test(a.reason ?? ""));
+      assert.ok(approve, "the approval and its reason are logged");
       assert.equal(approve.actorName, "Support (demo)");
-      assert.match(approve.reason, /Checked business details/);
     });
 
     await check("the audit log holds no passphrases or authenticator codes", async () => {

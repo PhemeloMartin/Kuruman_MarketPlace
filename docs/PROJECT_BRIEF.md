@@ -311,4 +311,8 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       motorbike, car or bakkie - a driver's licence; courier terms (/courier-terms) and the privacy notice ticked.
       Same protection (encrypted, approvers only, every opening audited, deleted 30 days after the decision);
       support opens each document separately; a wrong document is replaced on the Profile. `test:support` (28 checks)
+- [x] Documents still owed by couriers: an applicant may send proof of applying for police clearance and then the
+      certificate within 30 days of approval; couriers approved before checks began send all their documents within
+      14 days. Sent from the Deliveries page, checked by support (Verified / Reject with a reason, notified); once
+      overdue the courier can finish their jobs but take no new ones. `test:support` (30 checks)
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

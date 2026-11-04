@@ -71,7 +71,7 @@ function documentType(file: Buffer): string | null {
 }
 
 // Reads one uploaded document (sent as base64 text) and checks it.
-function readDocument(value: unknown, label: string): { file: Buffer; type: string } | { problem: string } {
+export function readDocument(value: unknown, label: string): { file: Buffer; type: string } | { problem: string } {
   const file = Buffer.from(text(value).replace(/^data:[^,]*,/, ""), "base64");
   const type = documentType(file);
   if (file.length === 0) return { problem: `Add a photo or PDF of your ${label}.` };
@@ -81,7 +81,7 @@ function readDocument(value: unknown, label: string): { file: Buffer; type: stri
 }
 
 // Stores a document encrypted; a new one of the same kind replaces the old one.
-async function saveDocument(db: { query: typeof pool.query }, caseId: number, userId: number, kind: string, d: { file: Buffer; type: string }) {
+export async function saveDocument(db: { query: typeof pool.query }, caseId: number, userId: number, kind: string, d: { file: Buffer; type: string }) {
   await db.query(
     `INSERT INTO verification_documents (case_id, user_id, kind, content_type, data_enc, bytes)
      VALUES ($1, $2, $3, $4, $5, $6)
@@ -117,7 +117,13 @@ applicationsRouter.post("/", requireRole("consumer"), async (req, res) => {
     if (!phone) fields.phone = "Enter a South African phone number for the business.";
   } else if (body.type === "courier") {
     caseType = "courier_application";
-    details = { vehicleType: text(body.vehicleType), area: text(body.area) };
+    details = {
+      vehicleType: text(body.vehicleType),
+      area: text(body.area),
+      // A SAPS police clearance can take weeks: a courier may apply with proof that they applied, and then
+      // has 30 days after approval to send the certificate itself.
+      policeClearance: body.policeClearanceStatus === "applied" ? "applied" : "certificate",
+    };
     if (!POLICY.vehicleTypes.includes(details.vehicleType)) fields.vehicleType = "Choose how you'll deliver.";
     if (!POLICY.serviceAreas.includes(details.area)) fields.area = "Choose your area from the list.";
   } else {
@@ -131,7 +137,8 @@ applicationsRouter.post("/", requireRole("consumer"), async (req, res) => {
   if (!EMAIL.test(details.email) || details.email.length > 120) fields.email = "Enter your email address, e.g. name@gmail.com.";
   const documents: { kind: string; file: Buffer; type: string }[] = [];
   for (const kind of requiredDocuments(caseType, details)) {
-    const d = readDocument(body[FIELD[kind]], DOCUMENT_LABEL[kind]);
+    const label = kind === "police_clearance" && details.policeClearance === "applied" ? "proof that you applied for police clearance" : DOCUMENT_LABEL[kind];
+    const d = readDocument(body[FIELD[kind]], label);
     if ("problem" in d) fields[FIELD[kind]] = d.problem;
     else documents.push({ kind, ...d });
   }

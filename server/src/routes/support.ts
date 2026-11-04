@@ -128,20 +128,20 @@ supportRouter.get("/applications", requireStaff("approvals"), async (_req, res) 
              (SELECT json_agg(d.kind ORDER BY d.id) FROM verification_documents d WHERE d.case_id = c.id) AS documents,
              ${TRAIL} AS trail
         FROM support_cases c JOIN users u ON u.id = c.requester_id LEFT JOIN users r ON r.id = c.resolved_by
-       WHERE c.status = 'open' AND c.case_type IN ('seller_application', 'courier_application')
+       WHERE c.status = 'open' AND c.case_type IN ('seller_application', 'courier_application', 'courier_documents')
        ORDER BY c.created_at)
      UNION ALL
      (SELECT c.*, u.display_name, u.phone, r.display_name AS resolved_by_name,
              (SELECT json_agg(d.kind ORDER BY d.id) FROM verification_documents d WHERE d.case_id = c.id) AS documents,
              ${TRAIL} AS trail
         FROM support_cases c JOIN users u ON u.id = c.requester_id LEFT JOIN users r ON r.id = c.resolved_by
-       WHERE c.status = 'closed' AND c.case_type IN ('seller_application', 'courier_application')
+       WHERE c.status = 'closed' AND c.case_type IN ('seller_application', 'courier_application', 'courier_documents')
        ORDER BY c.closed_at DESC LIMIT 20)`
   );
   res.json(
     r.rows.map((c) => ({
       id: Number(c.id),
-      type: c.case_type === "seller_application" ? "seller" : "courier",
+      type: c.case_type === "seller_application" ? "seller" : c.case_type === "courier_application" ? "courier" : "documents",
       status: c.status,
       applicant: { name: c.display_name, phone: c.phone },
       details: c.details,
@@ -213,6 +213,53 @@ async function emailDecision(caseId: number, approved: boolean, reason: string) 
   await emailApplicant(caseId, e.subject, e.message, null);
 }
 
+// POST /api/support/courier-documents/:id/:decision { reason } - support checked the documents a courier
+// sent after approval. verify: they're on file (no longer outstanding; the courier may take jobs again if
+// they were overdue). reject: unclear or not valid - the courier is told why and sends them again.
+supportRouter.post("/courier-documents/:id/:decision", requireStaff("approvals"), async (req, res) => {
+  const decision = req.params.decision;
+  if (decision !== "verify" && decision !== "reject") return res.status(404).json({ error: "Not found." });
+  const reason = reasonFrom(req, res);
+  if (!reason) return;
+  await inTransaction(res, async (client) => {
+    const c = await client.query(
+      "SELECT * FROM support_cases WHERE id = $1 AND case_type = 'courier_documents' FOR UPDATE",
+      [Number(req.params.id) || 0]
+    );
+    const doc = c.rows[0];
+    if (!doc) return void res.status(404).json({ error: "Not found." });
+    if (doc.status !== "open") return void res.status(409).json({ error: "Someone has already checked these documents. Refresh the list." });
+    const kinds = (await client.query("SELECT kind FROM verification_documents WHERE case_id = $1", [doc.id])).rows.map((r) => r.kind);
+    if (decision === "verify") {
+      await client.query(
+        `UPDATE courier_profiles
+            SET documents_outstanding = ARRAY(SELECT k FROM unnest(documents_outstanding) AS k WHERE k <> ALL($2::text[])),
+                documents_due = CASE WHEN cardinality(ARRAY(SELECT k FROM unnest(documents_outstanding) AS k WHERE k <> ALL($2::text[]))) = 0
+                                     THEN NULL ELSE documents_due END
+          WHERE user_id = $1`,
+        [doc.requester_id, kinds]
+      );
+    }
+    await closeCase(client, Number(doc.id), decision === "verify" ? "approved" : "rejected", reason, req.user!.id);
+    await enqueue(client, {
+      type: "courier.documents",
+      aggregateId: Number(doc.id),
+      dedupeKey: `courier-documents:${doc.id}`,
+      payload: { userId: Number(doc.requester_id), verified: decision === "verify", reason },
+    });
+    await audit(client, {
+      actorId: req.user!.id,
+      action: decision === "verify" ? "courier.documents_verify" : "courier.documents_reject",
+      resourceType: "support_case",
+      resourceId: Number(doc.id),
+      outcome: "success",
+      reason,
+      changes: { documents: kinds },
+    });
+    res.json({ status: decision === "verify" ? "verified" : "rejected" });
+  });
+});
+
 // Loads an OPEN application with it and its applicant locked, or answers 404/409 itself.
 async function lockOpenApplication(client: PoolClient, req: Request, res: Response) {
   const id = Number(req.params.id);
@@ -263,9 +310,12 @@ supportRouter.post("/applications/:id/approve", requireStaff("approvals"), async
       await client.query("UPDATE users SET role = 'entrepreneur', updated_at = now() WHERE id = $1", [applicant.id]);
       changes = { role: ["consumer", "entrepreneur"], businessId: Number(b.rows[0].id) };
     } else {
+      // Approved with only proof of applying for police clearance: the certificate is due within 30 days.
+      const pending = d.policeClearance === "applied";
       await client.query(
-        "INSERT INTO courier_profiles (user_id, vehicle_type, area, approved_by) VALUES ($1, $2, $3, $4)",
-        [applicant.id, d.vehicleType, d.area, req.user!.id]
+        `INSERT INTO courier_profiles (user_id, vehicle_type, area, approved_by, documents_outstanding, documents_due)
+         VALUES ($1, $2, $3, $4, $5, CASE WHEN $6::boolean THEN current_date + 30 END)`,
+        [applicant.id, d.vehicleType, d.area, req.user!.id, pending ? ["police_clearance"] : [], pending]
       );
       await client.query("UPDATE users SET role = 'courier', updated_at = now() WHERE id = $1", [applicant.id]);
       changes = { role: ["consumer", "courier"] };
