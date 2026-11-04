@@ -267,6 +267,19 @@ async function main() {
       assert.equal(sent[0].body.reply_to, "admin@example.com", "replies go to the admin's own inbox");
     });
 
+    await check("like Payfast: everyone accepts the current terms once; the version and time are kept and audited", async () => {
+      assert.equal((await call("", "GET", "/api/auth/terms")).status, 401);
+      const before = (await call(thato, "GET", "/api/auth/terms")).data;
+      assert.equal(before.accepted, false);
+      assert.equal((await call(thato, "POST", "/api/auth/terms", { version: "2020-01-01" })).status, 409, "an old version can't be accepted");
+      assert.equal((await call(thato, "POST", "/api/auth/terms", { version: before.version })).status, 200);
+      const after = (await call(thato, "GET", "/api/auth/terms")).data;
+      assert.equal(after.accepted, true);
+      assert.equal(after.previousVersion, before.version);
+      const log = await pool.query("SELECT changes FROM audit_events WHERE action = 'terms.accept' ORDER BY id DESC LIMIT 1");
+      assert.equal(log.rows[0].changes.version, before.version);
+    });
+
     console.log(`\n${passed} checks passed.\n`);
   } finally {
     server.close();

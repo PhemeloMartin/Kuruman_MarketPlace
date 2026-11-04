@@ -301,4 +301,10 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       an SMS with the link. Only their own tickets; support sees name and role, not the phone number. Max 5 open per
       person; deleted 12 months after closing; included in "download my data". Applicants also get emails (received,
       support's questions, decision) with replies to the admin's inbox, kept as a trail. `test:support` (27 checks)
+- [x] Legal pages and acceptance, like Payfast: Terms of use (/terms), Returns & refunds (/returns: ECTA s44 7-day
+      cooling-off with the s42 exclusions, CPA s55-56 six months for faulty goods, wrong items, refunds via Payfast
+      or cash), the privacy notice and seller terms; the business details ECTA s43 requires in one place
+      (client/src/lib/legal.ts). Every signed-in person accepts the current version once ("I agree to the above" ->
+      Confirm); the version and time are saved on the account and in the audit log, and the box returns when the
+      terms change (POLICY.termsVersion). Linked in the footer and at checkout. `test:extras` (15 checks)
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

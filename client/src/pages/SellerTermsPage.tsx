@@ -7,13 +7,14 @@ import { Link } from 'react-router-dom'
 export function SellerTermsPage() {
   return (
     <main className="page prose">
-      <p className="eyebrow">Version of 3 November 2026</p>
+      <p className="eyebrow">Version of 4 November 2026</p>
       <h1 className="page-title" style={{ marginTop: 0 }}>
         Seller terms
       </h1>
       <p>
         These terms are between you, the seller, and KurumanMarketPlace. They keep buying safe for customers in
-        Kuruman and fair for every seller. If something is unclear, ask support before you apply.
+        Kuruman and fair for every seller. They come on top of the <Link to="/terms">terms of use</Link> that everyone
+        accepts. If something is unclear, ask support under <Link to="/help">Help</Link> before you apply.
       </p>
 
       <h2>1. Who can sell</h2>
@@ -64,31 +65,39 @@ export function SellerTermsPage() {
         </li>
       </ul>
 
-      <h2>6. Online payments</h2>
+      <h2>6. Returns and refunds</h2>
+      <p>
+        Your customers have the rights in our <Link to="/returns">returns &amp; refunds policy</Link>: cancelling before
+        you accept, the 7-day cooling-off for goods that can be returned, and returning faulty, unsafe or wrong items
+        (Consumer Protection Act). You agree to honour them – repair, replace or refund at your cost where the law says
+        so – and to work with support when a customer reports a problem.
+      </p>
+
+      <h2>7. Online payments</h2>
       <p>
         When a customer pays online, the money is received through Payfast. How and when it is paid out to you is
         agreed with you in writing when your application is approved.
       </p>
 
-      <h2>7. Your customers’ information</h2>
+      <h2>8. Your customers’ information</h2>
       <p>
         You see a customer’s name and order so you can serve them. Use it only for that order: don’t add customers to
         marketing lists or share their details (POPIA).
       </p>
 
-      <h2>8. Reviews</h2>
+      <h2>9. Reviews</h2>
       <p>
         Customers who received an order may review it. You may reply once, politely. Never write reviews for your own
         shop or ask someone to.
       </p>
 
-      <h2>9. When we may hide a listing or close a shop</h2>
+      <h2>10. When we may hide a listing or close a shop</h2>
       <p>
         If you break these terms, or customers are put at risk, support may take a listing off sale or suspend your
         shop. Every such decision is recorded with a reason, and you may ask support to explain it.
       </p>
 
-      <h2>10. Leaving, and changes</h2>
+      <h2>11. Leaving, and changes</h2>
       <ul>
         <li>You may stop selling and close your account at any time, from your Profile.</li>
         <li>If we change these terms, we tell you first. The date at the top shows which version this is.</li>

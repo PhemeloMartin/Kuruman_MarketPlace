@@ -232,3 +232,9 @@ CREATE TABLE IF NOT EXISTS ticket_messages (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_ticket_messages ON ticket_messages(ticket_id, id);
+
+-- 2026-11-04: which version of the terms of use (and the privacy notice and returns policy that go with
+-- them) each person accepted, and when - like Payfast's "Updates to our end-user agreement". When the
+-- version changes, everyone is asked to accept again before they carry on.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_version VARCHAR(20);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ;

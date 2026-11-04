@@ -14,10 +14,13 @@ export const POLICY = {
   vehicleTypes: ["on_foot", "bicycle", "motorbike", "car", "bakkie"],
   // Why a courier couldn't hand an order over (spec FR-15, UC: "absence, invalid code or nonpayment").
   deliveryFailReasons: ["customer_absent", "wrong_address", "customer_refused", "no_payment"],
+  // The terms of use, returns & refunds policy and privacy notice everyone accepts (the "I agree" box).
+  // Change it whenever any of them changes: everyone is then asked to accept the new version.
+  termsVersion: "2026-11-04",
   // The seller terms and privacy notice a seller agrees to when applying: the date each last changed.
   // The agreed versions are saved with the application, so we can show what someone agreed to.
-  sellerTermsVersion: "2026-11-03",
-  privacyNoticeVersion: "2026-11-03",
+  sellerTermsVersion: "2026-11-04",
+  privacyNoticeVersion: "2026-11-04",
   maxIdDocumentBytes: 5 * 1024 * 1024, // 5 MB: a phone photo (shrunk first on the phone) or a PDF
   // On when Payfast is configured in .env (a getter, so it reads the settings when asked).
   get onlinePaymentAvailable() {

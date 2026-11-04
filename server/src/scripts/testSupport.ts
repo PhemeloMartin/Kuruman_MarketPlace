@@ -193,8 +193,8 @@ async function main() {
       const app = (await call(support, "GET", "/api/support/applications")).data.find((a: any) => a.id === lesegoCase);
       assert.equal(app.hasIdDocument, true);
       assert.equal(app.details.email, "lesego@example.com");
-      assert.equal(app.details.termsVersion, "2026-11-03");
-      assert.equal(app.details.privacyVersion, "2026-11-03");
+      assert.equal(app.details.termsVersion, "2026-11-04");
+      assert.equal(app.details.privacyVersion, "2026-11-04");
     });
 
     await check("only approvers can open the ID document, and every opening is in the audit log", async () => {

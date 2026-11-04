@@ -2638,3 +2638,26 @@ label.busy {
   background: var(--surface);
   justify-self: end;
 }
+
+/* Terms, returns and privacy pages: the business details, with the ones still to fill in marked. */
+.who-we-are .to-fill,
+.to-fill {
+  color: var(--danger, #b3261e);
+  font-style: italic;
+}
+
+/* The "I agree to the above" box (like Payfast's): it can't be dismissed, only accepted or signed out of. */
+.terms-gate ul {
+  margin: 8px 0 12px;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+}
+
+.terms-gate label.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  font-weight: 600;
+}

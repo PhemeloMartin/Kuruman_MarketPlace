@@ -113,7 +113,7 @@ export async function closeAccount(client: PoolClient, userId: number, staffId: 
 export async function exportFor(db: Db, userId: number) {
   const u = (
     await db.query(
-      "SELECT id, phone, display_name, role, preferred_language, created_at, updated_at FROM users WHERE id = $1",
+      "SELECT id, phone, display_name, role, preferred_language, terms_version, terms_accepted_at, created_at, updated_at FROM users WHERE id = $1",
       [userId]
     )
   ).rows[0];
@@ -181,6 +181,7 @@ export async function exportFor(db: Db, userId: number) {
       name: u.display_name,
       role: u.role,
       language: u.preferred_language,
+      termsAccepted: { version: u.terms_version, at: u.terms_accepted_at },
       createdAt: u.created_at,
       updatedAt: u.updated_at,
       signIn:

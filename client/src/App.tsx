@@ -21,6 +21,8 @@ import { SupportPage } from './pages/support/SupportPage'
 import { PrivacyPage } from './pages/PrivacyPage'
 import { SellerTermsPage } from './pages/SellerTermsPage'
 import { HelpPage, TicketPage } from './pages/HelpPage'
+import { TermsPage } from './pages/TermsPage'
+import { ReturnsPage } from './pages/ReturnsPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { UnreadProvider } from './notifications/UnreadContext'
 
@@ -44,6 +46,8 @@ export default function App() {
                 <Route path="register" element={<RegisterPage />} />
                 <Route path="privacy" element={<PrivacyPage />} />
                 <Route path="seller-terms" element={<SellerTermsPage />} />
+                <Route path="terms" element={<TermsPage />} />
+                <Route path="returns" element={<ReturnsPage />} />
                 <Route path="help" element={<HelpPage />} />
                 <Route path="help/:id" element={<TicketPage />} />
                 <Route path="notifications" element={<NotificationsPage />} />

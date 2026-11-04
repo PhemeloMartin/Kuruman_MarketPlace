@@ -6,6 +6,7 @@ import type { LanguageCode } from '../lib/translate'
 import { useOnline } from '../lib/useOnline'
 import { useUnread } from '../notifications/UnreadContext'
 import { DuneRibbon, LogoMark } from './Art'
+import { TermsGate } from './TermsGate'
 import { BellIcon, CartIcon, HomeIcon, OrdersIcon, ProfileIcon, ShieldIcon, ShopIcon, TruckIcon } from './Icons'
 
 export function Layout() {
@@ -23,6 +24,7 @@ export function Layout() {
       )}
       <Outlet />
       <BottomNav />
+      <TermsGate />
     </div>
   )
 }

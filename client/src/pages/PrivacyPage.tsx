@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import { LEGAL, TERMS_DATE, isPlaceholder } from '../lib/legal'
+import { WhoWeAre } from './TermsPage'
 
 // Privacy notice (spec C.3 checklist, FR-20, Table 38). Written in plain language.
 // Status: a DRAFT for the academic demonstration. Before any real person registers, the
@@ -7,21 +9,21 @@ import { Link } from 'react-router-dom'
 export function PrivacyPage() {
   return (
     <main className="page prose">
-      <p className="eyebrow">Draft – demonstration only</p>
+      <p className="eyebrow">Version of {TERMS_DATE}</p>
       <h1 className="page-title" style={{ marginTop: 0 }}>
         How we use your information
       </h1>
-      <p className="notice">
-        This notice is a draft for a student project. The app currently holds only made-up demonstration data. Before
-        real people use it, the organisation responsible and its Information Officer will be named here, and the
-        wording will be checked in all three languages.
+      <p>
+        This notice explains what personal information KurumanMarketPlace collects, why, who can see it, how long we
+        keep it, and your rights under the Protection of Personal Information Act (POPIA).
       </p>
 
       <h2>Who is responsible</h2>
+      <WhoWeAre />
       <p>
-        <strong>[Responsible party – to be named before real use]</strong>, Kuruman, Northern Cape.
-        <br />
-        Information Officer: <strong>[name and contact – to be named]</strong>.
+        Information Officer:{' '}
+        <strong className={isPlaceholder(LEGAL.informationOfficer) ? 'to-fill' : undefined}>{LEGAL.informationOfficer}</strong>,
+        reachable at the contact details above or under <Link to="/help">Help</Link>.
       </p>
 
       <h2>What we collect, and why</h2>
@@ -75,7 +77,7 @@ export function PrivacyPage() {
         <li>Payfast processes online payments under its own privacy terms.</li>
       </ul>
 
-      <h2>How long we keep it (proposed)</h2>
+      <h2>How long we keep it</h2>
       <ul>
         <li>Delivery addresses: removed 30 days after the order is finished, unless a problem with it is still open.</li>
         <li>Order, payment and refund records: kept as business records for the approved period.</li>

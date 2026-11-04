@@ -462,6 +462,8 @@ function HomeFooter() {
         <Link to="/directory">Business Directory</Link>
         <Link to="/orders">My orders</Link>
         <Link to="/help">Help</Link>
+        <Link to="/terms">Terms</Link>
+        <Link to="/returns">Returns &amp; refunds</Link>
         <Link to="/privacy">Privacy</Link>
       </nav>
     </footer>

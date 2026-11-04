@@ -19,7 +19,7 @@ export function robotsTxt(): string {
 }
 
 // Public page addresses that get a canonical tag (the rest are private or have no content of their own).
-const PUBLIC_PAGE = /^\/(directory|privacy|shop\/\d+|product\/\d+)?$/;
+const PUBLIC_PAGE = /^\/(directory|privacy|terms|returns|seller-terms|shop\/\d+|product\/\d+)?$/;
 
 export function canonicalTag(path: string): string {
   return PUBLIC_PAGE.test(path) ? `<link rel="canonical" href="${canonicalSiteUrl()}${path === "/" ? "/" : path}" />` : "";
@@ -39,6 +39,9 @@ export async function sitemapXml(): Promise<string> {
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     url("/"),
     url("/directory"),
+    url("/terms"),
+    url("/returns"),
+    url("/privacy"),
     ...shops.rows.map((s) => url(`/shop/${s.id}`)),
     ...products.rows.map((p) => url(`/product/${p.id}`, p.updated_at)),
     "</urlset>",

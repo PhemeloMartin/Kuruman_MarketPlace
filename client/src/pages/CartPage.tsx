@@ -335,6 +335,10 @@ export function CartPage() {
           The seller has {policy?.sellerResponseMinutes ?? 30} minutes to accept. Your cart is saved on this phone until you
           send it.
         </p>
+        <p className="fine-print" style={{ textAlign: 'center', marginTop: 0 }}>
+          By sending this order you agree to our <Link to="/terms">terms of use</Link>. See{' '}
+          <Link to="/returns">returns &amp; refunds</Link>.
+        </p>
       </div>
     </main>
   )

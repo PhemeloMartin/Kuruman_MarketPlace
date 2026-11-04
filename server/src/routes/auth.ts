@@ -3,7 +3,8 @@ import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import { pool } from "../db";
 import { normaliseSaPhone } from "../lib/phone";
-import { endSession, startSession } from "../auth/session";
+import { endSession, requireAuth, startSession } from "../auth/session";
+import { POLICY } from "../lib/policy";
 import { audit } from "../lib/audit";
 import { RESEND_AFTER_SECONDS, checkCode, issueCode, useCode } from "../lib/phoneCodes";
 import { SMS_DEMO_SHOW_CODES } from "../lib/sms";
@@ -203,6 +204,41 @@ authRouter.post("/logout", async (req, res) => {
 });
 
 // The app calls this on start-up to find out who (if anyone) is signed in.
+// GET /api/auth/terms - has this person accepted the current terms of use? If not, the website shows the
+// "I agree to the above" box (like Payfast) before they carry on. previousVersion tells "first time" from
+// "the terms changed".
+authRouter.get("/terms", requireAuth, async (req, res) => {
+  const r = await pool.query("SELECT terms_version, terms_accepted_at FROM users WHERE id = $1", [req.user!.id]);
+  const u = r.rows[0];
+  res.json({
+    version: POLICY.termsVersion,
+    accepted: u.terms_version === POLICY.termsVersion,
+    previousVersion: u.terms_version,
+    acceptedAt: u.terms_accepted_at,
+  });
+});
+
+// POST /api/auth/terms { version } - "I agree to the above". The version must be the current one (a page
+// opened before the terms changed can't accept the old text). Kept on the account and in the audit log.
+authRouter.post("/terms", requireAuth, async (req, res) => {
+  if (req.body?.version !== POLICY.termsVersion) {
+    return res.status(409).json({ error: "The terms have just changed. Please read the new version." });
+  }
+  await pool.query("UPDATE users SET terms_version = $2, terms_accepted_at = now(), updated_at = now() WHERE id = $1", [
+    req.user!.id,
+    POLICY.termsVersion,
+  ]);
+  await audit(pool, {
+    actorId: req.user!.id,
+    action: "terms.accept",
+    resourceType: "user",
+    resourceId: req.user!.id,
+    outcome: "success",
+    changes: { version: POLICY.termsVersion },
+  });
+  res.json({ accepted: true });
+});
+
 // Not being signed in is a normal answer here (user: null), not an error.
 authRouter.get("/me", (req, res) => {
   res.json({ user: req.user ?? null });
