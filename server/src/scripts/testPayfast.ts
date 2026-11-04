@@ -24,7 +24,7 @@ import { AddressInfo } from "net";
 import { app } from "../app";
 import { pool } from "../db";
 import { expireOverdueOrders } from "../lib/expiry";
-import { itnSignature, payfastEncode } from "../lib/payfast";
+import { buildCheckout, itnSignature, payfastConfig, payfastEncode } from "../lib/payfast";
 
 const ORIGIN = "http://localhost:5173";
 let base = "";
@@ -129,6 +129,25 @@ async function main() {
       assert.ok(r.data.fields.signature?.length === 32, "form is signed");
       reference = r.data.fields.m_payment_id;
       amount = r.data.fields.amount;
+    });
+
+    await check("Payfast always gets a clean return/cancel address, whatever was pasted into Render", async () => {
+      const saved = { app: process.env.PUBLIC_APP_URL, origin: process.env.CLIENT_ORIGIN };
+      const returnUrl = () =>
+        buildCheckout(payfastConfig()!, { reference: "r", amountCents: 3700, orderNumber: "KMP-1", orderId: 1 }).fields.return_url;
+      try {
+        process.env.CLIENT_ORIGIN = "https://kurumanmarketplace.co.za,https://kurumanmarketplace.onrender.com";
+        // A space or line break pasted at the end, a slash, a list, nothing, or no https:// at all.
+        for (const typed of ["https://kurumanmarketplace.co.za ", "https://kurumanmarketplace.co.za/\n", " https://kurumanmarketplace.co.za, https://x.onrender.com", "", "kurumanmarketplace.co.za"]) {
+          process.env.PUBLIC_APP_URL = typed;
+          assert.equal(returnUrl(), "https://kurumanmarketplace.co.za/orders?payment=returned", JSON.stringify(typed));
+        }
+      } finally {
+        process.env.PUBLIC_APP_URL = saved.app;
+        process.env.CLIENT_ORIGIN = saved.origin;
+        if (saved.app === undefined) delete process.env.PUBLIC_APP_URL;
+        if (saved.origin === undefined) delete process.env.CLIENT_ORIGIN;
+      }
     });
 
     await check("asking again re-uses the same unfinished attempt (no second charge)", async () => {

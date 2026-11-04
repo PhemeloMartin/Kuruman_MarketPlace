@@ -6,6 +6,20 @@ import { pool } from "../db";
 //   <link rel="canonical"> - the one address a page should be listed under. The same site also answers on
 //                 its onrender.com address; without this, Google could list both as copies.
 
+// A site address as typed into Render, cleaned up: the first one if several are listed, without spaces, a
+// line break or a slash at the end - or null if it isn't a proper http(s) address. A stray space pasted
+// with the address is invisible in Render, but Payfast refuses the whole payment over it.
+export function cleanSiteUrl(raw: string | undefined): string | null {
+  const first = raw?.split(",")[0]?.trim();
+  if (!first) return null;
+  try {
+    const u = new URL(first);
+    return u.protocol === "https:" || u.protocol === "http:" ? u.origin : null;
+  } catch {
+    return null;
+  }
+}
+
 // The site's main address: the first one in CLIENT_ORIGIN (e.g. https://kurumanmarketplace.co.za).
 export function canonicalSiteUrl(): string {
   const first = process.env.CLIENT_ORIGIN?.split(",")[0]?.trim();

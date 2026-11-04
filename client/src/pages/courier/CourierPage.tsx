@@ -7,7 +7,7 @@ import { MapView } from '../../components/MapView'
 import { CallButton } from '../../components/CallButton'
 import { DeliveryChat } from '../../components/DeliveryChat'
 import type { MapPin } from '../../components/DeliveryMap'
-import { VEHICLE_EMOJI, currentPosition, type Point } from '../../lib/geo'
+import { VEHICLE_EMOJI, type Point } from '../../lib/geo'
 import { useLiveLocation, type Sharing } from '../../lib/useLiveLocation'
 
 interface OpenJob {
@@ -120,16 +120,10 @@ export function CourierPage() {
     setBusy(id)
     setError(null)
     try {
-      // Customers follow their delivery on a map, so taking a job needs the phone's location on.
-      if (sharing.state !== 'on') {
-        try {
-          await currentPosition()
-        } catch (err) {
-          setError(`Turn on your location to take jobs: customers follow their delivery on a map. ${(err as Error).message}`)
-          return
-        }
-        sharing.turnOn()
-      }
+      // Customers follow their delivery on a map: taking a job switches location sharing on (the phone asks
+      // once). If location is off or blocked the job is still taken - the order must still arrive - and the
+      // banner above the job keeps saying how to turn it on.
+      sharing.turnOn()
       await api(`/courier/jobs/${id}/claim`, { method: 'POST' })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not take the job. Please try again.')

@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import dns from "dns/promises";
+import { canonicalSiteUrl, cleanSiteUrl } from "./seo";
 
 // Payfast (sandbox) integration, following Payfast's documented "custom integration":
 //   1. We build a signed form and the customer's browser posts it to Payfast.
@@ -31,7 +32,8 @@ export function payfastConfig(): PayfastConfig | null {
     passphrase: e.PAYFAST_PASSPHRASE ?? "",
     processUrl: `${host}/eng/process`,
     validateUrl: `${host}/eng/query/validate`,
-    publicAppUrl: e.PUBLIC_APP_URL ?? e.CLIENT_ORIGIN?.split(",")[0].trim() ?? "http://localhost:5173",
+    // Where Payfast sends the customer back: PUBLIC_APP_URL cleaned up, else the site's main address.
+    publicAppUrl: cleanSiteUrl(e.PUBLIC_APP_URL) ?? canonicalSiteUrl(),
     notifyUrl: e.PAYFAST_NOTIFY_URL ?? `http://localhost:${e.PORT ?? 4000}/api/payments/payfast/notify`,
     // Both checks are ON unless explicitly switched off for local contract tests.
     verifySourceIp: e.PAYFAST_VERIFY_SOURCE_IP !== "false",
@@ -87,8 +89,8 @@ export function buildCheckout(
   const fields: [string, string][] = [
     ["merchant_id", cfg.merchantId],
     ["merchant_key", cfg.merchantKey],
-    ["return_url", `${cfg.publicAppUrl}/orders?payment=returned&order=${attempt.orderId}`],
-    ["cancel_url", `${cfg.publicAppUrl}/orders?payment=cancelled&order=${attempt.orderId}`],
+    ["return_url", `${cfg.publicAppUrl}/orders?payment=returned`],
+    ["cancel_url", `${cfg.publicAppUrl}/orders?payment=cancelled`],
     ["notify_url", cfg.notifyUrl],
     ["m_payment_id", attempt.reference],
     ["amount", centsToAmount(attempt.amountCents)],
