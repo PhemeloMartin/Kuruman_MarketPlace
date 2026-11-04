@@ -334,7 +334,20 @@ export function CartPage() {
             You’re offline. Your cart is kept on this phone – send it when you’re connected.
           </p>
         )}
-        <button type="button" className="btn btn-primary btn-block" onClick={sendOrder} disabled={sending || !policy || !online}>
+        {/* Support staff can see, cancel and refund other people's orders, so their account doesn't shop
+            (the server refuses it too). Said plainly here instead of a bare "can't do this". */}
+        {user?.role === 'support' && (
+          <p className="notice error" role="status" style={{ marginBottom: 8 }}>
+            You’re signed in with a support account, which can’t place orders. Sign out, then sign in with your own
+            phone number to shop. Your cart stays on this phone.
+          </p>
+        )}
+        <button
+          type="button"
+          className="btn btn-primary btn-block"
+          onClick={sendOrder}
+          disabled={sending || !policy || !online || user?.role === 'support'}
+        >
           {sending ? 'Sending…' : user ? 'Send order to seller' : 'Sign in to send order'}
           <span translate="no">· {formatRand(total)}</span>
         </button>

@@ -24,7 +24,7 @@ export function currentPosition(): Promise<Point & { accuracy: number }> {
         reject(
           new Error(
             err.code === err.PERMISSION_DENIED
-              ? 'Location is blocked for this site. Allow it with the lock icon next to the web address, then try again.'
+              ? 'Location is blocked for this website. Allow it in your browser’s settings (iPhone: Settings > Privacy & Security > Location Services > Safari Websites > While Using; Android Chrome: the icon next to the web address > Permissions), then try again.'
               : 'Your phone couldn’t find where you are. Check that location (GPS) is on, then try again.'
           )
         ),

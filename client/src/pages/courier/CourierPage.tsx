@@ -402,7 +402,7 @@ function LocationBanner({ state, onTurnOn }: { state: Sharing; onTurnOn: () => v
       <p className="notice error" role="alert" style={{ marginBottom: 12 }}>
         📍{' '}
         {state === 'blocked'
-          ? 'Location is blocked, so your customer can’t see you coming. Allow location for this site (the lock icon next to the address), then reload the page.'
+          ? 'Location is blocked, so your customer can’t see you coming. Allow location for this website in your browser’s settings (iPhone: Settings > Privacy & Security > Location Services > Safari Websites > While Using), then reload the page.'
           : 'Your phone can’t find its location. Check that location (GPS) is on.'}
       </p>
     )
