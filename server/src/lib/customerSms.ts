@@ -76,6 +76,25 @@ export async function customerOrderSms(
   }
 }
 
+// The courier pressed "I'm outside": the customer may have closed the site while waiting, so they get an SMS
+// too. Only while the order is still on its way.
+export async function courierOutsideSms(client: PoolClient, orderId: number): Promise<{ phone: string; text: string } | null> {
+  const r = await client.query(
+    `SELECT o.order_number, o.status, u.phone, co.display_name AS courier
+       FROM orders o JOIN users u ON u.id = o.consumer_id
+       JOIN deliveries d ON d.order_id = o.id JOIN users co ON co.id = d.courier_id
+      WHERE o.id = $1`,
+    [orderId]
+  );
+  const o = r.rows[0];
+  if (!o?.phone || o.status !== "out_for_delivery") return null;
+  const name = String(o.courier).split(" ")[0].slice(0, 20);
+  return {
+    phone: o.phone,
+    text: `KurumanMarketPlace ${o.order_number}: ${name}, your courier, is outside with your order. Your code: ${canonicalSiteUrl()}/orders/${orderId}/track`,
+  };
+}
+
 // Support answered someone's help ticket: a short SMS with the link, so they hear it even when the site is
 // closed (the answer itself stays on the site). Fits in one SMS: the subject is shortened.
 export async function ticketAnsweredSms(

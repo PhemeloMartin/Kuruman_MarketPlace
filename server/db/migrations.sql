@@ -286,3 +286,16 @@ CREATE TABLE IF NOT EXISTS courier_locations (
   accuracy_m  INTEGER,                              -- how sure the phone is, in metres
   updated_at  TIMESTAMPTZ      NOT NULL DEFAULT now()
 );
+
+-- 2026-11-04: the customer and the courier delivering their order can message each other ("I'm at the
+-- gate"). Private to the two of them; deleted 30 days after the order ends, like the address.
+CREATE TABLE IF NOT EXISTS delivery_messages (
+  id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  order_id    BIGINT       NOT NULL REFERENCES orders(id),
+  sender_id   BIGINT       NOT NULL REFERENCES users(id),
+  body        VARCHAR(500) NOT NULL,
+  is_outside  BOOLEAN      NOT NULL DEFAULT FALSE,    -- the courier's "I'm outside" button (also sends an SMS)
+  read_at     TIMESTAMPTZ,                            -- when the other person saw it
+  created_at  TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_delivery_messages_order ON delivery_messages(order_id, id);

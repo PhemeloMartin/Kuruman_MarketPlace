@@ -2778,3 +2778,66 @@ label.busy {
 .track-steps li.current::before {
   box-shadow: 0 0 0 4px var(--primary-tint);
 }
+
+/* ---------- Chat between the customer and the courier ---------- */
+.chat {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface, #fff);
+}
+
+.chat-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.chat-list {
+  display: grid;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  margin: 10px 0;
+}
+
+.chat-list p {
+  margin: 0;
+  max-width: 85%;
+  padding: 8px 12px;
+  border-radius: 14px;
+  overflow-wrap: anywhere;
+}
+
+.chat-list .mine {
+  justify-self: end;
+  background: var(--primary);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-list .theirs {
+  justify-self: start;
+  background: var(--primary-tint);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-list time {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+.chat-replies {
+  margin-bottom: 8px;
+}
+
+.chat-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}

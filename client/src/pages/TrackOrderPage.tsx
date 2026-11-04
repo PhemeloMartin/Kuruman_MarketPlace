@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { CallButton } from '../components/CallButton'
+import { DeliveryChat } from '../components/DeliveryChat'
 import { HandoverCode } from '../components/HandoverCode'
 import { MapView } from '../components/MapView'
 import type { MapPin } from '../components/DeliveryMap'
@@ -28,6 +30,9 @@ interface Tracking {
     etaMinutes: number | null
   } | null
   mapCentre: Point
+  unreadMessages: number // from the courier, not seen yet
+  canMessage: boolean // a courier has the order
+  canCall: boolean // it's on its way
 }
 
 const REFRESH_MS = 10_000
@@ -194,6 +199,16 @@ export function TrackOrderPage() {
           {d?.courierLocation && <p className="fine-print">{freshness(d.courierLocation.secondsAgo)}</p>}
         </>
       )}
+
+      {t.canMessage && d?.courier && (
+        <DeliveryChat
+          orderId={t.orderId}
+          otherName={d.courier.name}
+          unread={t.unreadMessages}
+          quickReplies={['I’m coming out now', 'I’m at the gate', 'Please call me']}
+        />
+      )}
+      {t.canCall && d?.courier && <CallButton target={{ orderId: t.orderId, with: 'courier' }} label={`📞 Call ${d.courier.name} free`} />}
 
       {t.canSetPin && !t.destination?.location && (
         <div className="location-picker">

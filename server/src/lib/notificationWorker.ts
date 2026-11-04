@@ -1,6 +1,6 @@
 import { PoolClient } from "pg";
 import { pool } from "../db";
-import { customerOrderSms, ticketAnsweredSms } from "./customerSms";
+import { courierOutsideSms, customerOrderSms, ticketAnsweredSms } from "./customerSms";
 import { sendSms } from "./sms";
 import { alertNewOrder } from "./smsOrders";
 
@@ -105,6 +105,27 @@ async function notesFor(client: PoolClient, e: { event_type: string; aggregate_i
       return [{ userId: e.payload.userId, template: e.payload.verified ? "courier.documents_verified" : "courier.documents_rejected", args: { reason: e.payload.reason } }];
     case "ticket.answered":
       return [{ userId: e.payload.userId, template: "ticket.answered", args: { ticketId: e.payload.ticketId, subject: e.payload.subject } }];
+    case "delivery.message": {
+      const r = await client.query(
+        `SELECT m.body, m.read_at, u.display_name, o.order_number, o.consumer_id
+           FROM delivery_messages m JOIN users u ON u.id = m.sender_id JOIN orders o ON o.id = m.order_id
+          WHERE m.id = $1`,
+        [e.payload.messageId]
+      );
+      const m = r.rows[0];
+      // Already seen in the open chat (or deleted): no notification needed.
+      if (!m || m.read_at) return [];
+      return [{
+        userId: e.payload.recipientId,
+        template: "delivery.message",
+        args: {
+          from: String(m.display_name).split(" ")[0],
+          text: String(m.body).slice(0, 80),
+          orderNumber: m.order_number,
+          forCustomer: Number(m.consumer_id) === e.payload.recipientId,
+        },
+      }];
+    }
     default:
       throw new Error(`Unknown event type ${e.event_type}`);
   }
@@ -143,12 +164,13 @@ export async function processOutbox(options: { failWith?: string } = {}): Promis
         const sms =
           e.event_type === "order.status_changed" ? await customerOrderSms(client, Number(e.aggregate_id), e.payload)
           : e.event_type === "ticket.answered" ? await ticketAnsweredSms(client, e.payload)
+          : e.event_type === "delivery.message" && e.payload.outside ? await courierOutsideSms(client, Number(e.aggregate_id))
           : null;
         if (sms) {
           await client.query("INSERT INTO sms_messages (phone, direction, body, order_id) VALUES ($1, 'out', $2, $3)", [
             sms.phone,
             sms.text,
-            e.event_type === "order.status_changed" ? Number(e.aggregate_id) : null,
+            e.event_type === "order.status_changed" || e.event_type === "delivery.message" ? Number(e.aggregate_id) : null,
           ]);
         }
         await client.query("UPDATE outbox_events SET status = 'sent', sent_at = now(), last_error = NULL WHERE id = $1", [e.id]);

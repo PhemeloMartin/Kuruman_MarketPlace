@@ -13,6 +13,7 @@ import { emailAdmin } from "../lib/email";
 import { noteOnCase } from "../lib/caseMail";
 import { canonicalSiteUrl } from "../lib/seo";
 import { addressInKuruman, directionsUrl, parsePoint } from "../lib/geo";
+import { sendDeliveryMessage } from "../lib/deliveryChat";
 
 // Courier flow (spec FR-14, FR-15, TX-03). Only approved couriers get here.
 export const courierRouter = Router();
@@ -140,7 +141,9 @@ courierRouter.get("/my-jobs", async (req, res) => {
     `SELECT d.id, d.status, d.fee_cents, d.cash_to_collect_cents, d.released_to_courier_id = $1 AS released,
             d.claimed_at, d.collected_at, d.delivered_at, d.failed_reason, d.returned_at, o.status AS order_status,
             o.id AS order_id, o.order_number, o.delivery_address, o.notes, o.delivery_lat, o.delivery_lng,
-            u.display_name AS customer_name, u.phone AS customer_phone, cp.vehicle_type,
+            u.display_name AS customer_name, u.phone AS customer_phone, cp.vehicle_type, o.consumer_id,
+            (SELECT count(*)::int FROM delivery_messages m
+              WHERE m.order_id = o.id AND m.sender_id = o.consumer_id AND m.read_at IS NULL) AS unread_messages,
             b.name AS business_name, b.area AS business_area, b.pickup_address, b.phone AS business_phone,
             c.status AS cash_status,
             (SELECT json_agg(json_build_object('name', i.product_name, 'quantity', i.quantity) ORDER BY i.id)
@@ -169,6 +172,7 @@ courierRouter.get("/my-jobs", async (req, res) => {
         id: Number(j.id),
         orderId: Number(j.order_id),
         vehicleType: j.vehicle_type,
+        unreadMessages: active ? j.unread_messages : 0, // from the customer, not seen yet
         status: j.status,
         orderNumber: j.order_number,
         feeCents: j.fee_cents,
@@ -359,6 +363,33 @@ courierRouter.post("/jobs/:id/fail", (req, res) =>
     res.json({ status: "failed" });
   })
 );
+
+// POST /api/courier/jobs/:id/outside - "I'm outside": a message in the chat AND an SMS to the customer, who
+// may have closed the site while waiting. At most once every 2 minutes (then: call them).
+courierRouter.post("/jobs/:id/outside", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(404).json({ error: "Job not found." });
+  const r = await pool.query(
+    `SELECT d.order_id, d.status, o.consumer_id,
+            (SELECT max(m.created_at) > now() - interval '2 minutes' FROM delivery_messages m
+              WHERE m.order_id = d.order_id AND m.is_outside) AS told_recently
+       FROM deliveries d JOIN orders o ON o.id = d.order_id
+      WHERE d.id = $1 AND d.courier_id = $2`,
+    [id, req.user!.id]
+  );
+  const job = r.rows[0];
+  if (!job) return res.status(404).json({ error: "Job not found." });
+  if (job.status !== "collected") return res.status(409).json({ error: "Collect the order first." });
+  if (job.told_recently) return res.status(429).json({ error: "You told them less than 2 minutes ago. If they don't come out, call them." });
+  await sendDeliveryMessage({
+    orderId: Number(job.order_id),
+    senderId: req.user!.id,
+    recipientId: Number(job.consumer_id),
+    body: "I'm outside with your order.",
+    outside: true,
+  });
+  res.status(201).json({ told: true });
+});
 
 // The courier's position is shared only while they have a delivery on the go: with none left, it's deleted.
 async function stopSharingIfDone(db: PoolClient | typeof pool, courierId: number): Promise<boolean> {

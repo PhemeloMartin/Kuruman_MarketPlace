@@ -52,6 +52,11 @@ export function CourierTermsPage() {
       <h2>3. Taking and doing a delivery</h2>
       <ol>
         <li>Take only a job you can deliver now. If you can’t after all, tell support straight away.</li>
+        <li>
+          Keep your phone’s location on and the Deliveries page open while you deliver: the customer follows the
+          delivery on a map. Only your latest position is kept, it is shown only to that customer, and it is deleted when
+          you finish.
+        </li>
         <li>Collect the order from the seller only after they hand it over to you in the app.</li>
         <li>
           Hand the order over only to the customer, and only when they give you their one-time code. Never ask for the
@@ -74,8 +79,8 @@ export function CourierTermsPage() {
 
       <h2>5. Customers’ information</h2>
       <p>
-        You see a customer’s name, phone number and address only while you deliver their order. Use them only for that
-        delivery: don’t save, share or use them afterwards (POPIA).
+        You see a customer’s name, phone number, address and map pin only while you deliver their order. Use them, and
+        the chat and calls with them, only for that delivery: don’t save, share or use them afterwards (POPIA).
       </p>
 
       <h2>6. Safety and conduct</h2>

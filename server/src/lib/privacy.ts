@@ -60,6 +60,11 @@ export async function closeAccount(client: PoolClient, userId: number, staffId: 
   await client.query("DELETE FROM notifications WHERE user_id = $1", [userId]);
   // Their help tickets: what they wrote, and support's answers to them.
   await client.query("DELETE FROM tickets WHERE user_id = $1", [userId]);
+  // Their delivery chats: as the customer, and what they wrote as a courier.
+  await client.query(
+    "DELETE FROM delivery_messages WHERE sender_id = $1 OR order_id IN (SELECT id FROM orders WHERE consumer_id = $1)",
+    [userId]
+  );
   // A courier's live position (normally gone already: it's kept only during a delivery).
   await client.query("DELETE FROM courier_locations WHERE courier_id = $1", [userId]);
   // 2. Login details and name: erased; the row stays as a neutral surrogate for old records.
@@ -176,6 +181,12 @@ export async function exportFor(db: Db, userId: number) {
        FROM tickets t WHERE t.user_id = $1 ORDER BY t.id`,
     [userId]
   );
+  const chats = await db.query(
+    `SELECT o.order_number, m.sender_id = $1 AS from_you, m.body AS message, m.created_at AS at
+       FROM delivery_messages m JOIN orders o ON o.id = m.order_id
+      WHERE o.consumer_id = $1 OR m.sender_id = $1 ORDER BY m.id`,
+    [userId]
+  );
   return {
     about: "Personal information KurumanMarketPlace holds about you, as at the time of this download.",
     generatedAt: new Date().toISOString(),
@@ -200,5 +211,6 @@ export async function exportFor(db: Db, userId: number) {
     requestsAndApplications: requests.rows,
     notifications: notifications.rows,
     helpTickets: tickets.rows,
+    deliveryMessages: chats.rows,
   };
 }

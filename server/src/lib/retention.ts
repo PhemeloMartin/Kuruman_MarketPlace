@@ -32,6 +32,14 @@ export async function runRetention() {
       WHERE l.updated_at < now() - interval '1 hour'
          OR NOT EXISTS (SELECT 1 FROM deliveries d WHERE d.courier_id = l.courier_id AND d.status IN ('claimed', 'collected'))`
   );
+  // Messages between customers and couriers: 30 days after the order ended, like the address.
+  await pool.query(
+    `DELETE FROM delivery_messages m USING orders o
+      WHERE o.id = m.order_id
+        AND o.status IN ('completed', 'cancelled', 'declined', 'expired')
+        AND o.updated_at < now() - interval '30 days'
+        AND NOT EXISTS (SELECT 1 FROM support_cases c WHERE c.order_id = o.id AND c.status = 'open')`
+  );
   // Who called whom (and the number dialled): 30 days.
   await pool.query(`DELETE FROM calls WHERE created_at < now() - interval '30 days'`);
   // Order SMS (names and items): 30 days, like notifications.

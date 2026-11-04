@@ -3,6 +3,7 @@ import { pool } from "../db";
 import { requireAuth } from "../auth/session";
 import { POLICY } from "../lib/policy";
 import { distanceKm, etaMinutes, inServiceArea, parsePoint } from "../lib/geo";
+import { chatRole, sendDeliveryMessage } from "../lib/deliveryChat";
 
 // Following a delivery, like Uber Eats: where the order is, where the courier is, and roughly how far
 // away. Only the customer who placed the order sees this, and the courier's position only while they
@@ -23,7 +24,9 @@ trackingRouter.get("/:id/tracking", requireAuth, async (req, res) => {
             b.name AS shop_name, b.area AS shop_area,
             d.status AS delivery_status, co.display_name AS courier_name, cp.vehicle_type,
             l.lat AS courier_lat, l.lng AS courier_lng, l.accuracy_m,
-            extract(epoch FROM now() - l.updated_at)::int AS seconds_ago
+            extract(epoch FROM now() - l.updated_at)::int AS seconds_ago,
+            (SELECT count(*)::int FROM delivery_messages m
+              WHERE m.order_id = o.id AND m.sender_id <> o.consumer_id AND m.read_at IS NULL) AS unread_messages
        FROM orders o
        JOIN businesses b ON b.id = o.business_id
        LEFT JOIN deliveries d ON d.order_id = o.id
@@ -67,7 +70,48 @@ trackingRouter.get("/:id/tracking", requireAuth, async (req, res) => {
         }
       : null,
     mapCentre: home ?? courierAt ?? POLICY.serviceCentre,
+    // Messages from the courier the customer hasn't seen yet, and what they can do from this page.
+    unreadMessages: o.unread_messages,
+    canMessage: o.courier_name !== null && (o.delivery_status === "claimed" || o.delivery_status === "collected"),
+    canCall: o.courier_name !== null && o.status === "out_for_delivery" && o.fulfilment === "delivery",
   });
+});
+
+// GET /api/orders/:id/messages - the chat with the courier (or, for the courier, with the customer).
+// Opening it marks the other person's messages as read.
+trackingRouter.get("/:id/messages", requireAuth, async (req, res) => {
+  const who = Number.isInteger(Number(req.params.id)) ? await chatRole(Number(req.params.id), req.user!.id) : null;
+  if (!who) return res.status(404).json({ error: "Order not found." });
+  await pool.query("UPDATE delivery_messages SET read_at = now() WHERE order_id = $1 AND sender_id <> $2 AND read_at IS NULL", [
+    who.orderId,
+    req.user!.id,
+  ]);
+  const m = await pool.query("SELECT id, sender_id, body, is_outside, created_at FROM delivery_messages WHERE order_id = $1 ORDER BY id", [who.orderId]);
+  res.json({
+    canSend: who.canSend,
+    otherName: who.otherName,
+    messages: m.rows.map((x) => ({ id: Number(x.id), mine: Number(x.sender_id) === req.user!.id, text: x.body, outside: x.is_outside, at: x.created_at })),
+  });
+});
+
+const MESSAGES_PER_10_MIN = 30; // per person per order: plenty for a delivery, stops a flood
+
+// POST /api/orders/:id/messages { text } - only while a courier has the order.
+trackingRouter.post("/:id/messages", requireAuth, async (req, res) => {
+  const who = Number.isInteger(Number(req.params.id)) ? await chatRole(Number(req.params.id), req.user!.id) : null;
+  if (!who) return res.status(404).json({ error: "Order not found." });
+  if (!who.canSend || who.otherId === null) {
+    return res.status(409).json({ error: "You can message the courier once one is delivering your order." });
+  }
+  const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
+  if (text.length < 1 || text.length > 500) return res.status(422).json({ error: "Write a message of up to 500 characters." });
+  const recent = await pool.query(
+    "SELECT count(*)::int AS n FROM delivery_messages WHERE order_id = $1 AND sender_id = $2 AND created_at > now() - interval '10 minutes'",
+    [who.orderId, req.user!.id]
+  );
+  if (recent.rows[0].n >= MESSAGES_PER_10_MIN) return res.status(429).json({ error: "That's a lot of messages. Please call instead." });
+  const id = await sendDeliveryMessage({ orderId: who.orderId, senderId: req.user!.id, recipientId: who.otherId, body: text });
+  res.status(201).json({ id });
 });
 
 // POST /api/orders/:id/location { lat, lng } - "Share where I am" from the tracking page, for a customer who

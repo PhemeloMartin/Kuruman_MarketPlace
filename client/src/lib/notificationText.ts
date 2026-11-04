@@ -31,6 +31,7 @@ const TEMPLATES: Record<string, (a: Args) => string> = {
   'applicant.rejected': (a) => `Your application to ${a.kind === 'seller' ? 'sell' : 'deliver'} wasn’t approved: ${a.reason}`,
   'privacy.held': () => 'Your request to close your account is on hold. See your Profile for the reason.',
   'ticket.answered': (a) => `Support answered your question #${a.ticketId}: “${a.subject}”.`,
+  'delivery.message': (a) => `${a.from} (order ${a.orderNumber}): “${a.text}”`,
   'courier.documents_verified': () => 'Your documents were checked. Thank you – everything is on file.',
   'courier.documents_rejected': (a) => `Your documents couldn’t be accepted: ${a.reason} Please send them again under Deliveries.`,
 }
@@ -45,6 +46,8 @@ const TRACKABLE = ['customer.ready_delivery', 'customer.ready_seller_delivery', 
 
 export function notificationLink(template: string, args: Args = {}, orderId: number | null = null): string {
   if (orderId !== null && TRACKABLE.includes(template)) return `/orders/${orderId}/track`
+  // A chat message: the customer opens their tracking page, the courier their Deliveries page.
+  if (template === 'delivery.message') return args.forCustomer && orderId !== null ? `/orders/${orderId}/track` : '/courier'
   if (template.startsWith('ticket.')) return `/help/${args.ticketId}`
   if (template.startsWith('courier.')) return '/courier'
   if (template.startsWith('seller.')) return '/seller'

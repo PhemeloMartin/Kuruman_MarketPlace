@@ -324,4 +324,9 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       /orders/:id/track page shows the steps, a map with them and the courier, "8.3 km away · about 22 min"
       (straight line x 1.3 at the vehicle's town speed), the delivery code, and "Share where I am" if they had
       no pin. Notifications and the "on the way" SMS link to it. `test:tracking` (16 checks)
+- [x] Customer <-> courier chat while a courier has the order (quick replies, unread badge, a notification only
+      if not seen yet; the courier loses it when the delivery ends, the customer can still read it; deleted after
+      30 days). "I'm outside" = a chat message + an SMS to the customer (at most every 2 min). Free calls both
+      ways once the order is on its way (Twilio, existing rules). Privacy notice and courier terms updated.
+      `test:tracking` (21 checks)
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

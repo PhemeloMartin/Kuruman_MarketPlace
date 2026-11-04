@@ -1,5 +1,6 @@
 // Tests for delivering to a map pin and following a delivery (like Uber Eats): the customer's pin at
-// checkout, directions for whoever delivers, the courier's live position, and who may see what.
+// checkout, directions for whoever delivers, the courier's live position, the chat and "I'm outside", and
+// who may see what.
 //
 //   npm run test:tracking
 //
@@ -143,6 +144,44 @@ async function main() {
       assert.deepEqual(t.destination.location, HOME);
     });
 
+    const messages = async (cookie: string, id = orderId) => call(cookie, "GET", `/api/orders/${id}/messages`);
+    const notificationsOf = async (cookie: string) => (await call(cookie, "GET", "/api/notifications")).data;
+
+    await check("the customer and the courier can message each other while it's being delivered", async () => {
+      assert.equal((await call(customer, "POST", `/api/orders/${noPinOrder}/messages`, { text: "Hello?" })).status, 409, "no courier yet");
+      assert.equal((await call(customer, "POST", `/api/orders/${orderId}/messages`, { text: "   " })).status, 422);
+      assert.equal((await call(customer, "POST", `/api/orders/${orderId}/messages`, { text: "I'm at the blue gate" })).status, 201);
+      const job = (await call(courier, "GET", "/api/courier/my-jobs")).data.find((j: any) => j.id === jobId);
+      assert.equal(job.unreadMessages, 1);
+      const chat = (await messages(courier)).data;
+      assert.equal(chat.otherName, "Thato");
+      assert.deepEqual(chat.messages.map((m: any) => [m.mine, m.text]), [[false, "I'm at the blue gate"]]);
+      assert.equal((await call(courier, "GET", "/api/courier/my-jobs")).data.find((j: any) => j.id === jobId).unreadMessages, 0, "opening it marks it read");
+      assert.equal((await call(courier, "POST", `/api/orders/${orderId}/messages`, { text: "On my way to the shop" })).status, 201);
+      const t = (await tracking()).data;
+      assert.equal(t.unreadMessages, 1);
+      assert.equal(t.canMessage, true);
+      assert.equal(t.canCall, false, "calls once the order is on its way");
+    });
+
+    await check("nobody else can read or write in that chat", async () => {
+      const lesego = await login("0710000011");
+      assert.equal((await messages(lesego)).status, 404);
+      assert.equal((await call(lesego, "POST", `/api/orders/${orderId}/messages`, { text: "hi" })).status, 404);
+      assert.equal((await messages(seller)).status, 404, "not even the seller");
+    });
+
+    await check("an unread message becomes a notification (one already seen doesn't)", async () => {
+      await processOutbox();
+      const forCustomer = (await notificationsOf(customer)).filter((n: any) => n.template === "delivery.message");
+      assert.equal(forCustomer.length, 1);
+      assert.equal(forCustomer[0].args.from, "Pieter");
+      assert.equal(forCustomer[0].args.forCustomer, true);
+      assert.equal(forCustomer[0].orderId, orderId);
+      const forCourier = (await notificationsOf(courier)).filter((n: any) => n.template === "delivery.message");
+      assert.equal(forCourier.length, 0, "Pieter had already read Thato's message");
+    });
+
     await check("on the way: how far away the courier is, and about how long they'll be", async () => {
       await call(seller, "POST", `/api/seller/orders/${orderId}/release`);
       assert.equal((await call(courier, "POST", `/api/courier/jobs/${jobId}/collect`)).status, 200);
@@ -172,6 +211,19 @@ async function main() {
       assert.ok(sms.rows[0].body.length <= 160, `${sms.rows[0].body.length} characters`);
     });
 
+    await check("\"I'm outside\": a chat message and an SMS to the customer, at most every 2 minutes", async () => {
+      assert.equal((await tracking()).data.canCall, true, "on its way: the customer can call the courier free");
+      assert.equal((await call(courier, "POST", `/api/courier/jobs/${jobId}/outside`)).status, 201);
+      assert.equal((await call(courier, "POST", `/api/courier/jobs/${jobId}/outside`)).status, 429);
+      await processOutbox();
+      const sms = await pool.query("SELECT body FROM sms_messages WHERE order_id = $1 AND body LIKE '%outside%'", [orderId]);
+      assert.equal(sms.rowCount, 1);
+      assert.match(sms.rows[0].body, /Pieter, your courier, is outside/);
+      assert.ok(sms.rows[0].body.length <= 160, `${sms.rows[0].body.length} characters`);
+      const last = (await messages(customer)).data.messages.at(-1);
+      assert.equal(last.outside, true);
+    });
+
     await check("a customer without a pin can share where they are from the tracking page", async () => {
       assert.equal((await call(customer, "POST", `/api/orders/${noPinOrder}/location`, { lat: -26.2, lng: 28.04 })).status, 422);
       const lesego = await login("0710000011");
@@ -185,6 +237,14 @@ async function main() {
       assert.equal((await call(courier, "POST", `/api/courier/jobs/${jobId}/deliver`, { code })).status, 200);
       const done = (await call(courier, "GET", "/api/courier/my-jobs")).data.find((j: any) => j.id === jobId);
       assert.equal(done.customer, null);
+    });
+
+    await check("the chat closes when the delivery ends: the courier loses it, the customer can still read it", async () => {
+      assert.equal((await messages(courier)).status, 404);
+      const chat = (await messages(customer)).data;
+      assert.equal(chat.canSend, false);
+      assert.equal(chat.messages.length, 3);
+      assert.equal((await call(customer, "POST", `/api/orders/${orderId}/messages`, { text: "Thanks!" })).status, 409);
     });
 
     await check("...and stops sharing: their position is deleted, and the customer no longer sees it", async () => {
@@ -227,10 +287,11 @@ async function main() {
       assert.equal(courierOrder.deliverTo, null);
     });
 
-    await check("the pin is erased with the address 30 days after the order ends", async () => {
+    await check("the pin and the chat are erased with the address 30 days after the order ends", async () => {
       await pool.query("UPDATE orders SET updated_at = now() - interval '31 days' WHERE id = $1", [orderId]);
       await runRetention();
       assert.deepEqual(await pinOf(orderId), { lat: null, lng: null });
+      assert.equal((await pool.query("SELECT count(*)::int AS n FROM delivery_messages WHERE order_id = $1", [orderId])).rows[0].n, 0);
     });
 
     console.log(`\nTracking: ${passed} checks PASSED`);

@@ -3,6 +3,7 @@
 -- WARNING: running this file drops and re-creates all tables (development only).
 
 -- Tables added later in migrations.sql are dropped here too, so a reset starts clean.
+DROP TABLE IF EXISTS delivery_messages CASCADE;
 DROP TABLE IF EXISTS courier_locations CASCADE;
 DROP TABLE IF EXISTS ticket_messages CASCADE;
 DROP TABLE IF EXISTS tickets CASCADE;

@@ -40,6 +40,15 @@ export function PrivacyPage() {
           <strong>Delivery address and notes</strong> – only for delivery orders, to get the order to you.
         </li>
         <li>
+          <strong>Your delivery pin (optional)</strong> – if you share your location at checkout or while you wait, so
+          the courier can find you. <strong>Couriers: your phone’s position</strong> while you deliver, so the customer
+          can follow their order.
+        </li>
+        <li>
+          <strong>Messages between you and the courier</strong> about a delivery (“I’m at the gate”), and calls through
+          the site – to get the order to you.
+        </li>
+        <li>
           <strong>Your orders, payments and refunds</strong> – so everyone can see what was bought, paid and handed
           over. Card details never reach us: online payments happen on Payfast’s own page.
         </li>
@@ -70,7 +79,14 @@ export function PrivacyPage() {
       <h2>Who can see it</h2>
       <ul>
         <li>A seller sees your name and order – not your phone number or address.</li>
-        <li>A courier sees your name, phone and address only while delivering your order, and loses access after.</li>
+        <li>
+          A courier sees your name, phone, address and pin only while delivering your order, and loses access after.
+          (A shop that delivers its own orders sees your address and pin only while it’s on its way.)
+        </li>
+        <li>
+          A courier’s position is shown only to the customer of the order they are delivering, and only during that
+          delivery. Your messages with the courier are seen only by the two of you.
+        </li>
         <li>
           Support staff see details only when handling a case about your order, and every time they look at a phone
           number it is recorded.
@@ -84,7 +100,11 @@ export function PrivacyPage() {
 
       <h2>How long we keep it</h2>
       <ul>
-        <li>Delivery addresses: removed 30 days after the order is finished, unless a problem with it is still open.</li>
+        <li>
+          Delivery addresses, pins and messages with the courier: removed 30 days after the order is finished, unless a
+          problem with it is still open.
+        </li>
+        <li>A courier’s position: only the latest one is kept, and it is deleted when the delivery ends.</li>
         <li>Order, payment and refund records: kept as business records for the approved period.</li>
         <li>Your account: until you ask us to close it.</li>
         <li>Sellers’ and couriers’ documents: deleted 30 days after the application is decided (approved or not).</li>

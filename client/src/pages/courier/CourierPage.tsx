@@ -4,6 +4,8 @@ import { CodeScanButton } from '../../components/CodeScanButton'
 import { DOCUMENT_LABEL, readDocument } from '../../lib/documents'
 import { formatRand } from '../../lib/money'
 import { MapView } from '../../components/MapView'
+import { CallButton } from '../../components/CallButton'
+import { DeliveryChat } from '../../components/DeliveryChat'
 import type { MapPin } from '../../components/DeliveryMap'
 import { VEHICLE_EMOJI, currentPosition, type Point } from '../../lib/geo'
 import { useLiveLocation, type Sharing } from '../../lib/useLiveLocation'
@@ -22,6 +24,7 @@ interface MyJob {
   id: number
   orderId: number
   vehicleType: string
+  unreadMessages: number // from the customer, not seen yet
   status: 'claimed' | 'collected' | 'delivered' | 'failed'
   orderNumber: string
   feeCents: number
@@ -422,6 +425,23 @@ function ActiveJob({ job: j, me, onChanged }: { job: MyJob; me: Point | null; on
   const [code, setCode] = useState('')
   const [failing, setFailing] = useState(false)
   const [failReason, setFailReason] = useState('')
+  const [toldOutside, setToldOutside] = useState(false)
+  const customerFirstName = j.customer?.name.split(' ')[0] ?? 'the customer'
+  const quickReplies = ['I’m on my way', 'I’m at the gate', 'I can’t find the house – please call me']
+
+  // "I'm outside": a message in the chat and an SMS to the customer.
+  async function tellOutside() {
+    setBusy(true)
+    setError(null)
+    try {
+      await api(`/courier/jobs/${j.id}/outside`, { method: 'POST' })
+      setToldOutside(true)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   async function act(path: string, body?: unknown) {
     setBusy(true)
@@ -456,6 +476,7 @@ function ActiveJob({ job: j, me, onChanged }: { job: MyJob; me: Point | null; on
             {j.business.phone && <PhoneLink e164={j.business.phone} />}
             {j.business.directionsUrl && <DirectionsLink url={j.business.directionsUrl} />}
           </div>
+          <DeliveryChat orderId={j.orderId} otherName={customerFirstName} unread={j.unreadMessages} quickReplies={quickReplies} />
           {j.releasedBySeller ? (
             <button type="button" className="btn btn-primary btn-block" disabled={busy} onClick={() => act('collect')}>
               {busy ? 'Saving…' : 'I’ve collected the order'}
@@ -491,6 +512,16 @@ function ActiveJob({ job: j, me, onChanged }: { job: MyJob; me: Point | null; on
           ) : (
             <p className="fine-print">No map pin for this order: use the address, and call if you can’t find it.</p>
           )}
+          <button type="button" className="btn btn-primary btn-block" style={{ marginTop: 10 }} disabled={busy} onClick={tellOutside}>
+            📍 I’m outside
+          </button>
+          {toldOutside && (
+            <p className="fine-print" role="status">
+              ✓ {customerFirstName} got a message and an SMS that you’re outside.
+            </p>
+          )}
+          <DeliveryChat orderId={j.orderId} otherName={customerFirstName} unread={j.unreadMessages} quickReplies={quickReplies} />
+          <CallButton target={{ orderId: j.orderId, with: 'customer' }} label={`📞 Call ${customerFirstName} free`} />
           {j.cashToCollectCents > 0 && (
             <p className="notice" style={{ marginTop: 10 }}>
               Collect <strong translate="no">{formatRand(j.cashToCollectCents)}</strong> cash from the customer.
