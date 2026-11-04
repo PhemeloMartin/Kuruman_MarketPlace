@@ -5,15 +5,19 @@ import { useCart } from '../cart/CartContext'
 import { MokalaSmall } from '../components/Art'
 import { MinusIcon, PlusIcon } from '../components/Icons'
 import { ProductPhoto } from '../components/ProductCard'
+import { LocationPicker } from '../components/LocationPicker'
 import { api, ApiError } from '../lib/api'
 import { formatRand } from '../lib/money'
 import type { Product, Fulfilment, Shop } from '../lib/types'
 import { useOnline } from '../lib/useOnline'
+import type { Point } from '../lib/geo'
 
 interface Policy {
   deliveryFeeCents: number
   sellerResponseMinutes: number
   onlinePaymentAvailable: boolean
+  serviceCentre: Point
+  serviceRadiusKm: number
 }
 
 // A fresh random key for each checkout. If "Send order" reaches the server twice
@@ -46,6 +50,7 @@ export function CartPage() {
   const mustCollect = cart.lines.filter((l) => l.collectionOnly)
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online'>('cash')
   const [address, setAddress] = useState('')
+  const [pin, setPin] = useState<Point | null>(null)
   const [notes, setNotes] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
   const [fields, setFields] = useState<Record<string, string>>({})
@@ -129,6 +134,7 @@ export function CartPage() {
           fulfilment,
           paymentMethod,
           deliveryAddress: fulfilment !== 'pickup' ? address : null,
+          deliveryLocation: fulfilment !== 'pickup' ? pin : null,
           expectedTotalCents: total,
         },
       })
@@ -272,6 +278,7 @@ export function CartPage() {
               {fields.deliveryAddress}
             </p>
           )}
+          {policy && <LocationPicker value={pin} onChange={setPin} area={policy} error={fields.deliveryLocation} />}
         </div>
       )}
 

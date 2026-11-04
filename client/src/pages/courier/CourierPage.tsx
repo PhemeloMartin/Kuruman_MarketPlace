@@ -3,6 +3,7 @@ import { api, ApiError } from '../../lib/api'
 import { CodeScanButton } from '../../components/CodeScanButton'
 import { DOCUMENT_LABEL, readDocument } from '../../lib/documents'
 import { formatRand } from '../../lib/money'
+import { MapView } from '../../components/MapView'
 
 interface OpenJob {
   id: number
@@ -16,14 +17,22 @@ interface OpenJob {
 
 interface MyJob {
   id: number
+  orderId: number
   status: 'claimed' | 'collected' | 'delivered' | 'failed'
   orderNumber: string
   feeCents: number
   cashToCollectCents: number
   cashStatus: 'collected' | 'remitted' | 'disputed' | null
   releasedBySeller: boolean
-  business: { name: string; area: string; pickupAddress: string | null; phone: string | null }
-  customer: { name: string; phone: string; address: string; notes: string | null } | null
+  business: { name: string; area: string; pickupAddress: string | null; phone: string | null; directionsUrl: string | null }
+  customer: {
+    name: string
+    phone: string
+    address: string
+    notes: string | null
+    location: { lat: number; lng: number } | null // the customer's map pin, if they dropped one
+    directionsUrl: string // Google Maps: to the pin, or else to the written address
+  } | null
   items: { name: string; quantity: number }[]
   failedReason: string | null
   orderStatus: string // after a failure: delivery_failed = support deciding, cancelled = take goods back
@@ -38,6 +47,16 @@ const FAIL_REASONS: Record<string, string> = {
 }
 
 const REFRESH_MS = 15_000
+
+// Opens turn-by-turn directions in Google Maps (the app, if the phone has it). The link comes from the
+// server: to the customer's pin if they dropped one, otherwise to the written address.
+function DirectionsLink({ url }: { url: string }) {
+  return (
+    <a className="directions-link" href={url} target="_blank" rel="noopener noreferrer">
+      🧭 Directions
+    </a>
+  )
+}
 
 // Shows 071 234 5678 instead of +27712345678, and links it so the courier can tap to call.
 function PhoneLink({ e164 }: { e164: string }) {
@@ -386,6 +405,7 @@ function ActiveJob({ job: j, onChanged }: { job: MyJob; onChanged: () => void })
             <strong>1. Collect from {j.business.name}</strong>
             <span>{j.business.pickupAddress}</span>
             {j.business.phone && <PhoneLink e164={j.business.phone} />}
+            {j.business.directionsUrl && <DirectionsLink url={j.business.directionsUrl} />}
           </div>
           {j.releasedBySeller ? (
             <button type="button" className="btn btn-primary btn-block" disabled={busy} onClick={() => act('collect')}>
@@ -407,7 +427,18 @@ function ActiveJob({ job: j, onChanged }: { job: MyJob; onChanged: () => void })
             <span>{j.customer.address}</span>
             <PhoneLink e164={j.customer.phone} />
             {j.customer.notes && <span className="fine-print">Note: {j.customer.notes}</span>}
+            <DirectionsLink url={j.customer.directionsUrl} />
           </div>
+          {j.customer.location ? (
+            <MapView
+              label={`Map with the place ${j.customer.name} pinned for the delivery`}
+              centre={j.customer.location}
+              height={200}
+              pins={[{ id: 'home', ...j.customer.location, emoji: '🏠', label: `${j.customer.name}: deliver here` }]}
+            />
+          ) : (
+            <p className="fine-print">No map pin for this order: use the address, and call if you can’t find it.</p>
+          )}
           {j.cashToCollectCents > 0 && (
             <p className="notice" style={{ marginTop: 10 }}>
               Collect <strong translate="no">{formatRand(j.cashToCollectCents)}</strong> cash from the customer.

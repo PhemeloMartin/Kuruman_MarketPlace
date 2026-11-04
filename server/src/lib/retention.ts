@@ -11,7 +11,8 @@ export async function runRetention() {
   // Delivery addresses and notes: 30 days after the order finished.
   const addresses = await pool.query(
     `UPDATE orders o
-        SET delivery_address = CASE WHEN o.fulfilment = 'delivery' THEN '[removed after 30 days]' END, notes = NULL
+        SET delivery_address = CASE WHEN o.fulfilment = 'delivery' THEN '[removed after 30 days]' END, notes = NULL,
+            delivery_lat = NULL, delivery_lng = NULL
       WHERE o.status IN ('completed', 'cancelled', 'declined', 'expired')
         AND o.updated_at < now() - interval '30 days'
         AND (o.notes IS NOT NULL OR (o.fulfilment = 'delivery' AND o.delivery_address NOT LIKE '[removed%'))

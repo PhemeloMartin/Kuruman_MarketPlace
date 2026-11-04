@@ -10,6 +10,7 @@ import { api, ApiError } from '../../lib/api'
 import { formatRand, parseRandToCents } from '../../lib/money'
 import type { CashToConfirm, Kpis, Rating, Review, SellerOrder, SellerProduct } from '../../lib/types'
 import { FULFILMENT_LABEL } from '../../lib/types'
+import { MapView } from '../../components/MapView'
 
 interface Dashboard {
   business: { id: number; name: string; active: boolean }
@@ -490,6 +491,24 @@ function OrderCard({ order: o, onChanged }: { order: SellerOrder; onChanged: () 
             </button>
           </div>
         </form>
+      )}
+
+      {o.deliverTo && (
+        <div className="job-step">
+          <strong>Deliver to {o.customerName}</strong>
+          <span>{o.deliverTo.address}</span>
+          <a className="directions-link" href={o.deliverTo.directionsUrl} target="_blank" rel="noopener noreferrer">
+            🧭 Directions
+          </a>
+          {o.deliverTo.location && (
+            <MapView
+              label={`Map with the place ${o.customerName} pinned for the delivery`}
+              centre={o.deliverTo.location}
+              height={180}
+              pins={[{ id: 'home', ...o.deliverTo.location, emoji: '🏠', label: `${o.customerName}: deliver here` }]}
+            />
+          )}
+        </div>
       )}
 
       {o.status === 'ready' && o.fulfilment === 'seller_delivery' && (

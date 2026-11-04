@@ -71,7 +71,7 @@ export async function closeAccount(client: PoolClient, userId: number, staffId: 
   // 3. Where they had things delivered, and any notes they wrote to sellers.
   await client.query(
     `UPDATE orders SET delivery_address = CASE WHEN fulfilment = 'delivery' THEN '[removed at account closure]' END,
-            notes = NULL
+            notes = NULL, delivery_lat = NULL, delivery_lng = NULL
       WHERE consumer_id = $1`,
     [userId]
   );
@@ -119,6 +119,7 @@ export async function exportFor(db: Db, userId: number) {
   ).rows[0];
   const orders = await db.query(
     `SELECT o.order_number, o.status, o.fulfilment, o.payment_method, o.total_cents, o.delivery_address, o.notes,
+            CASE WHEN o.delivery_lat IS NOT NULL THEN json_build_object('lat', o.delivery_lat, 'lng', o.delivery_lng) END AS delivery_pin,
             o.created_at, b.name AS business,
             (SELECT json_agg(json_build_object('product', i.product_name, 'quantity', i.quantity,
                                                'unitPriceCents', i.unit_price_cents) ORDER BY i.id)

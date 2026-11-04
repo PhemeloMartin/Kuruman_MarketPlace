@@ -11,6 +11,9 @@ export const POLICY = {
   // Pilot areas (spec 2.1: "explicitly configured Kuruman areas"). Sellers and couriers
   // choose from this list when they apply, so names always match.
   serviceAreas: ["Kuruman town", "Wrenchville", "Mothibistad", "Seoding", "Batlharos", "Bankhara-Bodulong"],
+  // The same area on the map: a delivery pin must be within this circle around Kuruman town.
+  serviceCentre: { lat: -27.4524, lng: 23.4325 },
+  serviceRadiusKm: 40,
   vehicleTypes: ["on_foot", "bicycle", "motorbike", "car", "bakkie"],
   // Why a courier couldn't hand an order over (spec FR-15, UC: "absence, invalid code or nonpayment").
   deliveryFailReasons: ["customer_absent", "wrong_address", "customer_refused", "no_payment"],

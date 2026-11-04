@@ -12,6 +12,7 @@ import { DOCUMENT_LABEL, readDocument, saveDocument } from "./applications";
 import { emailAdmin } from "../lib/email";
 import { noteOnCase } from "../lib/caseMail";
 import { canonicalSiteUrl } from "../lib/seo";
+import { addressInKuruman, directionsUrl } from "../lib/geo";
 
 // Courier flow (spec FR-14, FR-15, TX-03). Only approved couriers get here.
 export const courierRouter = Router();
@@ -138,8 +139,8 @@ courierRouter.get("/my-jobs", async (req, res) => {
   const r = await pool.query(
     `SELECT d.id, d.status, d.fee_cents, d.cash_to_collect_cents, d.released_to_courier_id = $1 AS released,
             d.claimed_at, d.collected_at, d.delivered_at, d.failed_reason, d.returned_at, o.status AS order_status,
-            o.order_number, o.delivery_address, o.notes,
-            u.display_name AS customer_name, u.phone AS customer_phone,
+            o.id AS order_id, o.order_number, o.delivery_address, o.notes, o.delivery_lat, o.delivery_lng,
+            u.display_name AS customer_name, u.phone AS customer_phone, cp.vehicle_type,
             b.name AS business_name, b.area AS business_area, b.pickup_address, b.phone AS business_phone,
             c.status AS cash_status,
             (SELECT json_agg(json_build_object('name', i.product_name, 'quantity', i.quantity) ORDER BY i.id)
@@ -149,6 +150,7 @@ courierRouter.get("/my-jobs", async (req, res) => {
        JOIN users u ON u.id = o.consumer_id
        JOIN businesses b ON b.id = o.business_id
        LEFT JOIN cash_receipts c ON c.order_id = o.id
+       LEFT JOIN courier_profiles cp ON cp.user_id = d.courier_id
       WHERE d.courier_id = $1
         AND (d.status IN ('claimed', 'collected')
              OR d.delivered_at > now() - interval '3 days'
@@ -162,8 +164,10 @@ courierRouter.get("/my-jobs", async (req, res) => {
       // After a failed delivery the courier needs the seller's address to bring the goods back -
       // but no longer the customer's details.
       const returning = j.status === "failed" && !j.returned_at;
+      const pin = j.delivery_lat === null ? null : { lat: j.delivery_lat, lng: j.delivery_lng };
       return {
         id: Number(j.id),
+        orderId: Number(j.order_id),
         status: j.status,
         orderNumber: j.order_number,
         feeCents: j.fee_cents,
@@ -175,9 +179,18 @@ courierRouter.get("/my-jobs", async (req, res) => {
           area: j.business_area,
           pickupAddress: active || returning ? j.pickup_address : null,
           phone: active || returning ? j.business_phone : null,
+          // Shops have no map pin yet, so directions go to the written pickup address.
+          directionsUrl: active || returning ? directionsUrl(addressInKuruman(j.pickup_address, j.business_area), j.vehicle_type) : null,
         },
         customer: active
-          ? { name: j.customer_name, phone: j.customer_phone, address: j.delivery_address, notes: j.notes }
+          ? {
+              name: j.customer_name,
+              phone: j.customer_phone,
+              address: j.delivery_address,
+              notes: j.notes,
+              location: pin,
+              directionsUrl: directionsUrl(pin ?? addressInKuruman(j.delivery_address), j.vehicle_type),
+            }
           : null,
         items: j.items ?? [],
         claimedAt: j.claimed_at,

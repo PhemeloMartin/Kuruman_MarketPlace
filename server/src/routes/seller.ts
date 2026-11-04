@@ -14,6 +14,7 @@ import { MAX_PHOTO_BYTES, MAX_VOICE_BYTES, deleteStoredImage, detectAudioType, d
 import { cleanText, publicReviews, ratingOf, themeCounts } from "../lib/reviews";
 import { normaliseSaPhone } from "../lib/phone";
 import { forecastSales } from "../lib/aiClient";
+import { addressInKuruman, directionsUrl } from "../lib/geo";
 
 // Everything here is for an approved entrepreneur, and only ever about THEIR business.
 // The business is looked up from the session user - never taken from the request (BR-13).
@@ -74,6 +75,7 @@ sellerRouter.get("/orders", async (req, res) => {
   const r = await pool.query(
     `SELECT o.id, o.order_number, o.status, o.fulfilment, o.payment_method, o.subtotal_cents,
             o.delivery_fee_cents, o.total_cents, o.notes, o.accept_by, o.created_at, o.updated_at,
+            o.delivery_address, o.delivery_lat, o.delivery_lng,
             u.display_name AS customer_name,
             d.status AS delivery_status, cu.display_name AS courier_name,
             d.released_to_courier_id IS NOT NULL AND d.released_to_courier_id = d.courier_id AS released,
@@ -110,8 +112,19 @@ sellerRouter.get("/orders", async (req, res) => {
       acceptBy: o.accept_by,
       createdAt: o.created_at,
       updatedAt: o.updated_at,
-      // Minimum disclosure: the seller sees the customer's name, not their phone or address.
+      // Minimum disclosure: the seller sees the customer's name, not their phone or address -
+      // except where the shop delivers the order itself, and only while it's on its way.
       customerName: o.customer_name,
+      deliverTo:
+        o.fulfilment === "seller_delivery" && (o.status === "ready" || o.status === "out_for_delivery")
+          ? {
+              address: o.delivery_address,
+              location: o.delivery_lat === null ? null : { lat: o.delivery_lat, lng: o.delivery_lng },
+              directionsUrl: directionsUrl(
+                o.delivery_lat === null ? addressInKuruman(o.delivery_address) : { lat: o.delivery_lat, lng: o.delivery_lng }
+              ),
+            }
+          : null,
       delivery: o.delivery_status
         ? {
             status: o.delivery_status,

@@ -136,6 +136,8 @@ export interface SellerOrder {
   createdAt: string
   updatedAt: string
   customerName: string
+  // Only for an order the shop delivers itself, while it's ready or on its way.
+  deliverTo: { address: string; location: { lat: number; lng: number } | null; directionsUrl: string } | null
   delivery: {
     status: string
     courierName: string | null

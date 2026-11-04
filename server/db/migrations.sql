@@ -267,3 +267,11 @@ UPDATE courier_profiles
                                     ELSE '{id_document,police_clearance}'::text[] END,
        documents_due = current_date + 14
  WHERE documents_outstanding IS NULL;
+
+-- 2026-11-04: delivering to a map pin (like Uber Eats). At checkout the customer may drop a pin where they
+-- are - many homes here have no street number - and the courier gets directions to it. The written address
+-- still counts; the pin is optional. Erased with the address 30 days after the order ends (lib/retention.ts).
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_lat DOUBLE PRECISION;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_lng DOUBLE PRECISION;
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_delivery_pin_check;
+ALTER TABLE orders ADD CONSTRAINT orders_delivery_pin_check CHECK ((delivery_lat IS NULL) = (delivery_lng IS NULL));

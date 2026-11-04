@@ -8,6 +8,7 @@ import { POLICY } from "../lib/policy";
 import { recordStatusChange, releaseReservation } from "../lib/stock";
 import { HANDOVER_CODE_MINUTES, hashHandoverCode, newHandoverCode } from "../lib/handover";
 import { REVIEW_DAYS, cleanText } from "../lib/reviews";
+import { Point, inServiceArea, parsePoint } from "../lib/geo";
 
 export const ordersRouter = Router();
 
@@ -20,6 +21,7 @@ interface OrderRequest {
   fulfilment: "pickup" | "delivery" | "seller_delivery";
   paymentMethod: "cash" | "online";
   deliveryAddress: string | null;
+  deliveryLocation: Point | null; // the customer's map pin (optional)
   notes: string | null;
   expectedTotalCents: number | null;
 }
@@ -62,6 +64,16 @@ function parseOrder(body: any): { order?: OrderRequest; fields: Record<string, s
     fields.deliveryAddress = "Enter the delivery address, with a landmark if it helps (5 to 300 characters).";
   }
 
+  // The map pin is optional (some phones have no GPS, or the customer says no), but if sent it must be real
+  // and in our area: a pin in the wrong town would send the courier there.
+  let location: Point | null = null;
+  if (fulfilment !== "pickup" && body?.deliveryLocation != null) {
+    location = parsePoint(body.deliveryLocation);
+    if (!location || !inServiceArea(location)) {
+      fields.deliveryLocation = "That pin is outside the area we deliver to. Move it to where you are, or remove it.";
+    }
+  }
+
   const notes = typeof body?.notes === "string" ? body.notes.trim().slice(0, 300) : "";
 
   if (Object.keys(fields).length > 0) return { fields };
@@ -73,6 +85,7 @@ function parseOrder(body: any): { order?: OrderRequest; fields: Record<string, s
       fulfilment,
       paymentMethod,
       deliveryAddress: fulfilment !== "pickup" ? address : null,
+      deliveryLocation: location,
       notes: notes || null,
       expectedTotalCents: Number.isInteger(body?.expectedTotalCents) ? body.expectedTotalCents : null,
     },
@@ -218,8 +231,8 @@ ordersRouter.post("/", shopper, async (req, res) => {
     const created = await client.query(
       `INSERT INTO orders (consumer_id, business_id, fulfilment, payment_method, subtotal_cents,
                            delivery_fee_cents, total_cents, delivery_address, notes, accept_by,
-                           idempotency_key, request_hash)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now() + make_interval(mins => $10), $11, $12)
+                           idempotency_key, request_hash, delivery_lat, delivery_lng)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now() + make_interval(mins => $10), $11, $12, $13, $14)
        RETURNING id, order_number, accept_by`,
       [
         consumerId,
@@ -234,6 +247,8 @@ ordersRouter.post("/", shopper, async (req, res) => {
         POLICY.sellerResponseMinutes,
         idempotencyKey,
         requestHash,
+        order.deliveryLocation?.lat ?? null,
+        order.deliveryLocation?.lng ?? null,
       ]
     );
     const orderId = Number(created.rows[0].id);

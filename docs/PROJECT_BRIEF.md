@@ -315,4 +315,8 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       certificate within 30 days of approval; couriers approved before checks began send all their documents within
       14 days. Sent from the Deliveries page, checked by support (Verified / Reject with a reason, notified); once
       overdue the courier can finish their jobs but take no new ones. `test:support` (30 checks)
+- [x] Delivering to a map pin: at checkout the customer may drop a pin (phone GPS, or a tap on the map; must be
+      within 40 km of Kuruman). The courier who takes the job, or a shop delivering itself while it's on its way,
+      gets a map and Google Maps directions (to the pin, else the address). Leaflet + OpenStreetMap (no key, no
+      cost), loaded only on pages with a map. The pin is erased with the address after 30 days. `test:tracking`
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

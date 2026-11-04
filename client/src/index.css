@@ -2661,3 +2661,50 @@ label.busy {
   padding: 12px 14px;
   font-weight: 600;
 }
+
+/* ---------- Maps (delivery pin, live tracking) ---------- */
+.delivery-map {
+  width: 100%;
+  margin: 10px 0 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  z-index: 0; /* keeps Leaflet's layers under the app's dialogs and bottom bar */
+  position: relative;
+}
+
+/* A marker is an emoji in a white circle, so it reads on any map colour. */
+.map-pin span {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.directions-link {
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--primary);
+  border-radius: 999px;
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.location-picker {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.location-picker[data-invalid='true'] {
+  border-color: var(--danger, #b3261e);
+}
