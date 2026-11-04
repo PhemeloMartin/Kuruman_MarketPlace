@@ -132,7 +132,7 @@ async function main() {
     });
 
     await check("Payfast always gets a clean return/cancel address, whatever was pasted into Render", async () => {
-      const saved = { app: process.env.PUBLIC_APP_URL, origin: process.env.CLIENT_ORIGIN };
+      const saved = { app: process.env.PUBLIC_APP_URL, origin: process.env.CLIENT_ORIGIN, notify: process.env.PAYFAST_NOTIFY_URL };
       const returnUrl = () =>
         buildCheckout(payfastConfig()!, { reference: "r", amountCents: 3700, orderNumber: "KMP-1", orderId: 1 }).fields.return_url;
       try {
@@ -142,11 +142,16 @@ async function main() {
           process.env.PUBLIC_APP_URL = typed;
           assert.equal(returnUrl(), "https://kurumanmarketplace.co.za/orders?payment=returned", JSON.stringify(typed));
         }
+        // The notify address keeps its path, but a pasted line break is taken out too.
+        process.env.PAYFAST_NOTIFY_URL = " https://kurumanmarketplace.co.za/api/payments/payfast/notify\n";
+        assert.equal(payfastConfig()!.notifyUrl, "https://kurumanmarketplace.co.za/api/payments/payfast/notify");
       } finally {
         process.env.PUBLIC_APP_URL = saved.app;
         process.env.CLIENT_ORIGIN = saved.origin;
+        process.env.PAYFAST_NOTIFY_URL = saved.notify;
         if (saved.app === undefined) delete process.env.PUBLIC_APP_URL;
         if (saved.origin === undefined) delete process.env.CLIENT_ORIGIN;
+        if (saved.notify === undefined) delete process.env.PAYFAST_NOTIFY_URL;
       }
     });
 

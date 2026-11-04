@@ -34,7 +34,8 @@ export function payfastConfig(): PayfastConfig | null {
     validateUrl: `${host}/eng/query/validate`,
     // Where Payfast sends the customer back: PUBLIC_APP_URL cleaned up, else the site's main address.
     publicAppUrl: cleanSiteUrl(e.PUBLIC_APP_URL) ?? canonicalSiteUrl(),
-    notifyUrl: e.PAYFAST_NOTIFY_URL ?? `http://localhost:${e.PORT ?? 4000}/api/payments/payfast/notify`,
+    // Spaces and line breaks can't be part of a web address, so any pasted into Render are taken out.
+    notifyUrl: (e.PAYFAST_NOTIFY_URL ?? `http://localhost:${e.PORT ?? 4000}/api/payments/payfast/notify`).replace(/\s/g, ""),
     // Both checks are ON unless explicitly switched off for local contract tests.
     verifySourceIp: e.PAYFAST_VERIFY_SOURCE_IP !== "false",
     verifyWithServer: e.PAYFAST_VERIFY_WITH_SERVER !== "false",

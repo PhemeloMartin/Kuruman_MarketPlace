@@ -74,12 +74,18 @@ app.use("/api", (req, res, next) => {
 // Works out who is signed in (if anyone) for every request.
 app.use(loadSession);
 
-// Quick check that the API and the database are both up.
+// Quick check that the API and the database are both up. "version" is the git commit Render built this
+// server from (Render sets RENDER_GIT_COMMIT), so anyone can see which version is live.
 app.get("/api/health", async (_req, res) => {
   const r = await pool.query(
     "SELECT now() AS time, (SELECT count(*)::int FROM products WHERE is_active) AS product_count"
   );
-  res.json({ status: "ok", databaseTime: r.rows[0].time, productCount: r.rows[0].product_count });
+  res.json({
+    status: "ok",
+    version: process.env.RENDER_GIT_COMMIT?.slice(0, 7) ?? "local",
+    databaseTime: r.rows[0].time,
+    productCount: r.rows[0].product_count,
+  });
 });
 
 // Public policy values, so the website shows exactly what the server enforces.

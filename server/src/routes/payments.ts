@@ -66,9 +66,12 @@ paymentsRouter.post("/orders/:id/payment-attempts", requireRole("consumer", "ent
     }
     await client.query("COMMIT");
 
-    res.json(
-      buildCheckout(cfg, { reference, amountCents: order.total_cents, orderNumber: order.order_number, orderId })
-    );
+    const checkout = buildCheckout(cfg, { reference, amountCents: order.total_cents, orderNumber: order.order_number, orderId });
+    // The addresses Payfast will check, in quotes so a hidden space or line break shows in the log. They hold
+    // nothing secret (the merchant key and signature are not logged).
+    const f = checkout.fields;
+    console.log(`[payfast] checkout ${reference}: return_url=${JSON.stringify(f.return_url)} cancel_url=${JSON.stringify(f.cancel_url)} notify_url=${JSON.stringify(f.notify_url)}`);
+    res.json(checkout);
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;
