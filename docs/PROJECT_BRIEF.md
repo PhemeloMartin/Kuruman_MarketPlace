@@ -329,4 +329,9 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       30 days). "I'm outside" = a chat message + an SMS to the customer (at most every 2 min). Free calls both
       ways once the order is on its way (Twilio, existing rules). Privacy notice and courier terms updated.
       `test:tracking` (21 checks)
+- [x] SMS in English, Setswana or Afrikaans: each person gets SMS in their account's language (set by the
+      language button; a new account takes the site's language), a stall's SMS in the owner's language. All
+      texts in server/src/lib/smsText.ts; Setswana and Afrikaans are DRAFTS until checked by fluent speakers.
+      `test:sms` checks every text fits in one SMS in the basic GSM-7 alphabet (no ê/ë/ô/š, which would make
+      it Unicode and cost 2-3 SMS). (7 checks)
 - [ ] Deploy (needs the student's Render and Neon accounts), reviewed translations, remaining tables

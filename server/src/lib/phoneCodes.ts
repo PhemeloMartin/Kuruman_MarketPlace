@@ -2,6 +2,7 @@ import crypto from "crypto";
 import type { PoolClient } from "pg";
 import { pool } from "../db";
 import { sendSms } from "./sms";
+import { smsText } from "./smsText";
 
 // One-time SMS codes: the way customers, sellers and couriers sign in (no passphrase to remember),
 // and the way anyone confirms a sensitive action such as "download my data".
@@ -22,7 +23,15 @@ function hashCode(phone: string, purpose: CodePurpose, code: string): string {
 export type IssueResult = { ok: true; code: string } | { ok: false; waitSeconds: number };
 
 // Creates a new code for this number, cancels any older unused one, and sends it by SMS.
-export async function issueCode(phone: string, purpose: CodePurpose): Promise<IssueResult> {
+// The language of a code SMS: the account's, or - for a number with no account yet - the language the site
+// is showing them (sent by the sign-in page).
+export async function codeLanguage(phone: string, siteLanguage?: unknown): Promise<string> {
+  const u = await pool.query("SELECT preferred_language FROM users WHERE phone = $1", [phone]);
+  if (u.rows[0]) return u.rows[0].preferred_language;
+  return siteLanguage === "tn" || siteLanguage === "af" ? siteLanguage : "en";
+}
+
+export async function issueCode(phone: string, purpose: CodePurpose, siteLanguage?: unknown): Promise<IssueResult> {
   const recent = await pool.query(
     `SELECT count(*)::int AS last_hour,
             COALESCE(EXTRACT(EPOCH FROM (now() - max(created_at))), 1e9)::int AS seconds_since_last
@@ -44,8 +53,7 @@ export async function issueCode(phone: string, purpose: CodePurpose): Promise<Is
      VALUES ($1, $2, $3, now() + make_interval(mins => $4))`,
     [phone, purpose, hashCode(phone, purpose, code), CODE_MINUTES]
   );
-  const what = purpose === "sign_in" ? "sign-in" : "confirmation";
-  await sendSms(phone, `KurumanMarketPlace ${what} code: ${code}. It works for ${CODE_MINUTES} minutes. Never share it with anyone.`);
+  await sendSms(phone, smsText("code", await codeLanguage(phone, siteLanguage), { purpose, code, minutes: CODE_MINUTES }));
   return { ok: true, code };
 }
 

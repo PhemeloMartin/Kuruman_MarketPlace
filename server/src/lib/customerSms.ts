@@ -1,6 +1,7 @@
 import { PoolClient } from "pg";
 import { POLICY } from "./policy";
 import { canonicalSiteUrl } from "./seo";
+import { smsText } from "./smsText";
 
 // SMS updates for the CUSTOMER about their order, next to the in-app notifications. A customer who
 // closes the site - or has no data at that moment - still hears that the order was accepted, is
@@ -8,7 +9,8 @@ import { canonicalSiteUrl } from "./seo";
 //   - each message fits in one SMS (160 plain characters; longer ones cost double), so the shop name
 //     is shortened and there are no "smart" quotes;
 //   - a message goes only if the order is STILL at that step when it's sent. A stall's cash pickup
-//     goes from accepted to ready at once: the customer gets one SMS ("ready"), not two.
+//     goes from accepted to ready at once: the customer gets one SMS ("ready"), not two;
+//   - in the customer's language (English, Setswana or Afrikaans): the words are in smsText.ts.
 // The demo accounts' made-up numbers never get a real SMS (lib/sms.ts only logs those).
 
 const rand = (cents: number) => `R${(cents / 100).toFixed(2)}`;
@@ -19,7 +21,7 @@ export async function customerOrderSms(
   change: { from?: string | null; to: string; reason?: string | null; changedBy?: number | null }
 ): Promise<{ phone: string; text: string } | null> {
   const r = await client.query(
-    `SELECT o.order_number, o.status, o.fulfilment, o.total_cents, o.consumer_id, u.phone, b.name AS shop
+    `SELECT o.order_number, o.status, o.fulfilment, o.total_cents, o.consumer_id, u.phone, u.preferred_language, b.name AS shop
        FROM orders o JOIN users u ON u.id = o.consumer_id JOIN businesses b ON b.id = o.business_id
       WHERE o.id = $1`,
     [orderId]
@@ -28,49 +30,33 @@ export async function customerOrderSms(
   if (!o?.phone) return null; // a closed account has no phone number any more
   if (o.status !== change.to) return null; // already moved on: that SMS would be out of date
 
-  const head = `KurumanMarketPlace ${o.order_number}:`;
   const shop = String(o.shop).slice(0, 30).trim();
   const total = rand(o.total_cents);
   const orders = `${canonicalSiteUrl()}/orders`;
+  const sms = (key: Parameters<typeof smsText>[0], args: Record<string, string | number | boolean> = {}) => ({
+    phone: o.phone,
+    text: smsText(key, o.preferred_language, { order: o.order_number, shop, total, ...args }),
+  });
 
   switch (change.to) {
     case "awaiting_payment":
-      return { phone: o.phone, text: `${head} accepted by ${shop}. Pay ${total} online within ${POLICY.paymentMinutes} min: ${orders}` };
+      return sms("order.pay_now", { minutes: POLICY.paymentMinutes, link: orders });
     case "confirmed":
-      return {
-        phone: o.phone,
-        text:
-          change.from === "awaiting_payment"
-            ? `${head} payment of ${total} received. We'll SMS you when it's ready.`
-            : `${head} accepted by ${shop} (${total}, cash). We'll SMS you when it's ready.`,
-      };
+      return change.from === "awaiting_payment" ? sms("order.paid") : sms("order.accepted_cash");
     case "ready":
       // Deliveries get their SMS when the courier sets off ("on the way").
-      return o.fulfilment === "pickup"
-        ? { phone: o.phone, text: `${head} ready to collect at ${shop}. Show your code from ${orders}` }
-        : null;
+      return o.fulfilment === "pickup" ? sms("order.ready_pickup", { link: orders }) : null;
     case "out_for_delivery":
-      return {
-        phone: o.phone,
-        text: `${head} ${change.from === "delivery_failed" ? "we're delivering again" : "on the way to you"}. Track it, and have your code ready: ${orders}/${orderId}/track`,
-      };
-    case "declined": {
-      const why = change.reason ? ` (${String(change.reason).slice(0, 30).trim()})` : "";
-      return { phone: o.phone, text: `${head} ${shop} can't take your order${why}. You pay nothing.` };
-    }
+      return sms("order.on_the_way", { retry: change.from === "delivery_failed", link: `${orders}/${orderId}/track` });
+    case "declined":
+      return sms("order.declined", { why: change.reason ? ` (${String(change.reason).slice(0, 30).trim()})` : "" });
     case "expired":
-      return {
-        phone: o.phone,
-        text:
-          change.from === "awaiting_payment"
-            ? `${head} not paid in time, so it's cancelled. You pay nothing.`
-            : `${head} ${shop} didn't answer in time, so it's cancelled. You pay nothing.`,
-      };
+      return change.from === "awaiting_payment" ? sms("order.expired_unpaid") : sms("order.expired_no_reply");
     case "cancelled":
       // Cancelled by the customer: they did it themselves and saw it on screen.
-      return change.changedBy === Number(o.consumer_id) ? null : { phone: o.phone, text: `${head} cancelled by support. Details: ${orders}` };
+      return change.changedBy === Number(o.consumer_id) ? null : sms("order.cancelled_by_support", { link: orders });
     case "delivery_failed":
-      return { phone: o.phone, text: `${head} the courier couldn't hand it over. Support will contact you.` };
+      return sms("order.delivery_failed");
     default:
       return null;
   }
@@ -80,7 +66,7 @@ export async function customerOrderSms(
 // too. Only while the order is still on its way.
 export async function courierOutsideSms(client: PoolClient, orderId: number): Promise<{ phone: string; text: string } | null> {
   const r = await client.query(
-    `SELECT o.order_number, o.status, u.phone, co.display_name AS courier
+    `SELECT o.order_number, o.status, u.phone, u.preferred_language, co.display_name AS courier
        FROM orders o JOIN users u ON u.id = o.consumer_id
        JOIN deliveries d ON d.order_id = o.id JOIN users co ON co.id = d.courier_id
       WHERE o.id = $1`,
@@ -88,10 +74,13 @@ export async function courierOutsideSms(client: PoolClient, orderId: number): Pr
   );
   const o = r.rows[0];
   if (!o?.phone || o.status !== "out_for_delivery") return null;
-  const name = String(o.courier).split(" ")[0].slice(0, 20);
   return {
     phone: o.phone,
-    text: `KurumanMarketPlace ${o.order_number}: ${name}, your courier, is outside with your order. Your code: ${canonicalSiteUrl()}/orders/${orderId}/track`,
+    text: smsText("courier.outside", o.preferred_language, {
+      order: o.order_number,
+      name: String(o.courier).split(" ")[0].slice(0, 12),
+      link: `${canonicalSiteUrl()}/orders/${orderId}/track`,
+    }),
   };
 }
 
@@ -101,11 +90,14 @@ export async function ticketAnsweredSms(
   client: PoolClient,
   p: { userId: number; ticketId: number; subject: string }
 ): Promise<{ phone: string; text: string } | null> {
-  const u = await client.query("SELECT phone FROM users WHERE id = $1", [p.userId]);
+  const u = await client.query("SELECT phone, preferred_language FROM users WHERE id = $1", [p.userId]);
   if (!u.rows[0]?.phone) return null;
-  const subject = String(p.subject).slice(0, 35).trim();
   return {
     phone: u.rows[0].phone,
-    text: `KurumanMarketPlace: support answered your question #${p.ticketId} (${subject}). Read it: ${canonicalSiteUrl()}/help/${p.ticketId}`,
+    text: smsText("ticket.answered", u.rows[0].preferred_language, {
+      ticketId: p.ticketId,
+      subject: String(p.subject).slice(0, 35).trim(),
+      link: `${canonicalSiteUrl()}/help/${p.ticketId}`,
+    }),
   };
 }

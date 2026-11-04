@@ -75,7 +75,7 @@ authRouter.post("/code", codeLimiter, async (req, res) => {
   }
   let issued: Awaited<ReturnType<typeof issueCode>>;
   try {
-    issued = await issueCode(phone, "sign_in");
+    issued = await issueCode(phone, "sign_in", req.body?.language);
   } catch (err: any) {
     console.error("Sign-in SMS failed:", err?.message ?? err);
     return res.status(503).json({ error: "We couldn't send the SMS right now. Please try again in a minute." });

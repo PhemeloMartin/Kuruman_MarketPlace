@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { api } from '../lib/api'
+import { currentLanguage } from '../lib/translate'
 import type { User } from '../lib/types'
 
 // What the server answers when it has sent an SMS code. demoCode is only there in demo mode,
@@ -40,12 +41,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const requestCode = useCallback(
-    (phone: string) => api<CodeSent>('/auth/code', { method: 'POST', body: { phone } }),
+    // The site's language goes along, so the code SMS (and a new account) use it.
+    (phone: string) => api<CodeSent>('/auth/code', { method: 'POST', body: { phone, language: currentLanguage() } }),
     [],
   )
 
   const verifyCode = useCallback(async (phone: string, code: string, displayName?: string) => {
-    const r = await api<VerifyResult>('/auth/code/verify', { method: 'POST', body: { phone, code, displayName } })
+    const r = await api<VerifyResult>('/auth/code/verify', {
+      method: 'POST',
+      body: { phone, code, displayName, preferredLanguage: currentLanguage() },
+    })
     if ('user' in r) setUser(r.user)
     return r
   }, [])

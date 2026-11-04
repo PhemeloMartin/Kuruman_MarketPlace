@@ -1,10 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useCart } from '../cart/CartContext'
 import { MokalaScene } from '../components/Art'
 import { localPhone } from '../lib/labels'
 import { LANGUAGES, currentLanguage } from '../lib/translate'
+import { api } from '../lib/api'
 import { VERSION_LABEL } from '../lib/version'
 import { ApplySection } from './ApplySection'
 import { PrivacySection } from './PrivacySection'
@@ -75,6 +76,7 @@ export function ProfilePage() {
           {language}. Change it with the button at the top of the Home screen. Setswana and Afrikaans are machine
           translated for now and are being checked by fluent speakers.
         </p>
+        {user.role !== 'support' && <SmsLanguage />}
       </section>
       {user.role !== 'support' && (
         <Link to="/notifications" className="btn btn-outline btn-block" style={{ marginBottom: 10 }}>
@@ -121,5 +123,36 @@ export function ProfilePage() {
       </button>
       <p className="version-label">{VERSION_LABEL}</p>
     </main>
+  )
+}
+
+// The language of your SMS (order updates, codes) is saved on your account. It follows the language button,
+// but an account made before that (or on another phone) may differ: then one tap matches it.
+function SmsLanguage() {
+  const { user, refresh } = useAuth()
+  const [busy, setBusy] = useState(false)
+  if (!user) return null
+  const name = (code: string) => LANGUAGES.find((l) => l.code === code)?.name ?? 'English'
+  const site = currentLanguage()
+
+  async function useSiteLanguage() {
+    setBusy(true)
+    await api('/privacy/profile', { method: 'PATCH', body: { preferredLanguage: site } }).catch(() => {})
+    await refresh().catch(() => {})
+    setBusy(false)
+  }
+
+  return (
+    <p className="product-meta" style={{ margin: '8px 0 0' }}>
+      Your SMS come in <strong>{name(user.preferredLanguage)}</strong>.
+      {user.preferredLanguage !== site && (
+        <>
+          {' '}
+          <button type="button" className="link-btn" onClick={useSiteLanguage} disabled={busy}>
+            Send them in {name(site)}
+          </button>
+        </>
+      )}
+    </p>
   )
 }

@@ -5,6 +5,7 @@ import { LANGUAGES, currentLanguage, setLanguage } from '../lib/translate'
 import type { LanguageCode } from '../lib/translate'
 import { useOnline } from '../lib/useOnline'
 import { useUnread } from '../notifications/UnreadContext'
+import { api } from '../lib/api'
 import { DuneRibbon, LogoMark } from './Art'
 import { TermsGate } from './TermsGate'
 import { BellIcon, CartIcon, HomeIcon, OrdersIcon, ProfileIcon, ShieldIcon, ShopIcon, TruckIcon } from './Icons'
@@ -66,7 +67,17 @@ function NotificationBell() {
   )
 }
 
+// Changes the site's language - and, when signed in, the language of your SMS too.
 function LanguageSelect() {
+  const { user } = useAuth()
+
+  async function choose(code: LanguageCode) {
+    if (user && user.role !== 'support') {
+      await api('/privacy/profile', { method: 'PATCH', body: { preferredLanguage: code } }).catch(() => {})
+    }
+    setLanguage(code) // reloads the page in the new language
+  }
+
   return (
     <>
       <label htmlFor="language" className="visually-hidden">
@@ -77,7 +88,7 @@ function LanguageSelect() {
         className="lang-select notranslate"
         translate="no"
         value={currentLanguage()}
-        onChange={(e) => setLanguage(e.target.value as LanguageCode)}
+        onChange={(e) => choose(e.target.value as LanguageCode)}
       >
         {LANGUAGES.map((l) => (
           <option key={l.code} value={l.code} title={l.name}>
