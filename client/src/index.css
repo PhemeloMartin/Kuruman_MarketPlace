@@ -303,29 +303,6 @@ textarea {
   object-fit: cover;
 }
 
-/* Until the seller adds their own photo: an example photo, and it says so. */
-.product-photo.example,
-.product-thumb.example {
-  position: relative;
-}
-
-.example-tag {
-  position: absolute;
-  left: 6px;
-  bottom: 6px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(20, 16, 12, 0.62);
-  color: #fff;
-  font-family: var(--sans);
-  font-size: 0.68rem;
-  font-weight: 600;
-}
-
-.cart-thumb .example-tag,
-.product-thumb .example-tag {
-  display: none; /* too small to read there */
-}
 
 .product-body {
   display: flex;

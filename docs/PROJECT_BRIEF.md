@@ -354,8 +354,8 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       Notifications, Profile, Directory, Help) replaces the bottom bar; the cart stays at the top right; the
       footer (terms, returns, privacy, help, photo credits) is on every page. Home opens with a slideshow of
       Kuruman's markets (our photos, SMME Village first; a pause button, still for "reduce motion", the next
-      photo fetched only when its turn comes). Products without a seller photo show an example photo of their
-      kind, labelled "Example photo" so it can't mislead (lib/examplePhotos.ts; credits on /photo-credits).
+      photo fetched only when its turn comes). Products without a seller photo show a photo of their kind (no
+      label, the user's choice) until the seller adds their own (lib/examplePhotos.ts; credits on /photo-credits).
 - [x] SMS in English, Setswana or Afrikaans: each person gets SMS in their account's language (set by the
       language button; a new account takes the site's language), a stall's SMS in the owner's language. All
       texts in server/src/lib/smsText.ts; Setswana and Afrikaans are DRAFTS until checked by fluent speakers.

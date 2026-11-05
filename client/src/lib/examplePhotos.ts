@@ -1,9 +1,9 @@
 import { marketInfo } from '../components/Markets'
 import type { Credit } from '../components/Markets'
 
-// A product without a photo of its own gets an example photo of its kind, found by words in its name
-// (client/public/products/), or else its market's photo. The picture is labelled "Example photo", so a
-// buyer knows it isn't the seller's own - the seller's photo replaces it as soon as they add one.
+// A product without a photo of its own gets a photo of its kind, found by words in its name
+// (client/public/products/), or else its market's photo. The seller's own photo replaces it as soon as
+// they add one.
 // The photos are from Wikimedia Commons; the Photo credits page names who took them (their licences ask
 // for that).
 //

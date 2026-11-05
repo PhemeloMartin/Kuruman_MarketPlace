@@ -4,8 +4,8 @@ import { formatRand } from '../lib/money'
 import type { Product } from '../lib/types'
 import { CheckIcon, PlusIcon } from './Icons'
 
-// The seller's own photo; until they add one, an example photo of that kind of product, labelled as such
-// so it can't mislead a buyer (lib/examplePhotos.ts); only when nothing fits, a tile with the first letter.
+// The seller's own photo; until they add one, a photo of that kind of product (lib/examplePhotos.ts);
+// only when nothing fits, a tile with the first letter.
 export function ProductPhoto({
   product,
   className = 'product-photo',
@@ -23,9 +23,8 @@ export function ProductPhoto({
   const example = examplePhoto(product.name, product.category)
   if (example) {
     return (
-      <div className={`${className} example`}>
+      <div className={className}>
         <img src={example} alt="" loading="lazy" />
-        <span className="example-tag">Example photo</span>
       </div>
     )
   }

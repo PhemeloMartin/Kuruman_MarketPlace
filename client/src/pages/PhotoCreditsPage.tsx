@@ -29,10 +29,10 @@ export function PhotoCreditsPage() {
         ))}
       </ul>
 
-      <h2>Example product photos</h2>
+      <h2>Product photos</h2>
       <p>
-        Until a seller adds a photo of their own, a product shows an example photo of its kind, labelled “Example
-        photo”. The seller’s own photo replaces it.
+        Until a seller adds a photo of their own, a product shows a photo of its kind. The seller’s own photo replaces
+        it.
       </p>
       <ul>
         {EXAMPLE_PHOTOS.map(({ what, credit }) => (
