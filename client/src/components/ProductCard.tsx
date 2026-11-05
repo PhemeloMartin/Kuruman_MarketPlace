@@ -1,15 +1,31 @@
 import { Link } from 'react-router-dom'
+import { examplePhoto } from '../lib/examplePhotos'
 import { formatRand } from '../lib/money'
 import type { Product } from '../lib/types'
 import { CheckIcon, PlusIcon } from './Icons'
 
-// Products without a photo get a coloured tile with their first letter - never a stock photo,
-// because a decorative picture could mislead buyers about what they're getting.
-export function ProductPhoto({ product, className = 'product-photo' }: { product: Pick<Product, 'id' | 'name' | 'imageUrl'>; className?: string }) {
+// The seller's own photo; until they add one, an example photo of that kind of product, labelled as such
+// so it can't mislead a buyer (lib/examplePhotos.ts); only when nothing fits, a tile with the first letter.
+export function ProductPhoto({
+  product,
+  className = 'product-photo',
+}: {
+  product: Pick<Product, 'id' | 'name' | 'imageUrl'> & { category?: string }
+  className?: string
+}) {
   if (product.imageUrl) {
     return (
       <div className={className}>
         <img src={product.imageUrl} alt="" loading="lazy" />
+      </div>
+    )
+  }
+  const example = examplePhoto(product.name, product.category)
+  if (example) {
+    return (
+      <div className={`${className} example`}>
+        <img src={example} alt="" loading="lazy" />
+        <span className="example-tag">Example photo</span>
       </div>
     )
   }

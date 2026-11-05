@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom'
 // shown when the market is opened). Under each photo stays a small drawing (SVG), which shows
 // when the photo can't load, e.g. offline before the photo was ever seen.
 
-interface Credit {
+export interface Credit {
   text: string
   href: string
 }
@@ -395,6 +395,16 @@ export function MarketStoryCard({ market }: { market: StoryMarket }) {
   )
 }
 
+// Every market photo that isn't ours, with its credit (for the Photo credits page).
+export function marketPhotoCredits(): { what: string; credit: Credit }[] {
+  const story = STORY_MARKETS.filter((m) => m.credit).map((m) => ({ what: `${m.name} (${m.honour})`, credit: m.credit! }))
+  const plain = MARKETS.filter((m) => m.credit).map((m) => ({
+    what: m.slug.charAt(0).toUpperCase() + m.slug.slice(1).replace('-', ' '),
+    credit: m.credit!,
+  }))
+  return [...story, ...plain]
+}
+
 // Under an opened market: our own photos from around Kuruman (swipe sideways), and who took the market's
 // picture when it isn't ours.
 export function MarketPictures({ info }: { info: { gallery?: Gallery; credit?: Credit } }) {
@@ -442,49 +452,8 @@ export function orderMarkets<T extends { slug: string }>(categories: T[]): T[] {
   return [...categories].sort((a, b) => rank(a.slug) - rank(b.slug))
 }
 
-// Wide Kuruman scene for the Home screen's top banner: sunset, red and sand dunes, Mokala trees
-// and a row of market stalls. Built to sit behind the welcome card; can later be swapped for a
-// photo or a short muted video of Kuruman.
+// A wide photo of Kuruman: the SMME Village, home of many of its small businesses. Shown where a shop has
+// no cover photo of its own yet (shop page, Entrepreneur of the Month).
 export function KurumanPanorama() {
-  return (
-    <svg viewBox="0 0 800 360" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <defs>
-        <linearGradient id="pano-sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#154D41" />
-          <stop offset="0.5" stopColor="#6E8B5E" />
-          <stop offset="1" stopColor="#F2C57C" />
-        </linearGradient>
-      </defs>
-      <rect width="800" height="360" fill="url(#pano-sky)" />
-      <circle cx="600" cy="200" r="60" fill="#F2C57C" />
-      <circle cx="600" cy="200" r="84" fill="#F2C57C" opacity="0.25" />
-      <path d="M0 240c120-30 260-36 400-16s280 20 400-6v142H0z" fill="#E9B98A" />
-      {/* market stalls on the horizon */}
-      <g>
-        {[440, 492, 544, 690, 742].map((x, i) => (
-          <g key={x}>
-            <rect x={x} y="214" width="44" height="26" fill="#FFFCF7" />
-            <path d={`M${x - 4} 214h52l-6-14h-40z`} fill={i % 2 ? '#A8462A' : '#1E6B5A'} />
-          </g>
-        ))}
-      </g>
-      <path d="M0 270c140-24 300-22 440 2s250 18 360-4v92H0z" fill="#C8683F" />
-      <path d="M60 330c40-8 80-8 120 0s80 8 120 0" stroke="#DDF1EA" strokeWidth="5" fill="none" strokeLinecap="round" />
-      {/* Mokala trees */}
-      {[
-        [210, 250, 1],
-        [330, 262, 0.7],
-      ].map(([x, y, s]) => (
-        <g key={x} transform={`translate(${x} ${y}) scale(${s})`}>
-          <path d="M-4 0c2-20-4-34 4-50 4-8 2-16-2-22l8-2c4 8 6 16 2 24-6 14 0 30-2 50z" fill="#2A211B" />
-          <g fill="#1F3A2E">
-            <ellipse cx="0" cy="-74" rx="90" ry="14" />
-            <ellipse cx="-40" cy="-82" rx="40" ry="12" />
-            <ellipse cx="44" cy="-82" rx="44" ry="12" />
-            <ellipse cx="0" cy="-90" rx="52" ry="12" />
-          </g>
-        </g>
-      ))}
-    </svg>
-  )
+  return <img src="/hero/smme-village.webp" alt="" loading="lazy" />
 }

@@ -350,6 +350,12 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       (credited when the market is opened). The people in our photos agreed to be photographed (POPIA); a
       muthi shop is shown under Doctors & healers. The election poster was cropped out, and location data was stripped from our photos. The drawings stay
       underneath as the offline fallback; photos are cached once seen, not downloaded upfront.
+- [x] Cleaner layout (5 Nov): a ☰ menu at the top left (Home, Cart, My orders, My shop / Deliveries,
+      Notifications, Profile, Directory, Help) replaces the bottom bar; the cart stays at the top right; the
+      footer (terms, returns, privacy, help, photo credits) is on every page. Home opens with a slideshow of
+      Kuruman's markets (our photos, SMME Village first; a pause button, still for "reduce motion", the next
+      photo fetched only when its turn comes). Products without a seller photo show an example photo of their
+      kind, labelled "Example photo" so it can't mislead (lib/examplePhotos.ts; credits on /photo-credits).
 - [x] SMS in English, Setswana or Afrikaans: each person gets SMS in their account's language (set by the
       language button; a new account takes the site's language), a stall's SMS in the owner's language. All
       texts in server/src/lib/smsText.ts; Setswana and Afrikaans are DRAFTS until checked by fluent speakers.

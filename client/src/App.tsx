@@ -26,6 +26,7 @@ import { HelpPage, TicketPage } from './pages/HelpPage'
 import { TermsPage } from './pages/TermsPage'
 import { ReturnsPage } from './pages/ReturnsPage'
 import { NotificationsPage } from './pages/NotificationsPage'
+import { PhotoCreditsPage } from './pages/PhotoCreditsPage'
 import { UnreadProvider } from './notifications/UnreadContext'
 
 export default function App() {
@@ -55,6 +56,7 @@ export default function App() {
                 <Route path="help" element={<HelpPage />} />
                 <Route path="help/:id" element={<TicketPage />} />
                 <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="photo-credits" element={<PhotoCreditsPage />} />
                 <Route element={<RequireRole role="entrepreneur" />}>
                   <Route path="seller" element={<SellerDashboardPage />} />
                   <Route path="seller/products" element={<SellerProductsPage />} />

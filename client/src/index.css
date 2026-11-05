@@ -21,7 +21,6 @@
   --radius: 14px;
   --radius-sm: 10px;
   --tap: 48px; /* minimum size for anything you tap (spec 7.1) */
-  --nav-height: 64px;
 
   color-scheme: light;
   font: 16px/1.45 var(--sans);
@@ -86,7 +85,7 @@ textarea {
   min-height: 100dvh;
   background: var(--bg);
   position: relative;
-  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @media (min-width: 520px) {
@@ -117,9 +116,19 @@ textarea {
 .site-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 16px 4px;
+  gap: 6px;
+  padding: 8px 12px 4px;
+}
+
+/* On a narrow phone the name stays on one line and the tagline goes, so the cart and language fit. */
+@media (max-width: 420px) {
+  .brand-tagline,
+  .brand > svg {
+    display: none;
+  }
+  .brand-name {
+    font-size: 1rem;
+  }
 }
 
 .brand {
@@ -292,6 +301,30 @@ textarea {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* Until the seller adds their own photo: an example photo, and it says so. */
+.product-photo.example,
+.product-thumb.example {
+  position: relative;
+}
+
+.example-tag {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(20, 16, 12, 0.62);
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.cart-thumb .example-tag,
+.product-thumb .example-tag {
+  display: none; /* too small to read there */
 }
 
 .product-body {
@@ -688,7 +721,7 @@ textarea {
 
 .sticky-action {
   position: sticky;
-  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
+  bottom: env(safe-area-inset-bottom, 0px);
   padding: 12px 0;
   background: linear-gradient(to top, var(--bg) 75%, transparent);
 }
@@ -748,45 +781,169 @@ textarea {
   text-transform: capitalize;
 }
 
-/* ---------- Bottom navigation ---------- */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 480px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  height: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  z-index: 20;
+/* ---------- Menu (☰, top left) ---------- */
+.menu-button,
+.header-icon {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
 }
 
-.bottom-nav a {
+.menu-button:hover,
+.header-icon:hover {
+  background: var(--primary-tint);
+}
+
+/* A dot on ☰ when there are new notifications. */
+.menu-button .nav-badge {
+  top: 8px;
+  left: auto;
+  right: 8px;
+  min-width: 10px;
+  height: 10px;
+  padding: 0;
+}
+
+.header-icon .nav-badge {
+  top: 2px;
+  left: auto;
+  right: 0;
+}
+
+/* The menu slides in from the left over the page. */
+.menu-drawer {
+  margin: 0;
+  padding: 0;
+  width: min(320px, 86vw);
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  border: 0;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 8px 0 30px rgba(34, 32, 28, 0.18);
+}
+
+.menu-drawer[open] {
+  animation: menu-in 0.2s ease-out;
+}
+
+.menu-drawer::backdrop {
+  background: rgba(34, 32, 28, 0.45);
+}
+
+@keyframes menu-in {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-drawer[open] {
+    animation: none;
+  }
+}
+
+.menu-panel {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--muted);
-  text-decoration: none;
-  position: relative;
+  gap: 14px;
+  min-height: 100%;
+  padding: 12px 16px calc(24px + env(safe-area-inset-bottom, 0px));
 }
 
-.bottom-nav a.active {
-  color: var(--primary);
-  font-weight: 700;
+.menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.menu-close {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.menu-hello {
+  margin: 0;
+  color: var(--muted);
+}
+
+.menu-links {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-links a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: var(--tap);
+  padding: 0 10px;
+  border-radius: 12px;
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.menu-links a:hover {
+  background: var(--primary-tint);
+}
+
+.menu-links a.active {
+  background: var(--primary-tint);
+  color: var(--primary-dark);
+}
+
+.menu-count {
+  margin-left: auto;
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.menu-more {
+  display: flex;
+  flex-direction: column;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.menu-more a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 10px;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.menu-more a:hover,
+.site-footer a:hover {
+  text-decoration: underline;
 }
 
 .nav-badge {
   position: absolute;
-  top: 8px;
-  left: calc(50% + 6px);
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
@@ -1017,10 +1174,6 @@ body {
   color: var(--primary-dark);
 }
 
-.bottom-nav.five {
-  grid-template-columns: repeat(5, 1fr);
-}
-
 /* ---------- Courier jobs ---------- */
 .job-step {
   display: flex;
@@ -1089,10 +1242,6 @@ body {
   align-items: center;
   gap: 8px;
   margin: -6px 0 14px;
-}
-
-.bottom-nav.three {
-  grid-template-columns: repeat(3, 1fr);
 }
 
 /* ---------- Support console ---------- */
@@ -1213,18 +1362,8 @@ body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-.bell {
-  position: relative;
-  display: inline-flex;
-  padding: 6px;
-  color: var(--ink);
-}
-.bell .nav-badge {
-  top: -2px;
-  left: auto;
-  right: -4px;
+  gap: 6px;
+  margin-left: auto;
 }
 .notification-list {
   list-style: none;
@@ -1282,10 +1421,46 @@ body {
   margin: 8px -16px 0;
 }
 
-.hero-art svg {
-  display: block;
+/* The slideshow of Kuruman's markets: photos stacked on each other, the current one faded in. */
+.hero-slides {
+  position: relative;
+  height: 220px;
+  overflow: hidden;
+  background: var(--primary-dark);
+}
+
+.hero-slides img {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: 190px;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+.hero-slides img.active {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-slides img {
+    transition: none;
+  }
+}
+
+.hero-pause {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(20, 16, 12, 0.55);
+  color: #fff;
+  font-size: 0.75rem;
+  cursor: pointer;
 }
 
 .hero-card {
@@ -1692,11 +1867,11 @@ body {
   background: var(--primary-tint);
 }
 
-.home-footer {
+.site-footer {
   display: grid;
   gap: 16px;
-  margin: 24px -16px -24px;
-  padding: 24px 16px;
+  margin: 32px 0 0;
+  padding: 24px 16px calc(24px + env(safe-area-inset-bottom, 0px));
   background: #12382f;
   color: #cfe3db;
   font-size: 0.9rem;
@@ -1708,21 +1883,22 @@ body {
   color: #fff;
 }
 
-.home-footer p {
+.site-footer p {
   margin: 6px 0 0;
 }
 
-.home-footer nav {
+.site-footer nav {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 18px;
 }
 
-.home-footer a {
+.site-footer a {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
   color: #fff;
+  text-decoration: none;
 }
 
 @media (min-width: 600px) {
@@ -1747,8 +1923,8 @@ body {
     border-radius: var(--radius);
     overflow: hidden;
   }
-  .app-wide .hero-art svg {
-    height: 440px;
+  .app-wide .hero-slides {
+    height: 460px;
   }
   .app-wide .hero-card {
     position: absolute;
@@ -1773,9 +1949,8 @@ body {
     align-items: center;
     padding: 28px 32px;
   }
-  .app-wide .home-footer {
+  .app-wide .site-footer {
     grid-template-columns: 1fr auto;
-    margin: 24px -32px -24px;
     padding: 32px;
   }
 }

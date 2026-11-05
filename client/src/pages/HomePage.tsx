@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useAddToCart } from '../cart/useAddToCart'
+import { HeroSlideshow } from '../components/HeroSlideshow'
 import { BackIcon, CheckIcon, SearchIcon } from '../components/Icons'
 import {
   KurumanPanorama,
@@ -16,7 +17,6 @@ import {
 } from '../components/Markets'
 import type { StoryMarket } from '../components/Markets'
 import { ProductCard } from '../components/ProductCard'
-import { SiteHeader } from '../components/Layout'
 import { api, ApiError } from '../lib/api'
 import { STALE_AFTER_MS, filterSaved, loadCatalogue, saveCatalogue } from '../lib/catalogueCache'
 import type { Category, Product, Spotlight } from '../lib/types'
@@ -170,7 +170,6 @@ export function HomePage() {
 
   return (
     <>
-      <SiteHeader />
       {showResults ? (
         <main className="page">
           <Link to="/" className="back-link">
@@ -268,7 +267,6 @@ export function HomePage() {
           </Link>
 
           <SellBand />
-          <HomeFooter />
         </main>
       )}
 
@@ -329,7 +327,7 @@ function Hero({ categories, onSearch }: { categories: Category[]; onSearch: (mar
   return (
     <section className="hero" aria-label="Welcome">
       <div className="hero-art">
-        <KurumanPanorama />
+        <HeroSlideshow />
       </div>
       <div className="hero-card">
         <div className="tabs" role="tablist" aria-label="What would you like to do?">
@@ -492,28 +490,5 @@ function SellBand() {
         Start selling
       </Link>
     </section>
-  )
-}
-
-function HomeFooter() {
-  return (
-    <footer className="home-footer">
-      <div>
-        <strong className="footer-brand" translate="no">
-          KurumanMarketPlace
-        </strong>
-        <p>Local sellers, local couriers, local customers. The oasis of the Kalahari, online.</p>
-      </div>
-      <nav aria-label="More">
-        <Link to="/?market=all">All products</Link>
-        <Link to="/profile#sell">Sell with us</Link>
-        <Link to="/directory">Business Directory</Link>
-        <Link to="/orders">My orders</Link>
-        <Link to="/help">Help</Link>
-        <Link to="/terms">Terms</Link>
-        <Link to="/returns">Returns &amp; refunds</Link>
-        <Link to="/privacy">Privacy</Link>
-      </nav>
-    </footer>
   )
 }

@@ -99,3 +99,15 @@ export const BellIcon = () => (
     <path d="M10 20a2 2 0 0 0 4 0" />
   </svg>
 )
+
+export const MenuIcon = () => (
+  <svg {...common}>
+    <path d="M4 7h16M4 12h16M4 17h16" />
+  </svg>
+)
+
+export const CloseIcon = () => (
+  <svg {...common}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </svg>
+)
