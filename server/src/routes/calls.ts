@@ -13,7 +13,7 @@ import { dialTwiml, sayTwiml, twilioConfigured, validTwilioSignature, voiceAcces
 export const callsRouter = Router();
 
 export const CALL_MAX_SECONDS = 300; // 5 minutes per call
-const CALLS_PER_DAY = 10; // per person
+const CALLS_PER_DAY = 50; // per person (10 was too few for a live demo)
 
 callsRouter.get("/calls/config", (_req, res) => {
   res.json({ available: twilioConfigured(), maxMinutes: CALL_MAX_SECONDS / 60 });
