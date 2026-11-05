@@ -207,7 +207,8 @@ export function SellerProductFormPage() {
       description: form.description,
       collectionOnly: form.collectionOnly,
       barcode: form.barcode,
-      ...(isNew ? { category: form.category, aiSuggestionId: ai?.suggestionId } : { isActive: form.isActive }),
+      category: form.category,
+      ...(isNew ? { aiSuggestionId: ai?.suggestionId } : { isActive: form.isActive }),
     }
     try {
       if (isNew) {
@@ -291,31 +292,34 @@ export function SellerProductFormPage() {
           </div>
         )}
 
-        {isNew && (
-          <div className="field" data-invalid={Boolean(fields.category)}>
-            <label htmlFor="category">Category</label>
-            <button
-              type="button"
-              className="btn btn-outline btn-block ai-btn"
-              onClick={suggestCategory}
-              disabled={aiBusy || form.name.trim().length < 2}
-            >
-              {aiBusy ? 'Thinking…' : '✦ Suggest a category (AI)'}
-            </button>
-            {ai && <AiSuggestionBox ai={ai} categoryName={categoryName} onUse={(slug) => setForm((f) => ({ ...f, category: slug }))} chosen={form.category} />}
-            <div className="input-wrap">
-              <select id="category" value={form.category} onChange={set('category')} className="select">
-                <option value="">Choose…</option>
-                {categories.map((c) => (
-                  <option key={c.slug} value={c.slug}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {err('category')}
+        {/* Chosen when the product is added (with the AI's help); can be changed later, e.g. to a new market. */}
+        <div className="field" data-invalid={Boolean(fields.category)}>
+          <label htmlFor="category">Category</label>
+          {isNew && (
+            <>
+              <button
+                type="button"
+                className="btn btn-outline btn-block ai-btn"
+                onClick={suggestCategory}
+                disabled={aiBusy || form.name.trim().length < 2}
+              >
+                {aiBusy ? 'Thinking…' : '✦ Suggest a category (AI)'}
+              </button>
+              {ai && <AiSuggestionBox ai={ai} categoryName={categoryName} onUse={(slug) => setForm((f) => ({ ...f, category: slug }))} chosen={form.category} />}
+            </>
+          )}
+          <div className="input-wrap">
+            <select id="category" value={form.category} onChange={set('category')} className="select">
+              <option value="">Choose…</option>
+              {categories.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
           </div>
-        )}
+          {err('category')}
+        </div>
 
         <div className="field" data-invalid={Boolean(fields.unitLabel)}>
           <label htmlFor="unit">Sold as</label>

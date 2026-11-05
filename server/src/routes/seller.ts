@@ -635,10 +635,16 @@ sellerRouter.post("/products", requireActiveShop, async (req, res) => {
   res.status(201).json({ id: productId });
 });
 
-// Update price, stock, details, or hide/show. Past orders are unaffected: they keep their snapshot (BR-15).
+// Update price, stock, details, market, or hide/show. Past orders are unaffected: they keep their snapshot (BR-15).
 sellerRouter.patch("/products/:id", requireActiveShop, async (req, res) => {
   const id = Number(req.params.id);
   const { fields, out } = parseProduct(req.body, true);
+  // Moving a product to another market, e.g. one added later like "Water & ice".
+  if (req.body?.category !== undefined) {
+    const cat = await pool.query("SELECT id FROM categories WHERE slug = $1", [req.body.category]);
+    if (cat.rowCount === 0) fields.category = "Choose a category.";
+    else out.category_id = cat.rows[0].id;
+  }
   if (Object.keys(fields).length) return res.status(422).json({ error: "Please check the highlighted fields.", fields });
   if (Object.keys(out).length === 0) return res.status(422).json({ error: "Nothing to change." });
 

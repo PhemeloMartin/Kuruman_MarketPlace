@@ -129,6 +129,17 @@ async function main() {
       assert.equal((await call(tumelo, "PATCH", `/api/seller/products/${sand.id}`, { barcode: "6001111100018" })).status, 200);
     });
 
+    await check("a seller can move a product to another market, but not to one that doesn't exist", async () => {
+      const sand = (await pool.query("SELECT id FROM products WHERE name = 'Building sand'")).rows[0];
+      const marketOf = async () =>
+        (await pool.query("SELECT c.slug FROM products p JOIN categories c ON c.id = p.category_id WHERE p.id = $1", [sand.id])).rows[0].slug;
+      assert.equal((await call(tumelo, "PATCH", `/api/seller/products/${sand.id}`, { category: "no-such-market" })).status, 422);
+      assert.equal(await marketOf(), "building");
+      assert.equal((await call(tumelo, "PATCH", `/api/seller/products/${sand.id}`, { category: "water" })).status, 200);
+      assert.equal(await marketOf(), "water");
+      assert.equal((await call(tumelo, "PATCH", `/api/seller/products/${sand.id}`, { category: "building" })).status, 200);
+    });
+
     await check("a shared product link gets a WhatsApp preview: name, price and shop", async () => {
       const tags = await previewTags(`/product/${cement.id}`);
       assert.match(tags, /og:title" content="Cement - R110.00"/);
