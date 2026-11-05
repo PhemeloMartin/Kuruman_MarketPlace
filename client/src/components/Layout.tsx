@@ -15,8 +15,21 @@ import { BellIcon, CartIcon, CloseIcon, HomeIcon, MenuIcon, OrdersIcon, ProfileI
 // terms, help and refunds links.
 export function Layout() {
   const online = useOnline()
+  const location = useLocation()
   // Home may spread out on a laptop screen; every other page stays phone-width.
-  const wide = useLocation().pathname === '/'
+  const wide = location.pathname === '/'
+
+  // In Setswana or Afrikaans, Google's translator (lib/translate.ts) translates a page well when it loads,
+  // but often misses text the app swaps in afterwards. So there, going to another page loads it afresh and
+  // the translator sees all of it. English is unaffected. (The address is compared, not "first render",
+  // because React runs this twice in development.)
+  const shownAddress = useRef(location.pathname + location.search)
+  useEffect(() => {
+    const address = location.pathname + location.search
+    if (address === shownAddress.current) return
+    shownAddress.current = address
+    if (currentLanguage() !== 'en') window.location.reload()
+  }, [location.pathname, location.search])
   return (
     <div className={wide ? 'app app-wide' : 'app'}>
       <DuneRibbon />

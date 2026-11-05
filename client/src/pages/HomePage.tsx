@@ -338,21 +338,20 @@ function Hero({ categories, onSearch }: { categories: Category[]; onSearch: (mar
             I want to sell
           </button>
         </div>
-        {tab === 'shop' ? (
-          <div role="tabpanel" id="panel-shop" aria-labelledby="tab-shop">
-            <h1 className="hero-title">Everything Kuruman sells, in one place.</h1>
-            <p className="hero-text">
-              Fresh food, street food, bricks and sand, livestock, crafts and more, from local sellers. Collect it, or
-              have it delivered.
-            </p>
-            <SearchBar categories={categories} market="" words="" onSearch={onSearch} />
-          </div>
-        ) : (
-          <div role="tabpanel" id="panel-sell" aria-labelledby="tab-sell">
-            <h1 className="hero-title">Sell to all of Kuruman.</h1>
-            <SellSteps />
-          </div>
-        )}
+        {/* Both panels are always on the page and the other one is hidden: the Setswana/Afrikaans translator
+            only reliably translates text that is there when the page loads (lib/translate.ts). */}
+        <div role="tabpanel" id="panel-shop" aria-labelledby="tab-shop" hidden={tab !== 'shop'}>
+          <h1 className="hero-title">Everything Kuruman sells, in one place.</h1>
+          <p className="hero-text">
+            Fresh food, street food, bricks and sand, livestock, crafts and more, from local sellers. Collect it, or
+            have it delivered.
+          </p>
+          <SearchBar categories={categories} market="" words="" onSearch={onSearch} />
+        </div>
+        <div role="tabpanel" id="panel-sell" aria-labelledby="tab-sell" hidden={tab !== 'sell'}>
+          <h1 className="hero-title">Sell to all of Kuruman.</h1>
+          <SellSteps />
+        </div>
       </div>
     </section>
   )
