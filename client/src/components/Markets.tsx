@@ -21,8 +21,10 @@ export interface MarketInfo {
   art: ReactNode
   photo?: string
   credit?: Credit // for a photo that isn't ours
-  gallery?: { src: string; alt: string }[] // more of our own photos, shown when the market is opened
+  gallery?: Gallery // more of our own photos, shown when the market is opened
 }
+
+type Gallery = { src: string; alt: string }[]
 
 const commons = (who: string, licence: string, file: string): Credit => ({
   text: `Picture: ${who}, ${licence}, via Wikimedia Commons (cropped)`,
@@ -65,7 +67,11 @@ export const MARKETS: MarketInfo[] = [
       { src: '/markets/gallery/food-caravan.webp', alt: 'A food caravan under a shade net, with a table and chairs' },
       { src: '/markets/gallery/food-menu.webp', alt: 'A caravan’s menu: pap, rice or dumpling with beef stew or steak, R80' },
       { src: '/markets/gallery/pots-on-the-fire.webp', alt: 'Pots cooking on a gas stove' },
+      { src: '/markets/gallery/tea-stall-owner.webp', alt: 'The owner of a tea and bread stall in town, ready for customers' },
+      { src: '/markets/gallery/tea-stall.webp', alt: 'Tea and bread under a shade net, across from the taxi rank' },
       { src: '/markets/gallery/sis-dee.webp', alt: 'The “Sis Dee” food trailer' },
+      { src: '/markets/gallery/davids-cook.webp', alt: 'Dishing up pap at David’s Take Away' },
+      { src: '/markets/gallery/davids-lunchtime.webp', alt: 'Lunchtime at David’s Take Away, Stall 23 at the Kuruman SMME Village' },
       { src: '/markets/gallery/davids-take-away.webp', alt: 'David’s Take Away at the Kuruman SMME Village' },
       { src: '/markets/gallery/joyces-fast-food.webp', alt: 'The sign of Joyce’s Fast Food' },
       { src: '/markets/gallery/dannys-fast-foods.webp', alt: 'Danny’s Fast Foods, open for the day' },
@@ -241,7 +247,8 @@ export const MARKETS: MarketInfo[] = [
   {
     slug: 'personal-care',
     blurb: 'Soap, lotion, hair care',
-    photo: '/markets/personal-care.webp', // our own photo
+    photo: '/markets/personal-care.webp', // our own photos
+    gallery: [{ src: '/markets/gallery/siddiq-spa-window.webp', alt: 'The window of a Kuruman salon: braids, cuts and nails' }],
     art: svg(
       <>
         <rect x="56" y="54" width="40" height="76" rx="10" fill="#FFFCF7" />
@@ -289,6 +296,7 @@ export interface StoryMarket {
   photoAlt?: string
   art?: ReactNode // a drawing, when there is no free photo
   cover?: string // the Home card's photo, when it isn't the story's own picture
+  gallery?: Gallery // our own photos for a Business Directory market (product markets have them in MARKETS)
   credit?: { text: string; href: string }
   category?: string // a product market: opens /?market=<category>
   directory?: string // a Business Directory category: opens /directory?category=<directory>
@@ -320,6 +328,7 @@ export const STORY_MARKETS: StoryMarket[] = [
     note: 'We list doctors and healers so you can call them; we don’t check medical claims, so ask whether they are registered. Medicines can’t be sold on KurumanMarketPlace. In an emergency, call 10177 for an ambulance (112 from a cellphone).',
     photo: '/markets/credo-mutwa.webp',
     photoAlt: 'Credo Mutwa in Soweto, 1997',
+    gallery: [{ src: '/markets/gallery/lesego-muthi-shop.webp', alt: 'Lesego Muthi Shop in town: traditional medicine, wholesale and retail' }],
     credit: {
       text: 'Photo: oficinalis, 1997, CC BY-SA 4.0, via Wikimedia Commons (cropped)',
       href: 'https://commons.wikimedia.org/wiki/File:Credo_mutwa.jpg',
@@ -388,7 +397,7 @@ export function MarketStoryCard({ market }: { market: StoryMarket }) {
 
 // Under an opened market: our own photos from around Kuruman (swipe sideways), and who took the market's
 // picture when it isn't ours.
-export function MarketPictures({ info }: { info: MarketInfo }) {
+export function MarketPictures({ info }: { info: { gallery?: Gallery; credit?: Credit } }) {
   if (!info.gallery && !info.credit) return null
   return (
     <div className="market-pictures">

@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { SearchIcon } from '../components/Icons'
-import { MarketStoryCard, storyForDirectory } from '../components/Markets'
+import { MarketPictures, MarketStoryCard, storyForDirectory } from '../components/Markets'
 import { api, ApiError } from '../lib/api'
 
 interface Listing {
@@ -83,6 +83,7 @@ export function DirectoryPage() {
 
       <section style={{ marginTop: 16 }} aria-label="Listings">
         {story && <MarketStoryCard market={story} />}
+        {story && <MarketPictures info={{ gallery: story.gallery }} />}
         {listings?.length === 0 && (
           <p className="notice">
             {category && !query

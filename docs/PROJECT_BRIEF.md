@@ -347,8 +347,8 @@ open the console: scan the QR code shown, then enter the 6-digit code.
 - [x] Real photos on every market (5 Nov): our own from Kuruman (street food: the caravan park sign, and a
       row of food caravans and take-aways when the market is opened; clothing: traditional attire and a
       tailor's dresses; personal care: a salon) and free-licence photos from Wikimedia Commons for the rest
-      (credited when the market is opened). Photos where people's faces show clearly were left out (POPIA),
-      the election poster was cropped out, and location data was stripped from our photos. The drawings stay
+      (credited when the market is opened). The people in our photos agreed to be photographed (POPIA); a
+      muthi shop is shown under Doctors & healers. The election poster was cropped out, and location data was stripped from our photos. The drawings stay
       underneath as the offline fallback; photos are cached once seen, not downloaded upfront.
 - [x] SMS in English, Setswana or Afrikaans: each person gets SMS in their account's language (set by the
       language button; a new account takes the site's language), a stall's SMS in the owner's language. All
