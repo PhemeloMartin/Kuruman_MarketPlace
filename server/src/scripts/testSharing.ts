@@ -159,6 +159,13 @@ async function main() {
       assert.match(robots, /Disallow: \/orders/);
       assert.match(robots, /Disallow: \/seller/);
       assert.match(robots, /Sitemap: http.*\/sitemap\.xml/);
+      // Google may read the public catalogue the pages are built from (else they look empty: "soft 404"),
+      // but the rest of the API stays closed.
+      assert.match(robots, /Allow: \/api\/products/);
+      assert.match(robots, /Allow: \/api\/directory/);
+      assert.match(robots, /Allow: \/api\/shops\//);
+      assert.match(robots, /Disallow: \/api\//);
+      assert.doesNotMatch(robots, /Allow: \/api\/(orders|auth|payments|seller|privacy)/);
       const sitemap = await sitemapXml();
       assert.ok(sitemap.includes(`/product/${cement.id}</loc>`));
       assert.match(sitemap, /\/shop\/\d+<\/loc>/);
