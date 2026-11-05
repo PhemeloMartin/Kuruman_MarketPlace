@@ -11,7 +11,9 @@ services:
   - type: web
     name: kurumanmarketplace
     runtime: node
-    plan: free
+    # Paid plan (0.5 CPU, 512 MB; formerly called "starter"): the site never goes to sleep, so it opens
+    # straight away. Chosen in the dashboard on 5 Nov 2026; kept here so a Blueprint sync doesn't undo it.
+    plan: 0.5c-512mb
     region: frankfurt # closest Render region to South Africa at the time of writing
     buildCommand: >-
       cd client && npm ci --include=dev && npm run build &&
