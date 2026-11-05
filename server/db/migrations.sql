@@ -307,3 +307,20 @@ CREATE INDEX IF NOT EXISTS idx_delivery_messages_order ON delivery_messages(orde
 -- categories yet, so sellers pick them by hand - like the other categories added after the spec.
 INSERT INTO categories (slug, name) VALUES ('water', 'Water & ice'), ('books', 'Books & lessons')
   ON CONFLICT (slug) DO NOTHING;
+
+-- 2026-11-05: the Business Directory goes real. The made-up demo listings (names ending "(demo)", numbers in
+-- the 071 000 02xx demo range) come off the site, and Sego Sa Metsi - a real, approved seller whose owner
+-- confirmed the number - is listed instead, with its shop's own phone and area. 'removed' instead of DELETE
+-- keeps the history. Both statements are safe to run again (the server runs this file at every start): a
+-- listing that exists, even a removed one, is never added a second time.
+UPDATE directory_listings
+   SET status = 'removed', decided_at = now(), decision_note = 'Demo listing taken off before real use (5 Nov 2026)'
+ WHERE name LIKE '%(demo)' AND phone LIKE '+277100002%' AND status <> 'removed';
+INSERT INTO directory_listings (name, category, description, area, phone, has_whatsapp, submitted_by, consent_at,
+                                status, decided_at, decision_note)
+SELECT b.name, 'water', left(coalesce(nullif(b.description, ''), 'Purified water.'), 400), b.area, b.phone,
+       coalesce(b.whatsapp_phone = b.phone, FALSE), b.owner_id, now(),
+       'approved', now(), 'Approved seller; the owner confirmed the number (5 Nov 2026)'
+  FROM businesses b
+ WHERE lower(b.name) = 'sego sa metsi' AND b.is_active
+   AND NOT EXISTS (SELECT 1 FROM directory_listings d WHERE lower(d.name) = lower(b.name));

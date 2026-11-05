@@ -123,8 +123,9 @@ async function main() {
     });
 
     await check("the directory can be filtered by kind of service", async () => {
-      const r = (await call("", "GET", "/api/directory?category=plumbing")).data.listings;
-      assert.ok(r.length >= 1 && r.every((l: any) => l.category === "plumbing"));
+      const r = (await call("", "GET", "/api/directory?category=building")).data.listings;
+      assert.ok(r.length >= 1 && r.every((l: any) => l.category === "building"));
+      assert.equal((await call("", "GET", "/api/directory?category=plumbing")).data.listings.length, 0);
     });
 
     // ---- WhatsApp channel post ----

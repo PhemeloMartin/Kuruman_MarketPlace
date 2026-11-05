@@ -27,6 +27,7 @@ export const DIRECTORY_CATEGORIES: Record<string, string> = {
   // Surgeries, clinics and traditional healers: people you call, not products (the seller terms don't
   // allow medicines). On the Home screen this is the market in honour of Credo Mutwa.
   health: "Doctors & healers",
+  water: "Water & ice", // water sellers and deliveries (e.g. Sego Sa Metsi)
   other: "Other services",
 };
 
