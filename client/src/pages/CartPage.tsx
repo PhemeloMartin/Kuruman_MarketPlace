@@ -16,6 +16,7 @@ interface Policy {
   deliveryFeeCents: number
   sellerResponseMinutes: number
   onlinePaymentAvailable: boolean
+  onlinePaymentTest?: boolean // Payfast's sandbox: no real money
   serviceCentre: Point
   serviceRadiusKm: number
 }
@@ -297,10 +298,16 @@ export function CartPage() {
               onChange={() => setPaymentMethod('online')}
               disabled={!policy?.onlinePaymentAvailable}
             />
-            {policy?.onlinePaymentAvailable ? 'Pay online' : 'Pay online (soon)'}
+            {!policy?.onlinePaymentAvailable ? 'Pay online (soon)' : policy.onlinePaymentTest ? 'Pay online (test)' : 'Pay online'}
           </label>
         </div>
         <p className="fine-print">You only pay online after the seller accepts your order.</p>
+        {policy?.onlinePaymentTest && (
+          <p className="notice" role="note">
+            <strong>Online payment is in test mode</strong> while Payfast checks our account: it uses Payfast’s test
+            card and <strong>no real money is taken</strong>. For a real order, choose Cash.
+          </p>
+        )}
       </fieldset>
 
       <div className="totals" aria-label="Order total">

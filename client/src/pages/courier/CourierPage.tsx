@@ -10,6 +10,7 @@ import type { MapPin } from '../../components/DeliveryMap'
 import { InAppDirections } from '../../components/InAppDirections'
 import { VEHICLE_EMOJI, mapsAppLink, type Point } from '../../lib/geo'
 import { useLiveLocation, type Sharing } from '../../lib/useLiveLocation'
+import { usePaymentTestMode } from '../../lib/paymentMode'
 
 interface OpenJob {
   id: number
@@ -77,6 +78,7 @@ function PhoneLink({ e164 }: { e164: string }) {
 }
 
 export function CourierPage() {
+  const paymentTest = usePaymentTestMode()
   const [openJobs, setOpenJobs] = useState<OpenJob[] | null>(null)
   const [myJobs, setMyJobs] = useState<MyJob[] | null>(null)
   const [holdingCents, setHoldingCents] = useState(0)
@@ -242,6 +244,8 @@ export function CourierPage() {
                   <>
                     Customer pays cash: <span translate="no">{formatRand(j.cashToCollectCents)}</span>
                   </>
+                ) : paymentTest ? (
+                  <strong>Paid online in test mode: no real money</strong>
                 ) : (
                   'Already paid online'
                 )}

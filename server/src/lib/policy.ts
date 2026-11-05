@@ -30,4 +30,10 @@ export const POLICY = {
   get onlinePaymentAvailable() {
     return Boolean(process.env.PAYFAST_MERCHANT_ID && process.env.PAYFAST_MERCHANT_KEY);
   },
+  // True while online payment runs on Payfast's sandbox (test money, the same rule as lib/payfast.ts).
+  // Buyers, sellers and couriers are then told that an "online" payment moved no real money, so nobody
+  // hands over goods for a test payment.
+  get onlinePaymentTest() {
+    return this.onlinePaymentAvailable && process.env.PAYFAST_SANDBOX !== "false";
+  },
 };
