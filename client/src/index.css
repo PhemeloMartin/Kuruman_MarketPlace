@@ -1480,6 +1480,139 @@ body {
   color: var(--primary);
 }
 
+/* Markets with a Kuruman story: the plain name over the photo of the person or place it honours. The dark
+   fade at the bottom keeps the white text readable on any photo. */
+.story-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.story-tile {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--primary-dark); /* shows if the photo can't load (offline) */
+  color: #fff;
+  text-decoration: none;
+}
+
+.story-tile > img,
+.story-tile > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.story-tile:hover > img,
+.story-tile:hover > svg {
+  transform: scale(1.04);
+}
+
+.story-label {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 48px 12px 12px;
+  background: linear-gradient(to top, rgba(20, 16, 12, 0.9), rgba(20, 16, 12, 0.6) 55%, transparent);
+}
+
+.story-honour {
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--sun);
+}
+
+.story-name {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.story-count {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.story-tile:hover .story-name,
+.story-tile:focus-visible .story-name {
+  text-decoration: underline;
+}
+
+/* The story at the top of an opened market. On a phone: the photo and the name side by side, the story
+   underneath at full width. Wider: the photo on the left, everything else beside it. */
+.market-story {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px 14px;
+  margin: 0 0 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.market-story-text {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 600px) {
+  .market-story {
+    grid-template-columns: 120px minmax(0, 1fr);
+    align-items: start;
+  }
+  .market-story-art {
+    grid-row: span 2;
+  }
+  .market-story-text {
+    grid-column: 2;
+  }
+}
+
+.market-story-art {
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.market-story-art img,
+.market-story-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.market-story p {
+  margin: 0 0 8px;
+}
+
+.market-story .market-story-honour {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--primary);
+}
+
+.market-story .market-story-note {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
 .results-title {
   font-size: 1.3rem;
 }
@@ -1559,6 +1692,9 @@ body {
   }
   .market-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .story-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .trust-strip {
     grid-template-columns: repeat(4, auto);

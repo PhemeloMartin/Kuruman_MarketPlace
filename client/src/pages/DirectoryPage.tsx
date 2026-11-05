@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { SearchIcon } from '../components/Icons'
+import { MarketStoryCard, storyForDirectory } from '../components/Markets'
 import { api, ApiError } from '../lib/api'
 
 interface Listing {
@@ -21,10 +22,13 @@ const localPhone = (e164: string) => '0' + e164.slice(3).replace(/(\d{2})(\d{3})
 
 // Kuruman Business Directory: local services you phone directly - plumbers, hairdressers, mechanics...
 // Free to list; support checks every listing before it appears.
+// /directory?category=health opens on one kind of service (the Home screen's "Doctors & healers" card).
 export function DirectoryPage() {
+  const [params] = useSearchParams()
   const [categories, setCategories] = useState<Record<string, string>>({})
   const [listings, setListings] = useState<Listing[] | null>(null)
-  const [category, setCategory] = useState('')
+  const [category, setCategory] = useState(params.get('category') ?? '')
+  const story = storyForDirectory(category)
   const [words, setWords] = useState('')
   const [query, setQuery] = useState('')
   const [adding, setAdding] = useState(false)
@@ -78,7 +82,14 @@ export function DirectoryPage() {
       </form>
 
       <section style={{ marginTop: 16 }} aria-label="Listings">
-        {listings?.length === 0 && <p className="notice">Nothing found yet. Try another word or kind of service.</p>}
+        {story && <MarketStoryCard market={story} />}
+        {listings?.length === 0 && (
+          <p className="notice">
+            {category && !query
+              ? 'Nobody is listed here yet. Do you offer this? Add your business below: it’s free.'
+              : 'Nothing found yet. Try another word or kind of service.'}
+          </p>
+        )}
         {listings?.map((l) => (
           <article key={l.id} className="card directory-card">
             <div className="order-card-head">

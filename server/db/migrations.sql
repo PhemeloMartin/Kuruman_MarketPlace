@@ -299,3 +299,11 @@ CREATE TABLE IF NOT EXISTS delivery_messages (
   created_at  TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_delivery_messages_order ON delivery_messages(order_id, id);
+
+-- 2026-11-05: two new markets with a Kuruman story (see client/src/components/Markets.tsx): water sellers
+-- (Leitlho, the Eye of Kuruman) and local authors, study guides and lessons (the Moffat Mission). Doctors
+-- and traditional healers are a Business Directory category instead (routes/directory.ts): the seller terms
+-- don't allow medicines to be sold, so they are listed as people you call. The AI can't suggest these two
+-- categories yet, so sellers pick them by hand - like the other categories added after the spec.
+INSERT INTO categories (slug, name) VALUES ('water', 'Water & ice'), ('books', 'Books & lessons')
+  ON CONFLICT (slug) DO NOTHING;

@@ -24,6 +24,9 @@ export const DIRECTORY_CATEGORIES: Record<string, string> = {
   cleaning: "Cleaning",
   events: "Catering & events",
   repairs: "Phone & computer repairs",
+  // Surgeries, clinics and traditional healers: people you call, not products (the seller terms don't
+  // allow medicines). On the Home screen this is the market in honour of Credo Mutwa.
+  health: "Doctors & healers",
   other: "Other services",
 };
 

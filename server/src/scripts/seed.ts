@@ -18,7 +18,8 @@ async function main() {
     // Categories ("markets" on the Home screen).
     // The first six are spec Table 34 - the labels the AI model predicts. The last four are the
     // wider Kuruman economy (building, livestock, farm, street food); the AI can't suggest them
-    // yet, so sellers choose them by hand until the model is retrained with examples.
+    // yet, so sellers choose them by hand until the model is retrained with examples. Water and books
+    // are the markets with a Kuruman story (db/migrations.sql already adds them, hence ON CONFLICT).
     const categories = [
       ["fresh-produce", "Fresh produce"],
       ["pantry", "Pantry & groceries"],
@@ -30,11 +31,14 @@ async function main() {
       ["building", "Building materials"],
       ["livestock", "Livestock"],
       ["farm-feed", "Animal feed & farm supplies"],
+      ["water", "Water & ice"],
+      ["books", "Books & lessons"],
     ];
     const categoryIds: Record<string, number> = {};
     for (const [slug, name] of categories) {
       const r = await client.query(
-        "INSERT INTO categories (slug, name) VALUES ($1, $2) RETURNING id",
+        `INSERT INTO categories (slug, name) VALUES ($1, $2)
+         ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
         [slug, name]
       );
       categoryIds[slug] = r.rows[0].id;

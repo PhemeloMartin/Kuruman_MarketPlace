@@ -54,7 +54,7 @@ export default defineConfig({
         // so the app opens without signal. It never stores API answers: the public catalogue
         // is saved by our own code (src/lib/catalogueCache.ts) with a timestamp, and private
         // data - orders, addresses, payments - is never saved on the phone (spec 5.3, 5.4).
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'], // webp: the market photos (~150 KB)
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [

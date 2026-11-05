@@ -4,7 +4,16 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useAddToCart } from '../cart/useAddToCart'
 import { BackIcon, CheckIcon, SearchIcon } from '../components/Icons'
-import { KurumanPanorama, marketInfo, orderMarkets } from '../components/Markets'
+import {
+  KurumanPanorama,
+  MarketStoryCard,
+  STORY_MARKETS,
+  marketInfo,
+  orderMarkets,
+  storyForCategory,
+  storyLink,
+} from '../components/Markets'
+import type { StoryMarket } from '../components/Markets'
 import { ProductCard } from '../components/ProductCard'
 import { SiteHeader } from '../components/Layout'
 import { api, ApiError } from '../lib/api'
@@ -45,6 +54,7 @@ export function HomePage() {
   const query = (params.get('q') ?? '').trim()
   const category = market === 'all' ? '' : market
   const showResults = Boolean(market || query)
+  const story = storyForCategory(category) // the market's Kuruman story, if it has one
 
   const [categories, setCategories] = useState<Category[]>([])
   // The products loaded, and for which market + words. When you switch market, the old list
@@ -129,9 +139,16 @@ export function HomePage() {
       ))}
     </div>
   ) : products.length === 0 ? (
-    <p className="notice">
-      {showResults ? 'Nothing matches that yet. Try another word or market.' : 'No products listed yet.'}
-    </p>
+    category && !query ? (
+      // A new market nobody sells in yet: invite sellers instead of "nothing matches".
+      <p className="notice">
+        Nobody sells here yet. Do you? <Link to="/profile#sell">Open a shop</Link> and be the first.
+      </p>
+    ) : (
+      <p className="notice">
+        {showResults ? 'Nothing matches that yet. Try another word or market.' : 'No products listed yet.'}
+      </p>
+    )
   ) : (
     <div className="product-grid">
       {(showResults ? products : mixMarkets(products, categories).slice(0, LANDING_PRODUCTS)).map((p) => (
@@ -179,6 +196,7 @@ export function HomePage() {
                 Also searched: {alsoSearched.join(', ')}
               </p>
             )}
+            {story && !query && <MarketStoryCard market={story} />}
             {productList}
           </section>
         </main>
@@ -208,10 +226,17 @@ export function HomePage() {
                 See everything
               </button>
             </div>
-            <div className="market-grid">
-              {categories.map((c) => (
-                <MarketTile key={c.slug} category={c} onOpen={() => showMarket(c.slug, '')} />
+            <div className="story-grid">
+              {STORY_MARKETS.map((m) => (
+                <StoryTile key={m.key} market={m} category={categories.find((c) => c.slug === m.category)} />
               ))}
+            </div>
+            <div className="market-grid">
+              {categories
+                .filter((c) => !storyForCategory(c.slug)) // already shown above, with its story
+                .map((c) => (
+                  <MarketTile key={c.slug} category={c} onOpen={() => showMarket(c.slug, '')} />
+                ))}
             </div>
           </section>
 
@@ -369,6 +394,8 @@ function SellSteps() {
   )
 }
 
+const itemCount = (n: number) => (n === 0 ? 'Coming soon' : `${n} ${n === 1 ? 'item' : 'items'}`)
+
 function MarketTile({ category, onOpen }: { category: Category; onOpen: () => void }) {
   const info = marketInfo(category.slug)
   const count = category.productCount
@@ -378,11 +405,24 @@ function MarketTile({ category, onOpen }: { category: Category; onOpen: () => vo
       <span className="market-label">
         <span className="market-name">{category.name}</span>
         <span className="market-blurb">{info.blurb}</span>
-        {count !== undefined && (
-          <span className="market-count">{count === 0 ? 'Coming soon' : `${count} ${count === 1 ? 'item' : 'items'}`}</span>
-        )}
+        {count !== undefined && <span className="market-count">{itemCount(count)}</span>}
       </span>
     </button>
+  )
+}
+
+// A market with a Kuruman story: its plain name over the photo of the person or place it honours.
+function StoryTile({ market, category }: { market: StoryMarket; category?: Category }) {
+  const count = category?.productCount
+  return (
+    <Link to={storyLink(market)} className="story-tile" onClick={() => window.scrollTo({ top: 0 })}>
+      {market.photo ? <img src={market.photo} alt="" loading="lazy" /> : market.art}
+      <span className="story-label">
+        <span className="story-honour">{market.honour}</span>
+        <span className="story-name">{category?.name ?? market.name}</span>
+        <span className="story-count">{market.directory ? 'Call them directly' : count !== undefined && itemCount(count)}</span>
+      </span>
+    </Link>
   )
 }
 

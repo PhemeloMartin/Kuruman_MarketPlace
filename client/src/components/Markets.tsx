@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 
 // The "markets" on the Home screen. A market is simply a product category from the server
 // (GET /api/categories); this file adds what the Home screen shows for it: the order, a short
@@ -77,6 +78,8 @@ export const MARKETS: MarketInfo[] = [
       '#F2C57C',
     ),
   },
+  // Water and books are markets with a Kuruman story (STORY_MARKETS below): their own photos.
+  { slug: 'water', blurb: 'Filtered water, refills, ice', photo: '/markets/eye-of-kuruman.webp', art: null },
   {
     slug: 'building',
     blurb: 'Bricks, sand, cement',
@@ -174,6 +177,7 @@ export const MARKETS: MarketInfo[] = [
       '#1E6B5A',
     ),
   },
+  { slug: 'books', blurb: 'Local authors, study guides, lessons', photo: '/markets/moffat-mission.webp', art: null },
   {
     slug: 'household',
     blurb: 'Pots, cleaning, home things',
@@ -206,6 +210,133 @@ export const MARKETS: MarketInfo[] = [
     ),
   },
 ]
+
+// Wonderwerk Cave has no photo with a free licence, so it is drawn: the hill, the cave mouth, a fire inside.
+// The fire sits high in the picture, so the market's name (over the bottom of the card) doesn't hide it.
+const wonderwerkArt = svg(
+  <>
+    <circle cx="136" cy="16" r="9" fill="#F2C57C" />
+    <path d="M-10 160C-6 50 34 12 80 12s86 38 90 148z" fill="#A8462A" />
+    <path d="M14 70c20-6 40-8 60-6M100 44c18 0 32 6 46 14" stroke="#8A3B22" strokeWidth="4" fill="none" strokeLinecap="round" />
+    <path d="M28 160c0-70 22-112 52-112s52 42 52 112z" fill="#2A211B" />
+    <g transform="translate(0 -46)">
+      <circle cx="80" cy="134" r="30" fill="#F2C57C" opacity="0.18" />
+      <path d="M62 154l36-12M62 142l36 12" stroke="#6B2C18" strokeWidth="6" strokeLinecap="round" />
+      <path d="M80 106c10 12 16 20 12 32-2 6-7 9-12 9s-10-3-12-9c-3-9 1-16 6-22 0 7 3 9 5 9-2-7-2-13 1-19z" fill="#D9573A" />
+      <path d="M80 124c5 6 7 10 5 15-1 3-3 4-5 4s-4-1-5-4c-1-4 1-8 5-15z" fill="#F2C57C" />
+    </g>
+  </>,
+  '#F6D9B5',
+)
+
+// Markets with a Kuruman story. The card keeps the market's plain name (people look for "Water", not for a
+// name they first have to learn); the picture behind it and one line say whose story it carries, and opening
+// the market tells that story. The photos are from Wikimedia Commons under licences that ask for the
+// photographer and the licence to be named next to the photo - that is `credit`.
+export interface StoryMarket {
+  key: string
+  name: string // the plain name (a product market shows the server's category name when it has one)
+  honour: string // the line on the picture
+  story: string // shown when the market is opened
+  note?: string // something people must know there, e.g. what to do in an emergency
+  photo?: string
+  photoAlt?: string
+  art?: ReactNode // a drawing, when there is no free photo
+  credit?: { text: string; href: string }
+  category?: string // a product market: opens /?market=<category>
+  directory?: string // a Business Directory category: opens /directory?category=<directory>
+  also?: { to: string; label: string } // a related place, e.g. tutors to call next to the books
+}
+
+export const STORY_MARKETS: StoryMarket[] = [
+  {
+    key: 'leitlho',
+    category: 'water',
+    name: 'Water & ice',
+    honour: 'Leitlho · the Eye of Kuruman',
+    story:
+      'Leitlho means “the eye”. The Eye of Kuruman, Gasegonyana, is the spring that gives the town about 20 million litres of clean water every day: it’s why Kuruman is called the oasis of the Kalahari. This market is for the people who sell water: filtered and bottled water, refills, deliveries and ice.',
+    photo: '/markets/eye-of-kuruman.webp',
+    photoAlt: 'Water flowing out of the rock at the Eye of Kuruman',
+    credit: {
+      text: 'Photo: South African Tourism, CC BY 2.0, via Wikimedia Commons (cropped)',
+      href: 'https://commons.wikimedia.org/wiki/File:The_Eye,_Kuruman,_Northern_Cape,_South_Africa_(19919680754).jpg',
+    },
+  },
+  {
+    key: 'credo-mutwa',
+    directory: 'health',
+    name: 'Doctors & healers',
+    honour: 'In honour of Credo Mutwa',
+    story:
+      'Vusamazulu Credo Mutwa (1921–2020) was a sangoma and healer, an author and an artist. He spent his last years in Kuruman, where he ran a clinic, and he is buried here. In Setswana a ngaka is a doctor and a traditional healer alike, so this market brings them together: surgeries, clinics and traditional healers you can call.',
+    note: 'We list doctors and healers so you can call them; we don’t check medical claims, so ask whether they are registered. Medicines can’t be sold on KurumanMarketPlace. In an emergency, call 10177 for an ambulance (112 from a cellphone).',
+    photo: '/markets/credo-mutwa.webp',
+    photoAlt: 'Credo Mutwa in Soweto, 1997',
+    credit: {
+      text: 'Photo: oficinalis, 1997, CC BY-SA 4.0, via Wikimedia Commons (cropped)',
+      href: 'https://commons.wikimedia.org/wiki/File:Credo_mutwa.jpg',
+    },
+  },
+  {
+    key: 'moffat-mission',
+    category: 'books',
+    name: 'Books & lessons',
+    honour: 'Moffat Mission · Setswana in print',
+    story:
+      'At the Moffat Mission, Robert Moffat translated the whole Bible into Setswana, finished in 1857: the first complete Bible in an African language. The mission’s hand press, which printed books and lessons in Setswana, can still be seen there. This market is for local authors, books, study guides and extra lessons.',
+    photo: '/markets/moffat-mission.webp',
+    photoAlt: 'The thatched stone church at the Moffat Mission, Kuruman',
+    credit: {
+      text: 'Photo: Andrew Hall, CC BY-SA 3.0, via Wikimedia Commons (cropped)',
+      href: 'https://commons.wikimedia.org/wiki/File:Church,_Moffat_Mission,_Kuruman.JPG',
+    },
+    also: { to: '/directory?category=lessons', label: 'Tutors you can call: Lessons & tutoring in the Business Directory' },
+  },
+  {
+    key: 'wonderwerk',
+    category: 'street-food',
+    name: 'Street food & caravans',
+    honour: 'Wonderwerk · a million years of fire',
+    story:
+      'Wonderwerk Cave, between Kuruman and Danielskuil, holds some of the oldest signs of people using fire, about a million years old. Wonderwerk means “miracle”. Kuruman still gathers around the fire, and this market is for food cooked at stalls and caravans: kotas, vetkoek, pap and stew.',
+    art: wonderwerkArt,
+  },
+]
+
+export const storyForCategory = (slug: string) => STORY_MARKETS.find((m) => m.category === slug)
+export const storyForDirectory = (key: string) => STORY_MARKETS.find((m) => m.directory === key)
+export const storyLink = (m: StoryMarket) => (m.directory ? `/directory?category=${m.directory}` : `/?market=${m.category}`)
+
+// The story at the top of an opened market.
+export function MarketStoryCard({ market }: { market: StoryMarket }) {
+  return (
+    <aside className="market-story" aria-label="About this market">
+      <div className="market-story-art">{market.photo ? <img src={market.photo} alt={market.photoAlt ?? ''} /> : market.art}</div>
+      <p className="market-story-honour">{market.honour}</p>
+      <div className="market-story-text">
+        <p>{market.story}</p>
+        {market.also && (
+          <p>
+            <Link to={market.also.to}>{market.also.label}</Link>
+          </p>
+        )}
+        {market.credit && (
+          <p className="fine-print">
+            <a href={market.credit.href} target="_blank" rel="noopener noreferrer">
+              {market.credit.text}
+            </a>
+          </p>
+        )}
+      </div>
+      {market.note && (
+        <p className="notice market-story-note" role="note">
+          {market.note}
+        </p>
+      )}
+    </aside>
+  )
+}
 
 // A category the server has but this file doesn't know yet still gets a tile, with a plain picture.
 export function marketInfo(slug: string): MarketInfo {

@@ -335,7 +335,15 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       two map points are sent, never a name; one request per courier per 3 s; a straight line if it's down).
       The "Maps app" buttons open Apple Maps on an iPhone and Google Maps on Android, so nothing needs
       installing. `test:tracking` (22 checks)
-      `test:tracking` (21 checks)
+- [x] Markets with a Kuruman story (5 Nov): four markets keep their plain names, with a photo of the person
+      or place they honour behind them, and tell the story when opened. Water & ice: Leitlho, the Eye of
+      Kuruman (about 20 million litres a day). Doctors & healers: in honour of Credo Mutwa (1921–2020), who
+      spent his last years in Kuruman. Books & lessons: the Moffat Mission (the Setswana Bible, 1857).
+      Street food & caravans: Wonderwerk Cave (signs of fire about a million years old; drawn, as no photo
+      has a free licence). Water and books are new categories (db/migrations.sql); doctors and healers are a
+      Business Directory category, because the seller terms don't allow medicines to be sold. Photos are
+      from Wikimedia Commons (CC BY 2.0 / CC BY-SA), credited on each market. Before a real launch: ask Credo
+      Mutwa's family whether they agree to his photo and name being used.
 - [x] SMS in English, Setswana or Afrikaans: each person gets SMS in their account's language (set by the
       language button; a new account takes the site's language), a stall's SMS in the owner's language. All
       texts in server/src/lib/smsText.ts; Setswana and Afrikaans are DRAFTS until checked by fluent speakers.
