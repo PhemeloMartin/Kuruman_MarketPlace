@@ -318,8 +318,8 @@ async function main() {
     await client.query("UPDATE products SET barcode = '6009876500025' WHERE name = 'Cement'");
 
     // ---------------------------------------------------------------------------
-    // Order history and reviews, ALL MADE UP, so the shop numbers, the ratings, Entrepreneur of the Month
-    // and the AI models have weeks of data to work with in a demo:
+    // Order history and reviews, ALL MADE UP, so the shop numbers, the ratings and the AI models have
+    // weeks of data to work with in a demo:
     //   1. orders that customers reviewed - in English, Setswana and Afrikaans like Kuruman customers would
     //      write, good and bad - so the review AI has something to summarise ("Customers mention ...");
     //   2. SYNTHETIC walk-in sales for every shop over the last 12 weeks (busier on Fridays, Saturdays and

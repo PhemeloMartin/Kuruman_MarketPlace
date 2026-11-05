@@ -453,7 +453,7 @@ export function orderMarkets<T extends { slug: string }>(categories: T[]): T[] {
 }
 
 // A wide photo of Kuruman: the SMME Village, home of many of its small businesses. Shown where a shop has
-// no cover photo of its own yet (shop page, Entrepreneur of the Month).
+// no cover photo of its own yet (shop page).
 export function KurumanPanorama() {
   return <img src="/hero/smme-village.webp" alt="" loading="lazy" />
 }

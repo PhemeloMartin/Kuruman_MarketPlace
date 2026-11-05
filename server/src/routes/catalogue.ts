@@ -2,7 +2,6 @@ import { Router } from "express";
 import { pool } from "../db";
 import { expandQuery, plain } from "../lib/glossary";
 import { publicReviews, ratingOf, themeCounts } from "../lib/reviews";
-import { currentSpotlight } from "../lib/spotlight";
 
 // Public catalogue: anyone can browse without signing in (spec FR-01, FR-04).
 // Only public fields are returned - never seller phone numbers or stock internals.
@@ -148,7 +147,6 @@ catalogueRouter.get("/shops/:id", async (req, res) => {
     [id]
   );
   const shop = b.rows[0];
-  const spotlight = await currentSpotlight();
   res.json({
     id: Number(shop.id),
     name: shop.name,
@@ -169,13 +167,7 @@ catalogueRouter.get("/shops/:id", async (req, res) => {
     rating: await ratingOf(id),
     reviews: await publicReviews(id),
     customerThemes: await themeCounts(id),
-    isSpotlight: spotlight?.business.id === id,
   });
-});
-
-// GET /api/spotlight - this month's Entrepreneur of the Month (null if no shop qualifies yet).
-catalogueRouter.get("/spotlight", async (_req, res) => {
-  res.json({ spotlight: await currentSpotlight() });
 });
 
 // GET /api/voice/:productId - the product's voice note. The ?v= part changes with each new

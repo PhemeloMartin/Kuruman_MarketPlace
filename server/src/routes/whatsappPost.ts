@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { pool } from "../db";
 import { requireStaff } from "../auth/session";
-import { currentSpotlight } from "../lib/spotlight";
 
 // The weekly post for the KurumanMarketPlace WhatsApp Channel: WhatsApp is where Kuruman FINDS the shops,
 // the site is where it BUYS. Every line links back to the site. Support copies it into the channel by hand
@@ -33,16 +32,8 @@ whatsappPostRouter.get("/support/whatsapp-post", requireStaff(), async (_req, re
   const services = await pool.query(
     "SELECT name, category FROM directory_listings WHERE status = 'approved' AND decided_at > now() - interval '7 days' ORDER BY decided_at DESC LIMIT 3"
   );
-  const spotlight = await currentSpotlight();
 
   const lines: string[] = ["*This week on KurumanMarketPlace* 🛒", "Buy local. Support Kuruman.", ""];
-  if (spotlight) {
-    lines.push(
-      `🏆 *Entrepreneur of the Month:* ${spotlight.business.name} (${spotlight.business.area}) - ${spotlight.completedOrders} orders, ${spotlight.averageRating.toFixed(1)}★`,
-      `${site}/shop/${spotlight.business.id}`,
-      ""
-    );
-  }
   if (newShops.rowCount) {
     lines.push("🆕 *New shops*");
     for (const s of newShops.rows) lines.push(`• ${s.name}, ${s.area}: ${site}/shop/${s.id}`);

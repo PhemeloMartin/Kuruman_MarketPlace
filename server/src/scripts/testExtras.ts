@@ -132,7 +132,8 @@ async function main() {
       const r = await call(support, "GET", "/api/support/whatsapp-post");
       assert.equal(r.status, 200);
       assert.match(r.data.text, /This week on KurumanMarketPlace/);
-      assert.match(r.data.text, /Entrepreneur of the Month/);
+      assert.match(r.data.text, /Popular this week/);
+      assert.doesNotMatch(r.data.text, /Entrepreneur of the Month/); // feature removed for now
       assert.match(r.data.text, /kurumanmarketplace\.example\/shop\/\d+/);
       assert.equal((await call(thato, "GET", "/api/support/whatsapp-post")).status, 403);
     });

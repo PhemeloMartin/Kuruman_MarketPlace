@@ -248,7 +248,7 @@ open the console: scan the QR code shown, then enter the 6-digit code.
 - [x] Reviews: 1-5 stars and an optional comment, only for your own COMPLETED order, once, within 30 days;
       first name only in public; seller replies once; support-hidden reviews don't count; shop rating on shop and
       product pages; in "download my data"
-- [x] Entrepreneur of the Month: published formula over 30 days (50% completed orders vs the best shop, 30% rating,
+- [ ] REMOVED 5 Nov 2026 (user's decision: it ran on demo data): Entrepreneur of the Month: published formula over 30 days (50% completed orders vs the best shop, 30% rating,
       20% acceptance; at least 3 orders and 3 reviews; on-site orders only), card on Home with "How is this
       chosen?", badge on the shop page; demo order history with reviews in English, Setswana and Afrikaans;
       `npm run test:reviews` (10 checks)

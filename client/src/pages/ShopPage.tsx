@@ -53,7 +53,6 @@ export function ShopPage() {
       <h1 className="page-title" style={{ marginBottom: 4 }}>
         {shop.name}
       </h1>
-      {shop.isSpotlight && <p className="spotlight-badge">🏆 Entrepreneur of the Month</p>}
       <p className="product-meta" style={{ fontSize: '0.95rem', marginTop: 0 }}>
         {shop.area}, Kuruman · selling here since {since}
       </p>

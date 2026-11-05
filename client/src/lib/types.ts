@@ -79,18 +79,6 @@ export const THEME_LABEL: Record<string, string> = {
 }
 export const NEGATIVE_THEMES = ['slow', 'expensive', 'poor_quality', 'cold', 'rude']
 
-// Entrepreneur of the Month (GET /api/spotlight).
-export interface Spotlight {
-  business: { id: number; name: string; area: string; description: string | null; coverPhotoUrl: string | null }
-  completedOrders: number
-  averageRating: number
-  reviewCount: number
-  acceptanceRate: number | null
-  score: number
-  periodDays: number
-  rule: string
-}
-
 // A shop's public page (GET /api/shops/:id).
 export interface Shop {
   id: number
@@ -108,7 +96,6 @@ export interface Shop {
   products: Product[]
   rating: Rating
   reviews: Review[]
-  isSpotlight: boolean
   customerThemes: { theme: string; count: number }[]
 }
 

@@ -1,5 +1,4 @@
-// Reviews and Entrepreneur of the Month: only real buyers review, once per order; sellers reply once;
-// hidden reviews don't count; the spotlight follows the published formula.
+// Reviews: only real buyers review, once per order; sellers reply once; hidden reviews don't count.
 //
 //   npm run test:reviews
 //
@@ -46,7 +45,7 @@ async function main() {
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 
   try {
-    console.log("\nReview and spotlight tests\n");
+    console.log("\nReview tests\n");
     const lesego = await login("0710000011");
     const thato = await login("0710000001");
     const kgomotso = await login("0710000002");
@@ -107,26 +106,6 @@ async function main() {
       const shop = (await call("", "GET", `/api/shops/${shopId}`)).data;
       assert.equal(shop.rating.count, count - 1);
       assert.ok(!shop.reviews.some((x: any) => x.comment === "Vetkoek was perfect."));
-    });
-
-    await check("Entrepreneur of the Month follows the formula: the food caravan wins on the demo data", async () => {
-      const s = (await call("", "GET", "/api/spotlight")).data.spotlight;
-      assert.match(s.business.name, /Dineo/);
-      // The caravan has the most completed orders (50 x 1), its 25 reviews of the last 30 days average 4.4
-      // (30 x 4.4/5 = 26.4), and the acceptance rate counts for 20%. The synthetic history follows the
-      // calendar (weekdays, paydays), so the acceptance rate - not the formula - can differ a little by day.
-      assert.equal(s.reviewCount, 25);
-      assert.equal(s.averageRating, 4.4);
-      assert.ok(s.acceptanceRate > 0.9 && s.acceptanceRate < 1);
-      assert.equal(s.score, Math.round(50 + 26.4 + 20 * s.acceptanceRate));
-      assert.match(s.rule, /Only orders placed and completed on the site count/);
-    });
-
-    await check("a suspended shop can't be Entrepreneur of the Month", async () => {
-      await pool.query("UPDATE businesses SET is_active = FALSE WHERE name LIKE 'Mma Dineo%'");
-      const s = (await call("", "GET", "/api/spotlight")).data.spotlight;
-      await pool.query("UPDATE businesses SET is_active = TRUE WHERE name LIKE 'Mma Dineo%'");
-      assert.ok(!s || !/Dineo/.test(s.business.name));
     });
 
     console.log(`\n${passed} checks passed.\n`);

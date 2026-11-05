@@ -32,7 +32,7 @@ const PRIVATE = ["/api/", "/seller", "/support", "/courier", "/cart", "/orders",
 // it must be allowed to read this data too: blocked, a shop, product or directory page looks empty to it
 // and is reported as a "soft 404". The rest of /api/ (accounts, orders, payments) stays off-limits; for
 // Google the longer, more specific rule wins, so "Allow: /api/products" beats "Disallow: /api/".
-const PUBLIC_DATA = ["/api/categories", "/api/products", "/api/search", "/api/spotlight", "/api/directory", "/api/shops/"];
+const PUBLIC_DATA = ["/api/categories", "/api/products", "/api/search", "/api/directory", "/api/shops/"];
 
 export function robotsTxt(): string {
   return [
