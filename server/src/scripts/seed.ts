@@ -61,8 +61,8 @@ async function main() {
       ["lesego", "+27710000011", "Lesego (demo customer)", "consumer"],
       ["anna", "+27710000012", "Anna (demo customer)", "consumer"],
       ["kabelo", "+27710000013", "Kabelo (demo customer)", "consumer"],
-      // Tebogo helps his grandmother, Mma Kefilwe, run her stall. She has a basic phone: 071 000 0014.
-      ["helper", "+27710000015", "Tebogo (demo helper for Mma Kefilwe's stall)", "entrepreneur"],
+      // Tebogo helps their grandmother, Mma Kefilwe, run her stall. She has a basic phone: 071 000 0014.
+      ["helper", "+27710000015", "Tebogo", "entrepreneur"],
       // Places the synthetic older sales history below (so real demo customers' order lists stay short).
       ["history", "+27710000099", "Walk-in customers (synthetic demo history)", "consumer"],
     ];

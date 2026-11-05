@@ -324,3 +324,6 @@ SELECT b.name, 'water', left(coalesce(nullif(b.description, ''), 'Purified water
   FROM businesses b
  WHERE lower(b.name) = 'sego sa metsi' AND b.is_active
    AND NOT EXISTS (SELECT 1 FROM directory_listings d WHERE lower(d.name) = lower(b.name));
+
+-- 2026-11-05: Tebogo's account is used for real now: the name loses its "(demo helper ...)" note.
+UPDATE users SET display_name = 'Tebogo' WHERE display_name = 'Tebogo (demo helper for Mma Kefilwe''s stall)';
