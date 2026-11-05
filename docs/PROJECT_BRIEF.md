@@ -344,6 +344,12 @@ open the console: scan the QR code shown, then enter the 6-digit code.
       Business Directory category, because the seller terms don't allow medicines to be sold. Photos are
       from Wikimedia Commons (CC BY 2.0 / CC BY-SA), credited on each market. Before a real launch: ask Credo
       Mutwa's family whether they agree to his photo and name being used.
+- [x] Real photos on every market (5 Nov): our own from Kuruman (street food: the caravan park sign, and a
+      row of food caravans and take-aways when the market is opened; clothing: traditional attire and a
+      tailor's dresses; personal care: a salon) and free-licence photos from Wikimedia Commons for the rest
+      (credited when the market is opened). Photos where people's faces show clearly were left out (POPIA),
+      the election poster was cropped out, and location data was stripped from our photos. The drawings stay
+      underneath as the offline fallback; photos are cached once seen, not downloaded upfront.
 - [x] SMS in English, Setswana or Afrikaans: each person gets SMS in their account's language (set by the
       language button; a new account takes the site's language), a stall's SMS in the owner's language. All
       texts in server/src/lib/smsText.ts; Setswana and Afrikaans are DRAFTS until checked by fluent speakers.

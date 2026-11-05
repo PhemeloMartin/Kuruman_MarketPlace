@@ -6,6 +6,7 @@ import { useAddToCart } from '../cart/useAddToCart'
 import { BackIcon, CheckIcon, SearchIcon } from '../components/Icons'
 import {
   KurumanPanorama,
+  MarketPictures,
   MarketStoryCard,
   STORY_MARKETS,
   marketInfo,
@@ -197,6 +198,7 @@ export function HomePage() {
               </p>
             )}
             {story && !query && <MarketStoryCard market={story} />}
+            {category && !query && <MarketPictures info={marketInfo(category)} />}
             {productList}
           </section>
         </main>
@@ -401,7 +403,11 @@ function MarketTile({ category, onOpen }: { category: Category; onOpen: () => vo
   const count = category.productCount
   return (
     <button type="button" className="market-tile" onClick={onOpen}>
-      <span className="market-art">{info.photo ? <img src={info.photo} alt="" loading="lazy" /> : info.art}</span>
+      {/* The photo lies over the drawing: if it can't load (offline), the drawing shows. */}
+      <span className="market-art">
+        {info.art}
+        {info.photo && <img src={info.photo} alt="" loading="lazy" />}
+      </span>
       <span className="market-label">
         <span className="market-name">{category.name}</span>
         <span className="market-blurb">{info.blurb}</span>
@@ -414,9 +420,11 @@ function MarketTile({ category, onOpen }: { category: Category; onOpen: () => vo
 // A market with a Kuruman story: its plain name over the photo of the person or place it honours.
 function StoryTile({ market, category }: { market: StoryMarket; category?: Category }) {
   const count = category?.productCount
+  const photo = market.cover ?? market.photo
   return (
     <Link to={storyLink(market)} className="story-tile" onClick={() => window.scrollTo({ top: 0 })}>
-      {market.photo ? <img src={market.photo} alt="" loading="lazy" /> : market.art}
+      {market.art}
+      {photo && <img src={photo} alt="" loading="lazy" />}
       <span className="story-label">
         <span className="story-honour">{market.honour}</span>
         <span className="story-name">{category?.name ?? market.name}</span>

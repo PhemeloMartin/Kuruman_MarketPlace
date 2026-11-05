@@ -54,10 +54,20 @@ export default defineConfig({
         // so the app opens without signal. It never stores API answers: the public catalogue
         // is saved by our own code (src/lib/catalogueCache.ts) with a timestamp, and private
         // data - orders, addresses, payments - is never saved on the phone (spec 5.3, 5.4).
-        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'], // webp: the market photos (~150 KB)
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
+          // The market photos (about 1 MB together) are kept once seen, not all downloaded upfront:
+          // that would cost every visitor data for photos they may never look at.
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/markets/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'market-photos',
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
           {
             urlPattern: ({ url }) => url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com',
             handler: 'CacheFirst',

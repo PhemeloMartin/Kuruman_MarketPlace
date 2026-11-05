@@ -5,16 +5,29 @@ import { Link } from 'react-router-dom'
 // (GET /api/categories); this file adds what the Home screen shows for it: the order, a short
 // line of text and a picture.
 //
-// Pictures are drawn in code (SVG), like the rest of the artwork: original, tiny, no licensing
-// questions. To use a real photo instead (e.g. from the market day, with permission), put it in
-// client/public/markets/ and set `photo`, for example photo: '/markets/building.webp'.
+// Each market has a photo (client/public/markets/): our own from Kuruman, or one from Wikimedia
+// Commons under a free licence that asks for the photographer and licence to be named (`credit`,
+// shown when the market is opened). Under each photo stays a small drawing (SVG), which shows
+// when the photo can't load, e.g. offline before the photo was ever seen.
+
+interface Credit {
+  text: string
+  href: string
+}
 
 export interface MarketInfo {
   slug: string
   blurb: string
   art: ReactNode
   photo?: string
+  credit?: Credit // for a photo that isn't ours
+  gallery?: { src: string; alt: string }[] // more of our own photos, shown when the market is opened
 }
+
+const commons = (who: string, licence: string, file: string): Credit => ({
+  text: `Picture: ${who}, ${licence}, via Wikimedia Commons (cropped)`,
+  href: `https://commons.wikimedia.org/wiki/File:${file}`,
+})
 
 const svg = (children: ReactNode, background: string) => (
   <svg viewBox="0 0 160 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -28,6 +41,8 @@ export const MARKETS: MarketInfo[] = [
   {
     slug: 'fresh-produce',
     blurb: 'Spinach, tomatoes, onions, fruit',
+    photo: '/markets/fresh-produce.webp',
+    credit: commons('Refiloe776', 'CC BY-SA 4.0', 'Johannesburg_Spinach_Hawkers.jpg'),
     art: svg(
       <>
         <circle cx="122" cy="34" r="16" fill="#F2C57C" />
@@ -45,6 +60,16 @@ export const MARKETS: MarketInfo[] = [
   {
     slug: 'street-food',
     blurb: 'Kotas, vetkoek, pap and stew',
+    photo: '/markets/street-food.webp', // our own photos from here on
+    gallery: [
+      { src: '/markets/gallery/food-caravan.webp', alt: 'A food caravan under a shade net, with a table and chairs' },
+      { src: '/markets/gallery/food-menu.webp', alt: 'A caravan’s menu: pap, rice or dumpling with beef stew or steak, R80' },
+      { src: '/markets/gallery/pots-on-the-fire.webp', alt: 'Pots cooking on a gas stove' },
+      { src: '/markets/gallery/sis-dee.webp', alt: 'The “Sis Dee” food trailer' },
+      { src: '/markets/gallery/davids-take-away.webp', alt: 'David’s Take Away at the Kuruman SMME Village' },
+      { src: '/markets/gallery/joyces-fast-food.webp', alt: 'The sign of Joyce’s Fast Food' },
+      { src: '/markets/gallery/dannys-fast-foods.webp', alt: 'Danny’s Fast Foods, open for the day' },
+    ],
     art: svg(
       <>
         <path d="M62 26c-4 8 4 12 0 20M80 22c-4 8 4 12 0 20M98 26c-4 8 4 12 0 20" stroke="#fff" strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.8" />
@@ -65,6 +90,8 @@ export const MARKETS: MarketInfo[] = [
   {
     slug: 'pantry',
     blurb: 'Bread, maize meal, groceries',
+    photo: '/markets/pantry.webp',
+    credit: commons('King of the Grasshoppers', 'CC BY-SA 4.0', 'Spaza_Shop,_Cathedral_Peak,_KwaZulu_Natal.JPG'),
     art: svg(
       <>
         <rect x="88" y="44" width="46" height="84" rx="6" fill="#FFFCF7" />
@@ -83,6 +110,8 @@ export const MARKETS: MarketInfo[] = [
   {
     slug: 'building',
     blurb: 'Bricks, sand, cement',
+    photo: '/markets/building.webp',
+    credit: commons('Gabriel Fredrick Sindahnai', 'CC BY-SA 4.0', 'Stacked_bricks.jpg'),
     art: svg(
       <>
         <circle cx="128" cy="30" r="14" fill="#F2C57C" />
@@ -106,6 +135,8 @@ export const MARKETS: MarketInfo[] = [
   {
     slug: 'livestock',
     blurb: 'Goats, sheep, chickens, cattle',
+    photo: '/markets/livestock.webp',
+    credit: commons('Lazarus000', 'CC BY-SA 4.0', 'Boer_goat.jpg'),
     art: svg(
       <>
         <circle cx="34" cy="36" r="14" fill="#F2C57C" />
@@ -132,6 +163,8 @@ export const MARKETS: MarketInfo[] = [
   {
     slug: 'farm-feed',
     blurb: 'Lucerne, chicken feed, farm supplies',
+    photo: '/markets/farm-feed.webp',
+    credit: commons('Gary D Robson', 'CC BY-SA 3.0', 'Alfalfa_square_bales.jpg'),
     art: svg(
       <>
         <rect x="16" y="76" width="74" height="52" rx="6" fill="#D9B653" />
@@ -148,6 +181,11 @@ export const MARKETS: MarketInfo[] = [
   {
     slug: 'clothing',
     blurb: 'Clothes, shoes, shweshwe',
+    photo: '/markets/clothing.webp', // our own photos
+    gallery: [
+      { src: '/markets/gallery/dresses-and-suits.webp', alt: 'Dresses, gowns and suits made by a Kuruman tailor' },
+      { src: '/markets/gallery/tailors-corridor.webp', alt: 'Traditional shirts and dresses on mannequins outside a tailor' },
+    ],
     art: svg(
       <>
         <path d="M54 30l-36 22 12 24 16-8v66h68V68l16 8 12-24-36-22c-4 10-14 16-26 16s-22-6-26-16z" fill="#1E4E7A" />
@@ -164,6 +202,8 @@ export const MARKETS: MarketInfo[] = [
   {
     slug: 'crafts',
     blurb: 'Beadwork, baskets, gifts',
+    photo: '/markets/crafts.webp',
+    credit: commons('Aurobindo Ogra', 'CC BY-SA 3.0', 'Beadwork_Wire_Art_and_Crafts_(22).JPG'),
     art: svg(
       <>
         <circle cx="80" cy="78" r="44" fill="none" stroke="#154D41" strokeWidth="2" />
@@ -181,6 +221,11 @@ export const MARKETS: MarketInfo[] = [
   {
     slug: 'household',
     blurb: 'Pots, cleaning, home things',
+    photo: '/markets/household.webp',
+    credit: {
+      text: 'Picture: Digrpat, public domain, via Wikimedia Commons (cropped)',
+      href: 'https://commons.wikimedia.org/wiki/File:Potjie4.jpg',
+    },
     art: svg(
       <>
         <path d="M58 140c4-14 12-20 22-20s18 6 22 20z" fill="#F2C57C" />
@@ -196,6 +241,7 @@ export const MARKETS: MarketInfo[] = [
   {
     slug: 'personal-care',
     blurb: 'Soap, lotion, hair care',
+    photo: '/markets/personal-care.webp', // our own photo
     art: svg(
       <>
         <rect x="56" y="54" width="40" height="76" rx="10" fill="#FFFCF7" />
@@ -242,6 +288,7 @@ export interface StoryMarket {
   photo?: string
   photoAlt?: string
   art?: ReactNode // a drawing, when there is no free photo
+  cover?: string // the Home card's photo, when it isn't the story's own picture
   credit?: { text: string; href: string }
   category?: string // a product market: opens /?market=<category>
   directory?: string // a Business Directory category: opens /directory?category=<directory>
@@ -301,6 +348,7 @@ export const STORY_MARKETS: StoryMarket[] = [
     story:
       'Wonderwerk Cave, between Kuruman and Danielskuil, holds some of the oldest signs of people using fire, about a million years old. Wonderwerk means “miracle”. Kuruman still gathers around the fire, and this market is for food cooked at stalls and caravans: kotas, vetkoek, pap and stew.',
     art: wonderwerkArt,
+    cover: '/markets/street-food.webp', // our own photo: the way to Kuruman's caravan park
   },
 ]
 
@@ -335,6 +383,33 @@ export function MarketStoryCard({ market }: { market: StoryMarket }) {
         </p>
       )}
     </aside>
+  )
+}
+
+// Under an opened market: our own photos from around Kuruman (swipe sideways), and who took the market's
+// picture when it isn't ours.
+export function MarketPictures({ info }: { info: MarketInfo }) {
+  if (!info.gallery && !info.credit) return null
+  return (
+    <div className="market-pictures">
+      {info.gallery && (
+        <figure>
+          <div className="market-gallery" role="group" aria-label="Photos from around Kuruman" tabIndex={0}>
+            {info.gallery.map((g) => (
+              <img key={g.src} src={g.src} alt={g.alt} loading="lazy" width={640} height={480} />
+            ))}
+          </div>
+          <figcaption className="fine-print">Photos taken around Kuruman.</figcaption>
+        </figure>
+      )}
+      {info.credit && (
+        <p className="fine-print">
+          <a href={info.credit.href} target="_blank" rel="noopener noreferrer">
+            {info.credit.text}
+          </a>
+        </p>
+      )}
+    </div>
   )
 }
 
