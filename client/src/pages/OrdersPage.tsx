@@ -9,7 +9,6 @@ import { api, ApiError } from '../lib/api'
 import { formatRand } from '../lib/money'
 import { FULFILMENT_LABEL } from '../lib/types'
 import type { Fulfilment } from '../lib/types'
-import { usePaymentTestMode } from '../lib/paymentMode'
 
 interface OrderSummary {
   id: number
@@ -56,7 +55,6 @@ function timeLeft(iso: string): string {
 }
 
 export function OrdersPage() {
-  const paymentTest = usePaymentTestMode()
   const { user, loading } = useAuth()
   const location = useLocation()
   const placed = (location.state as { placed?: string } | null)?.placed
@@ -281,11 +279,7 @@ export function OrdersPage() {
                 </p>
               )}
               {/* Only shown once Payfast's verified notification has marked the payment paid. */}
-              {o.paymentStatus === 'paid' && (
-                <p className="fine-print">
-                  {paymentTest ? '✓ Paid with Payfast’s test card: no real money was taken.' : '✓ Paid online with Payfast.'}
-                </p>
-              )}
+              {o.paymentStatus === 'paid' && <p className="fine-print">✓ Paid online with Payfast.</p>}
               {o.status === 'ready' && o.fulfilment === 'delivery' && (
                 <p className="fine-print">Packed and waiting for a courier.</p>
               )}

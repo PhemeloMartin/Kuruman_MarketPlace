@@ -12,7 +12,6 @@ import type { CashToConfirm, Kpis, Rating, Review, SellerOrder, SellerProduct } 
 import { FULFILMENT_LABEL } from '../../lib/types'
 import { MapView } from '../../components/MapView'
 import { mapsAppLink } from '../../lib/geo'
-import { usePaymentTestMode } from '../../lib/paymentMode'
 
 interface Dashboard {
   business: { id: number; name: string; active: boolean }
@@ -344,7 +343,6 @@ const PILL: Record<string, { label: string; tone: string }> = {
 }
 
 function OrderCard({ order: o, onChanged }: { order: SellerOrder; onChanged: () => void }) {
-  const paymentTest = usePaymentTestMode()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [declining, setDeclining] = useState(false)
@@ -380,8 +378,7 @@ function OrderCard({ order: o, onChanged }: { order: SellerOrder; onChanged: () 
         {o.items.map((i) => `${i.quantity} × ${i.name}`).join(', ')}
       </p>
       <p className="product-meta" style={{ margin: 0 }}>
-        {o.customerName} · {FULFILMENT_LABEL[o.fulfilment]} ·{' '}
-        {o.paymentMethod === 'cash' ? 'Cash' : paymentTest ? <strong>Online (test, no real money)</strong> : 'Online'} ·{' '}
+        {o.customerName} · {FULFILMENT_LABEL[o.fulfilment]} · {o.paymentMethod === 'cash' ? 'Cash' : 'Online'} ·{' '}
         <span className="price" translate="no">
           {formatRand(o.totalCents)}
         </span>

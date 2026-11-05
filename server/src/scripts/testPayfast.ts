@@ -155,17 +155,6 @@ async function main() {
       }
     });
 
-    await check("the site says when online payment is in test mode (sandbox), so nobody mistakes it for real money", async () => {
-      const config = async () => (await fetch(`${base}/api/config`)).json();
-      assert.equal((await config()).onlinePaymentTest, true, "sandbox");
-      process.env.PAYFAST_SANDBOX = "false";
-      try {
-        assert.equal((await config()).onlinePaymentTest, false, "live account");
-      } finally {
-        process.env.PAYFAST_SANDBOX = "true";
-      }
-    });
-
     await check("Payfast's notification addresses are recognised, also when hidden in the proxy's forwarded list", async () => {
       assert.equal(await isPayfastIp("197.97.145.150"), true, "Payfast range 197.97.145.144/28");
       assert.equal(await isPayfastIp("::ffff:41.74.179.200"), true, "Payfast range 41.74.179.192/27");
