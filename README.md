@@ -163,7 +163,7 @@ the database).
 
 ## Tests
 
-16 automated suites (about 240 checks) in `server/`. Run each on a fresh database with the dev server
+16 automated suites (204 checks) in `server/`. Run each on a fresh database with the dev server
 stopped:
 
 ```

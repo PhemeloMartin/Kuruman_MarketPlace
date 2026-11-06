@@ -2447,14 +2447,15 @@ label.busy {
   flex: 1 1 160px;
 }
 
-/* WhatsApp's own green, darkened so white text passes WCAG AA contrast. */
+/* WhatsApp's own green, darkened so white text passes WCAG AA contrast (about 6.3:1; the earlier #128c4b gave
+   only 4.3:1 and was flagged by an axe-core scan). */
 .btn-whatsapp {
-  background: #128c4b;
+  background: #0d6e3a;
   color: #fff;
 }
 
 .btn-whatsapp:hover {
-  background: #0d6e3a;
+  background: #0a5a2f;
 }
 
 .whatsapp-tile {
