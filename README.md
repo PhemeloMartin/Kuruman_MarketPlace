@@ -191,6 +191,14 @@ npm run test:payfast
 | `test:tracking` | Map pins, in-app directions, live courier location, chat and "I'm outside" |
 | `test:sms` | SMS in three languages, each within one 160-character GSM-7 message |
 
+**Python unit tests (AI component)** — 37 tests with `unittest`, in `ai/tests/`: the forecast features and
+payday rule, the grouped data split, abstaining below the confidence threshold, scam screening, review
+analysis, model-file integrity and the AI service's HTTP layer (token, unknown paths, bad input). From `ai/`:
+
+```
+python -m unittest discover -s tests -t . -v
+```
+
 In `ai/`: `python train.py` (and `train_reviews.py`, `train_screening.py`, `train_forecast.py`) retrain
 and re-evaluate the models.
 
