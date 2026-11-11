@@ -11,10 +11,9 @@ services:
   - type: web
     name: kurumanmarketplace
     runtime: node
-    # Free plan: after 15 minutes without visitors the site sleeps and the next visit takes about a minute to
-    # wake it. It ran on the paid plan (0.5c-512mb, never sleeps) from 5 Nov 2026 for the presentation and was
-    # moved back to free on 11 Nov 2026; "free" here keeps a Blueprint sync from switching the paid plan back on.
-    plan: free
+    # Paid plan (0.5 CPU, 512 MB; formerly called "starter"): the site never goes to sleep, so it opens
+    # straight away. Chosen in the dashboard on 5 Nov 2026; kept here so a Blueprint sync doesn't undo it.
+    plan: 0.5c-512mb
     region: frankfurt # closest Render region to South Africa at the time of writing
     buildCommand: >-
       cd client && npm ci --include=dev && npm run build &&
